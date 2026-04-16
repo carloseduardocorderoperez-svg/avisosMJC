@@ -1,0 +1,343 @@
+/*
+ * blocks.css — Estilos ÚNICOS DE VERDAD para los bloques de avisos.
+ *
+ * - Este archivo se importa en app.css → panel central del editor.
+ * - El backend (htmlGenerator.js) lo lee e inyecta en el HTML de salida.
+ *
+ * Edita aquí para cambiar el aspecto de los bloques en AMBOS lados a la vez.
+ */
+
+/* ============================================================
+   Variables (necesarias para el HTML de salida).
+   En el editor React estas vienen de :root en app.css, pero el
+   servidor las inyecta de este mismo bloque al generar el HTML.
+   ============================================================ */
+
+:root {
+  --bs-text-main: #f8f8f8;
+  --bs-text-muted: #b5b7c2;
+  --bs-border-soft: #242735;
+  --bs-border-strong: #2d3040;
+  --bs-bg-elevated: #111217;
+}
+
+/* ============================================================
+   TEXTO
+   ============================================================ */
+
+.canvas-block-text {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--bs-text-main, #f8f8f8);
+  margin-top: 8px;
+}
+
+/* ============================================================
+   LISTA
+   ============================================================ */
+
+.canvas-list {
+  margin: 8px 0 0;
+  padding-left: 1.3rem;
+}
+
+.canvas-list li {
+  margin-bottom: 3px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* ============================================================
+   TABLA
+   ============================================================ */
+
+.canvas-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  font-size: 12px;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.canvas-table td {
+  border: 1px solid var(--bs-border-soft, #242735);
+  padding: 6px 8px;
+}
+
+.canvas-table tr:nth-child(n + 2) td {
+  background: rgba(255, 255, 255, 0.01);
+}
+
+.canvas-table tr:nth-child(odd):not(:first-child) td {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.canvas-table tr:hover td {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* Tabla: encabezado y bordes por categoría */
+
+.admin .canvas-table td              { border-color: rgba(255, 68, 68, 0.4); }
+.admin .canvas-table tr:first-child td { background: rgba(255, 68, 68, 0.15); font-weight: 600; }
+
+.eventos .canvas-table td              { border-color: rgba(255, 221, 68, 0.4); }
+.eventos .canvas-table tr:first-child td { background: rgba(255, 221, 68, 0.16); font-weight: 600; color: #fff; }
+
+.pastoral .canvas-table td              { border-color: rgba(76, 175, 80, 0.45); }
+.pastoral .canvas-table tr:first-child td { background: rgba(76, 175, 80, 0.18); font-weight: 600; }
+
+.formacion .canvas-table td              { border-color: rgba(77, 163, 255, 0.45); }
+.formacion .canvas-table tr:first-child td { background: rgba(77, 163, 255, 0.2); font-weight: 600; }
+
+.extras .canvas-table td              { border-color: rgba(139, 69, 19, 0.5); }
+.extras .canvas-table tr:first-child td { background: rgba(139, 69, 19, 0.24); font-weight: 600; }
+
+/* ============================================================
+   LINK / BOTÓN (3D)
+   ============================================================ */
+
+/* Contenedor clicable: puede ser <a> o <button> */
+.canvas-link {
+  position: relative;
+  display: inline-block;
+  margin-top: 14px;   /* más aire por encima */
+  margin-bottom: 12px; /* más aire por debajo para la sombra 3D */
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: none;
+  outline-offset: 4px;
+  transition: filter 250ms;
+}
+
+/* Borde lateral con degradado oscuro (para fondo negro) */
+.canvas-link-edge {
+  position: absolute;
+  top: 3px;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  background: rgb(156, 1, 1)
+}
+
+/* Cara visible del botón; el color se ajusta por categoría */
+.canvas-link-front {
+  display: block;
+  position: relative;
+  padding: 10px 22px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #ffffff;
+  background: #3a7bff; /* color por defecto si no hay categoría */
+  will-change: transform;
+  transform: translateY(-4px);
+  transition: transform 600ms cubic-bezier(0.3, 0.7, 0.4, 1);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+
+.canvas-link:hover {
+  filter: brightness(112%);
+}
+
+.canvas-link:hover .canvas-link-front {
+  transform: translateY(-6px);
+  transition: transform 250ms cubic-bezier(0.3, 0.7, 0.4, 1.5);
+}
+
+.canvas-link:active .canvas-link-front {
+  transform: translateY(-2px);
+  transition: transform 34ms;
+}
+
+.canvas-link:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Pequeña animación periódica para sugerir "soy clicable" */
+
+@keyframes canvas-link-pulse {
+  0% {
+    transform: translateY(-4px);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.03);
+  }
+  50% {
+    transform: translateY(-6px);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.55);
+  }
+  100% {
+    transform: translateY(-4px);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.03);
+  }
+}
+
+/* Solo cuando no se está haciendo hover, para que no moleste al interactuar */
+.canvas-link:not(:hover) .canvas-link-front {
+  animation: canvas-link-pulse 3.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .canvas-link:not(:hover) .canvas-link-front {
+    animation: none;
+  }
+}
+
+/* Color de botón por categoría (aplicado a la "front") */
+
+.admin    .canvas-link-front { background: #c90000; color: #fff; }
+.eventos  .canvas-link-front { background: #ffdd44; color: #000; }
+.pastoral .canvas-link-front { background: #4caf50; color: #fff; }
+.formacion .canvas-link-front { background: #4da3ff; color: #fff; }
+.extras   .canvas-link-front { background: #555555; color: #eeeeee; }
+
+/* Borde 3D por categoría: mismo color pero más oscuro */
+
+.admin .canvas-link-edge {
+  background: rgb(156, 1, 1);
+}
+
+.eventos .canvas-link-edge {
+  /* amarillo oscuro, derivado de #ffdd44 */
+  background: rgb(191, 160, 0);
+}
+
+.pastoral .canvas-link-edge {
+  /* verde oscuro, derivado de #4caf50 */
+  background: rgb(27, 94, 32);
+}
+
+.formacion .canvas-link-edge {
+  /* azul oscuro, derivado de #4da3ff */
+  background: rgb(13, 71, 161);
+}
+
+.extras .canvas-link-edge {
+  /* marrón/gris oscuro para extras */
+  background: rgb(90, 60, 30);
+}
+
+/* ============================================================
+   INFO (fecha / lugar / horario)
+   ============================================================ */
+
+.canvas-info {
+  margin-top: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #1a1a1a;
+  font-size: 12px;
+  color: var(--bs-text-main, #f8f8f8);
+  line-height: 1.6;
+}
+
+/* ============================================================
+   CHIPS (personas)
+   ============================================================ */
+
+.canvas-meta {
+  font-size: 11px;
+  color: var(--bs-text-muted, #b5b7c2);
+  margin-top: 8px;
+}
+
+.canvas-chips {
+  margin-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.canvas-chip {
+  display: inline-block;
+  background: #1a1a1a;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Color de chip por categoría */
+
+.admin    .canvas-chip { border-color: #ff4444; color: #ff4444; }
+.eventos  .canvas-chip { border-color: #ffdd44; color: #ffdd44; }
+.pastoral .canvas-chip { border-color: #4caf50; color: #4caf50; }
+.formacion .canvas-chip { border-color: #4da3ff; color: #4da3ff; }
+.extras   .canvas-chip { border-color: #666;   color: #ccc; }
+
+/* ============================================================
+   BANCO (datos de transferencia)
+   ============================================================ */
+
+.canvas-banco {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--bs-border-soft, #242735);
+  font-size: 12px;
+}
+
+.canvas-banco-header {
+  font-weight: 600;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+
+.canvas-banco-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 3px;
+}
+
+.canvas-banco-label {
+  color: var(--bs-text-muted, #b5b7c2);
+}
+
+.canvas-banco-value {
+  color: var(--bs-text-main, #f8f8f8);
+}
+
+/* Color del valor por categoría */
+
+.admin    .canvas-banco-value { color: #ff4444; }
+.eventos  .canvas-banco-value { color: #ffdd44; }
+.pastoral .canvas-banco-value { color: #4caf50; }
+.formacion .canvas-banco-value { color: #4da3ff; }
+.extras   .canvas-banco-value { color: #c19a6b; }
+
+/* ============================================================
+   IMAGEN
+   ============================================================ */
+
+.canvas-imagen {
+  margin-top: 8px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px dashed var(--bs-border-soft, #242735);
+  font-size: 12px;
+  color: var(--bs-text-muted, #b5b7c2);
+  text-align: center;
+}
+
+.canvas-imagen img {
+  max-width: 100%;
+  display: block;
+  border-radius: 8px;
+  margin: 0 auto;
+}
+
+.canvas-imagen iframe {
+  width: 100%;
+  min-height: 260px;
+  border: 0;
+  border-radius: 8px;
+  display: block;
+}
+
+.canvas-imagen.vacio {
+  font-style: italic;
+}

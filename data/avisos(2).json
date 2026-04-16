@@ -1,0 +1,1393 @@
+{
+  "sets": [
+    {
+      "id": "7e42f443-7772-47c6-9d8f-34d070923220",
+      "code": "HTML-001",
+      "date": "18/03/2026",
+      "title": "AVISOS ZONALES",
+      "avisos": [
+        {
+          "id": 1,
+          "orden": 1,
+          "titulo": "Deudas",
+          "categoria": "admin",
+          "bloques": [
+            {
+              "tipo": "texto",
+              "contenido": "Avisar más tardar mañana cuándo pagarán sus deudas de grupo, relacionadas con el torneo de zonas"
+            },
+            {
+              "tipo": "tabla",
+              "contenido": [
+                [
+                  "Grupo",
+                  "Deuda"
+                ],
+                [
+                  "Hagen",
+                  "$270"
+                ],
+                [
+                  "Alfirk",
+                  "$560"
+                ]
+              ]
+            },
+            {
+              "tipo": "banco",
+              "banco": "Nu",
+              "tipoCuenta": "CLABE",
+              "cuenta": "638180010160134075",
+              "titular": "Carlos Gerardo Hernández Salas",
+              "referencia": "Ejemplo: Deuda - Hagen"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "orden": 2,
+          "titulo": "Censo Estadístico",
+          "categoria": "admin",
+          "bloques": [
+            {
+              "tipo": "texto",
+              "contenido": "Ya toca llenar el censo de semáforo del segundo bimestre."
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Fecha límite: viernes 27 de marzo."
+            },
+            {
+              "tipo": "texto",
+              "contenido": "NOTA: Recuerden que tienen que seleccionar el semestre 2026A antes de enviar el forms."
+            },
+            {
+              "tipo": "link",
+              "texto": "Llenar Censo Segundo Bimestre",
+              "url": "https://docs.google.com/forms/d/e/1FAIpQLScmD-GOfptkzwWtzS8nX0X3KutNcBWsekkz5YwTOiBx0zeiQw/viewform"
+            },
+            {
+              "tipo": "chips",
+              "items": [
+                "Asesores de grupo"
+              ]
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "orden": 3,
+          "titulo": "ANL 2026",
+          "categoria": "admin",
+          "bloques": [
+            {
+              "tipo": "texto",
+              "contenido": "Precio Nacional"
+            },
+            {
+              "tipo": "tabla",
+              "contenido": [
+                [
+                  "Fase",
+                  "Monto"
+                ],
+                [
+                  "Fase 1 (20 al 28 febrero)",
+                  "$980.00"
+                ],
+                [
+                  "Fase 2 (7 al 15 de marzo)",
+                  "$1,080.00"
+                ],
+                [
+                  "Fase 3 (20 de marzo al 6 de abril)",
+                  "$1,180.00"
+                ]
+              ]
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Se paga directamente a la COMINADES"
+            },
+            {
+              "tipo": "tabla",
+              "contenido": [
+                [
+                  "Fecha",
+                  "Monto (Escuadron, Cadena, Conquista y Asamblea)",
+                  "Recargo",
+                  "Monto (Juvenil)",
+                  "Recargo"
+                ],
+                [
+                  "30 Enero - 5 Febrero",
+                  "$300",
+                  "",
+                  "$300",
+                  ""
+                ],
+                [
+                  "15 Febrero - 20 Febrero",
+                  "$350",
+                  "",
+                  "$350",
+                  ""
+                ],
+                [
+                  "28 Febrero - 05 Marzo",
+                  "$350",
+                  "+$50",
+                  "$350",
+                  "+$50"
+                ],
+                [
+                  "15 Marzo - 20 Marzo",
+                  "$350",
+                  "+$50",
+                  "$200",
+                  "+$50"
+                ],
+                [
+                  "29 Marzo - 08 Abril",
+                  "$350",
+                  "",
+                  "$200",
+                  ""
+                ],
+                [
+                  "Total",
+                  "$1,700",
+                  "$1,800",
+                  "$1,200",
+                  "$1,300"
+                ]
+              ]
+            },
+            {
+              "tipo": "imagen",
+              "url": "https://drive.google.com/thumbnail?id=108-9FzI1SNgzLVHAX1-xQbmpHihdzkvU&sz=w2000",
+              "descripcion": ""
+            },
+            {
+              "tipo": "chips",
+              "items": [
+                "Sofy",
+                "Carlos"
+              ]
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "orden": 4,
+          "titulo": "Seguros",
+          "categoria": "admin",
+          "bloques": [
+            {
+              "tipo": "texto",
+              "contenido": "Tendremos como límite hasta el próximo martes 24 para revisar de manera muy minuciosa que toda la gente esté asegurada, que los datos sean correctos y que no haya discrepancias entre sus registros de grupo, zonales y el regional. Por el grupo les compartiremos qué encargado se estará reportando con ustedes (o con quiénes tendrán que reportarse en caso de ya haber identificado alguna anomalía). Por favor no lo dejemos pasar, nunca sabemos cuándo podemos hacer uso del servicio."
+            },
+            {
+              "tipo": "chips",
+              "items": [
+                "Sofy",
+                "Carlos"
+              ]
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "orden": 5,
+          "titulo": "Delegación Juvenil San Nicolás",
+          "categoria": "admin",
+          "bloques": [
+            {
+              "tipo": "texto",
+              "contenido": "Invitación a todos los dirigentes de la zona a ser Delegados Juveniles de San Nicolás para beneficio de sus grupos"
+            },
+            {
+              "tipo": "chips",
+              "items": [
+                "Roger"
+              ]
+            }
+          ]
+        },
+        {
+          "id": 6,
+          "orden": 6,
+          "titulo": "🔥🔥🔥Bonelessada Zonal 🔥🔥🔥",
+          "categoria": "eventos",
+          "bloques": [
+            {
+              "tipo": "info",
+              "fecha": "Sábado 28 de Marzo (siguiente semana!!!)",
+              "lugar": "Templo El Señor De La Mirericordia",
+              "horario": "A partir de las 7:30PM!"
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Ya la siguiente semana es la bonelessada zonal, recordando los pedidos con los que se ofrecieron a apoyar:"
+            },
+            {
+              "tipo": "imagen",
+              "url": "https://drive.google.com/thumbnail?id=14iVZ1Jgm69iTwmsj6R9ZqVfvo74bmFuW&sz=w2000",
+              "descripcion": ""
+            }
+          ]
+        },
+        {
+          "id": 7,
+          "orden": 7,
+          "titulo": "Asamblea de Lineas",
+          "categoria": "eventos",
+          "bloques": [
+            {
+              "tipo": "texto",
+              "contenido": "Cadena:"
+            },
+            {
+              "tipo": "info",
+              "fecha": "18 de marzo",
+              "lugar": "Casa Pastoral (PU)",
+              "horario": "8:00PM"
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Conquista:"
+            },
+            {
+              "tipo": "info",
+              "fecha": "25 de marzo",
+              "lugar": "Casa Pastoral (PU)",
+              "horario": "8:30PM"
+            },
+            {
+              "tipo": "link",
+              "texto": "Ubicación 📍",
+              "url": "https://maps.app.goo.gl/pG2osfSTT6vDFbkGA"
+            },
+            {
+              "tipo": "chips",
+              "items": [
+                "Asesores de línea"
+              ]
+            }
+          ]
+        },
+        {
+          "id": 8,
+          "orden": 8,
+          "titulo": "Misiones MJC",
+          "categoria": "eventos",
+          "bloques": [
+            {
+              "tipo": "texto",
+              "contenido": "Cada vez estamos más próximos a Semana Santa y este año Misiones MJC podrá cubrir 15 comunidades en Galeana, pero seguimos requiriendo de su ayuda para juntar los víveres necesarios para dichas comunidades."
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Podrán entregar jueves en Casita PJ (durante CFF), martes en PU (junta de ECR), asambleas de líneas pendientes (Cadena y Conquista), en visiteos (Ikiga y Omaha) o directamente en la Parroquia María Auxiliadora."
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Fecha límite: viernes 27 de marzo."
+            },
+            {
+              "tipo": "tabla",
+              "contenido": [
+                [
+                  "Grupo",
+                  "Cantidad de Arroz"
+                ],
+                [
+                  "Hagen",
+                  "40 kg"
+                ],
+                [
+                  "Zurich",
+                  "40 kg"
+                ],
+                [
+                  "Alfirk",
+                  "40 kg"
+                ],
+                [
+                  "Kao",
+                  "15 kg"
+                ],
+                [
+                  "ECZ",
+                  "10 kg"
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "id": 9,
+          "orden": 9,
+          "titulo": "Viacrusis Templo Señor De La Misericordia",
+          "categoria": "pastoral",
+          "bloques": [
+            {
+              "tipo": "texto",
+              "contenido": "Ensayos de viacrusis obligatorio asistir para todos los grupos del templo"
+            },
+            {
+              "tipo": "info",
+              "fecha": "Miércoles",
+              "lugar": "Templo",
+              "horario": "8pm"
+            },
+            {
+              "tipo": "info",
+              "fecha": "Sábado",
+              "lugar": "Templo",
+              "horario": "10:30am-11:30am"
+            }
+          ]
+        },
+        {
+          "id": 10,
+          "orden": 10,
+          "titulo": "Sacramentos",
+          "categoria": "pastoral",
+          "bloques": [
+            {
+              "tipo": "texto",
+              "contenido": "Por parte de la Basílica de NS del Roble se nos facilita la formación para recibir sacramentos a mayores de 14 años, solteros o personas próximas a casarse por la iglesia."
+            },
+            {
+              "tipo": "info",
+              "fecha": "26 de abril",
+              "horario": "8AM-1:30PM"
+            },
+            {
+              "tipo": "texto",
+              "contenido": "INSCRIPCIONES: Hasta el 22 de abril."
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Aportación: 1 sacramento = $750 2 sacramentos = $900 3 sacramentos = $1200"
+            },
+            {
+              "tipo": "chips",
+              "items": [
+                "Anavic"
+              ]
+            }
+          ]
+        },
+        {
+          "id": 11,
+          "orden": 11,
+          "titulo": "Convocatoria Hora Santa Regional",
+          "categoria": "pastoral",
+          "bloques": [
+            {
+              "tipo": "texto",
+              "contenido": "En caso de estar interesados, durante esta semana se enviará la convocatoria más indicaciones."
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Les pedimos estar al pendiente de su correo electrónico para más información."
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Hora Santa Regional: 6 de mayo"
+            }
+          ]
+        },
+        {
+          "id": 12,
+          "orden": 12,
+          "titulo": "CFF",
+          "categoria": "formacion",
+          "bloques": [
+            {
+              "tipo": "info",
+              "fecha": "Jueves",
+              "lugar": "Casita PJ",
+              "horario": "Cita: 8:15pm Inicio: 8:30pm"
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Modalidad: Presencial. Duración: 1 hora cada sesión, 9 sesiones en total."
+            },
+            {
+              "tipo": "texto",
+              "contenido": "¡Favor de unirse al grupo los que faltén pues se pasarán avisos importantes!"
+            },
+            {
+              "tipo": "link",
+              "texto": "Abrir enlace",
+              "url": "https://chat.whatsapp.com/LH30idBLdKV51eAnSPi1ra"
+            },
+            {
+              "tipo": "chips",
+              "items": [
+                "Anavic"
+              ]
+            }
+          ]
+        },
+        {
+          "id": 13,
+          "orden": 13,
+          "titulo": "Ministros",
+          "categoria": "formacion",
+          "bloques": [
+            {
+              "tipo": "texto",
+              "contenido": "Ya falta muy poco para que termine la formación, gracias por estarse conectando a las juntas y haber asistido a la sesión presencial. 'Ser MESC no es un logro personal sino un servicio a quién más lo necesite'"
+            },
+            {
+              "tipo": "lista",
+              "contenido": [
+                "1. El sábado 28 de marzo es la próxima junta presencial y última de todo el curso.",
+                "2. Hay que llevar los $250 del resello.",
+                "3. Carta de recomendación por el párroco solamente a los del 2026A."
+              ]
+            },
+            {
+              "tipo": "imagen",
+              "url": "https://drive.google.com/thumbnail?id=1SOalND3hgEr6_kN4WIIuc1jyCH9SXwOy&sz=w2000",
+              "descripcion": ""
+            },
+            {
+              "tipo": "chips",
+              "items": [
+                "Anavic"
+              ]
+            }
+          ]
+        },
+        {
+          "id": 14,
+          "orden": 14,
+          "titulo": "Curso de Prevención",
+          "categoria": "formacion",
+          "bloques": [
+            {
+              "tipo": "texto",
+              "contenido": "Para los dirigentes que acaban de subir (y también algún rezagado) deberán realizar el Curso de Prevención solicitado por la Arquidiócesis de Monterrey."
+            },
+            {
+              "tipo": "info",
+              "fecha": "11 de abril"
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Costo: $50"
+            },
+            {
+              "tipo": "link",
+              "texto": "Link al Curso",
+              "url": "https://www.mayahii.com/arquidiocesismty/c/5535"
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Una vez concluido el curso, deberán subir el comprobante a la siguiente carpeta y cómo titulo del documento el nombre completo y el grupo en el que subieron (sin abreviaciones, en mayúsculas y sin tildes). EJEMPLO: VANESSA GARZA BENÍTEZ MIRPHAK"
+            },
+            {
+              "tipo": "link",
+              "texto": "📂 Subir Comprobante",
+              "url": "https://drive.google.com/drive/folders/1GwFHj_Y9yI3VPkpD1-3kAZFqcSrlfv7D"
+            },
+            {
+              "tipo": "chips",
+              "items": [
+                "Roger"
+              ]
+            }
+          ]
+        },
+        {
+          "id": 15,
+          "orden": 15,
+          "titulo": "Sarampión",
+          "categoria": "extras",
+          "bloques": [
+            {
+              "tipo": "texto",
+              "contenido": "Los invitamos a hacer conciencia sobre la importancia de vacunarse contra el sarampión."
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Pueden ir a cualquier centro de salud o buscar más información llamando al 070."
+            },
+            {
+              "tipo": "link",
+              "texto": "CENTROS DE SALUD",
+              "url": "https://drive.google.com/file/d/1SxzexbAg9TnQR3DjrOXJLCF1KctwhdmR/view"
+            }
+          ]
+        },
+        {
+          "id": 16,
+          "orden": 16,
+          "titulo": "📌Recordatorios",
+          "categoria": "extras",
+          "bloques": [
+            {
+              "tipo": "lista",
+              "contenido": [
+                "Este sábado Visiteo con Kao",
+                "18 de Marzo - Asamblea de Cadena",
+                "25 de Marzo - Asamblea de Conquista",
+                "28 de Marzo - Visiteo Regional"
+              ]
+            }
+          ]
+        }
+      ],
+      "createdAt": "2026-03-27T02:54:29.585Z",
+      "updatedAt": "2026-03-27T02:55:45.461Z"
+    },
+    {
+      "id": "580056c5-b6dc-44ab-82ad-bd057ad90b38",
+      "code": "HTML-002",
+      "date": "26/03/2026",
+      "title": "AVISOS ZONALES",
+      "avisos": [
+        {
+          "id": "3adf2066-2133-48f0-8c4a-b463b94ad06a",
+          "orden": 1,
+          "titulo": "🔥🔥🔥Bonelessada Zonal 🔥🔥🔥 (Primer Aviso)",
+          "categoria": "admin",
+          "bloques": [
+            {
+              "tipo": "info",
+              "fecha": "Este Sábado 28 de Marzo !!!!!",
+              "lugar": "Templo El Señor De La Mirericordia",
+              "horario": "7:00-9:00 PM"
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Ya este sábado es nuestra bonelessada zonal, recordatorio de que los pagos se entregan más tardar el viernes y el sábado solo es de entregas. Les recordamos la cantidad de pedidos con la que se comprometieron a cooperar:"
+            },
+            {
+              "tipo": "imagen",
+              "url": "https://drive.google.com/thumbnail?id=14iVZ1Jgm69iTwmsj6R9ZqVfvo74bmFuW&sz=w2000",
+              "descripcion": ""
+            },
+            {
+              "tipo": "banco",
+              "banco": "Nu",
+              "tipoCuenta": "CLABE",
+              "cuenta": "638180010160134075",
+              "titular": "Carlos Gerardo Hernández Salas",
+              "referencia": "Sugerencia: \"Pedido Boneless - {Nombre de persona} - {Nombre de grupo} - {Célula opcional}\""
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "orden": 2,
+          "titulo": "Deudas",
+          "categoria": "admin",
+          "bloques": [
+            {
+              "tipo": "texto",
+              "contenido": "Acércase a hablar con la zona para coordinar pagos de sus deudas (cuarto aviso)"
+            },
+            {
+              "tipo": "tabla",
+              "contenido": [
+                [
+                  "Grupo",
+                  "Deuda"
+                ],
+                [
+                  "Hagen",
+                  "$270"
+                ],
+                [
+                  "Alfirk",
+                  "$560"
+                ]
+              ]
+            },
+            {
+              "tipo": "banco",
+              "banco": "Nu",
+              "tipoCuenta": "CLABE",
+              "cuenta": "638180010160134075",
+              "titular": "Carlos Gerardo Hernández Salas",
+              "referencia": "Ejemplo: Deuda - Hagen"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "orden": 3,
+          "titulo": "Censo Estadístico",
+          "categoria": "admin",
+          "bloques": [
+            {
+              "tipo": "texto",
+              "contenido": "RECORDATORIO PARA LOS GRUPOS QUE FALTAN: Ya toca llenar el censo de semáforo del segundo bimestre."
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Fecha límite: viernes 27 de marzo."
+            },
+            {
+              "tipo": "texto",
+              "contenido": "NOTA: Recuerden que tienen que seleccionar el semestre 2026A antes de enviar el forms."
+            },
+            {
+              "tipo": "link",
+              "texto": "Llenar Censo Segundo Bimestre",
+              "url": "https://docs.google.com/forms/d/e/1FAIpQLScmD-GOfptkzwWtzS8nX0X3KutNcBWsekkz5YwTOiBx0zeiQw/viewform"
+            },
+            {
+              "tipo": "chips",
+              "items": [
+                "Asesores de grupo"
+              ]
+            }
+          ]
+        },
+        {
+          "id": 6,
+          "orden": 4,
+          "titulo": "🔥🔥🔥Bonelessada Zonal 🔥🔥🔥(Segundo Aviso)!!",
+          "categoria": "eventos",
+          "bloques": [
+            {
+              "tipo": "info",
+              "fecha": "Este Sábado 28 de Marzo !!!!!",
+              "lugar": "Templo El Señor De La Mirericordia",
+              "horario": "7:00-9:00 PM"
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Ya este sábado es nuestra bonelessada zonal, recordatorio de que los pagos se entregan más tardar el viernes y el sábado solo es de entregas. Les recordamos la cantidad de pedidos con la que se comprometieron a cooperar:"
+            },
+            {
+              "tipo": "imagen",
+              "url": "https://drive.google.com/thumbnail?id=14iVZ1Jgm69iTwmsj6R9ZqVfvo74bmFuW&sz=w2000",
+              "descripcion": ""
+            },
+            {
+              "tipo": "banco",
+              "banco": "Nu",
+              "tipoCuenta": "CLABE",
+              "cuenta": "638180010160134075",
+              "titular": "Carlos Gerardo Hernández Salas",
+              "referencia": "Sugerencia: \"Pedido Boneless - {Nombre de persona} - {Nombre de grupo} - {Célula opcional}\""
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "orden": 5,
+          "titulo": "ANL 2026",
+          "categoria": "admin",
+          "bloques": [
+            {
+              "tipo": "texto",
+              "contenido": "Precio Nacional"
+            },
+            {
+              "tipo": "tabla",
+              "contenido": [
+                [
+                  "Fase 3 (20 de marzo al 6 de abril)",
+                  "$1,180.00"
+                ]
+              ]
+            },
+            {
+              "tipo": "tabla",
+              "contenido": [
+                [
+                  "Oferta (para los que hicieron ID hasta el 28 de marzo)",
+                  "$880"
+                ]
+              ]
+            },
+            {
+              "tipo": "texto",
+              "contenido": "**Los que paguen la oferta debe ser en transferencia aparte"
+            },
+            {
+              "tipo": "imagen",
+              "url": "https://drive.google.com/thumbnail?id=19byC5LqUECT6QwompVEUC3DqMuDxF-t1&sz=w2000",
+              "normalizedUrl": "https://drive.google.com/thumbnail?id=19byC5LqUECT6QwompVEUC3DqMuDxF-t1&sz=w2000"
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Registro en nueva plataforma (límite el 10 de abril):"
+            },
+            {
+              "tipo": "link",
+              "texto": "Registro (vivemjc.com)",
+              "url": "http://www.vivemjc.com.mx/"
+            },
+            {
+              "tipo": "link",
+              "texto": "Tutorial de cómo hacer el registro",
+              "url": "https://www.canva.com/design/DAHE7C5Qolk/hzuQm_G8RMPmm5noEI8TaA/edit?utm_content=DAHE7C5Qolk&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton"
+            },
+            {
+              "tipo": "chips",
+              "items": [
+                "Sofy",
+                "Carlos"
+              ]
+            }
+          ]
+        },
+        {
+          "id": 10,
+          "orden": 6,
+          "titulo": "Sacramentos",
+          "categoria": "pastoral",
+          "bloques": [
+            {
+              "tipo": "texto",
+              "contenido": "Por parte de la Basílica de NS del Roble se nos facilita la formación para recibir sacramentos a mayores de 14 años, solteros o personas próximas a casarse por la iglesia."
+            },
+            {
+              "tipo": "info",
+              "fecha": "26 de abril",
+              "horario": "8AM-1:30PM"
+            },
+            {
+              "tipo": "texto",
+              "contenido": "INSCRIPCIONES: Hasta el 22 de abril."
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Aportación: 1 sacramento = $750 2 sacramentos = $900 3 sacramentos = $120"
+            },
+            {
+              "tipo": "chips",
+              "items": [
+                "Anavic"
+              ]
+            }
+          ]
+        },
+        {
+          "id": 11,
+          "orden": 7,
+          "titulo": "Convocatoria Hora Santa Regional",
+          "categoria": "pastoral",
+          "bloques": [
+            {
+              "tipo": "lista",
+              "contenido": [
+                "Fecha de inicio de convocatoria: 23 de Marzo del 2026",
+                "Fecha de cierre de convocatoria: 5 de Abril del 2026- 11:59 p.m.",
+                "Fecha de exposición de postulantes: 8 de Abril del 2026 (Asamblea Regional)",
+                "Fecha de la Hora Santa Regional: 6 de Mayo del 2026 (Horario por definir)"
+              ]
+            }
+          ]
+        },
+        {
+          "id": 12,
+          "orden": 8,
+          "titulo": "CFF",
+          "categoria": "formacion",
+          "bloques": [
+            {
+              "tipo": "info",
+              "fecha": "Jueves",
+              "lugar": "Casita PJ",
+              "horario": "Cita: 8:15pm Inicio: 8:30pm"
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Modalidad: Presencial. Duración: 1 hora cada sesión, 9 sesiones en total."
+            },
+            {
+              "tipo": "texto",
+              "contenido": "¡Favor de unirse al grupo los que faltén pues se pasarán avisos importantes!"
+            },
+            {
+              "tipo": "link",
+              "texto": "Abrir enlace",
+              "url": "https://chat.whatsapp.com/LH30idBLdKV51eAnSPi1ra"
+            },
+            {
+              "tipo": "chips",
+              "items": [
+                "Anavic"
+              ]
+            }
+          ]
+        },
+        {
+          "id": 14,
+          "orden": 9,
+          "titulo": "Curso de Prevención",
+          "categoria": "admin",
+          "bloques": [
+            {
+              "tipo": "texto",
+              "contenido": "Para los dirigentes que acaban de subir (y también algún rezagado) deberán realizar el Curso de Prevención solicitado por la Arquidiócesis de Monterrey."
+            },
+            {
+              "tipo": "info",
+              "fecha": "11 de abril"
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Costo: $50"
+            },
+            {
+              "tipo": "link",
+              "texto": "Link al Curso",
+              "url": "https://www.mayahii.com/arquidiocesismty/c/5535"
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Una vez concluido el curso, deberán subir el comprobante a la siguiente carpeta y cómo titulo del documento el nombre completo y el grupo en el que subieron (sin abreviaciones, en mayúsculas y sin tildes). EJEMPLO: VANESSA GARZA BENÍTEZ MIRPHAK"
+            },
+            {
+              "tipo": "link",
+              "texto": "📂 Subir Comprobante",
+              "url": "https://drive.google.com/drive/folders/1GwFHj_Y9yI3VPkpD1-3kAZFqcSrlfv7D"
+            },
+            {
+              "tipo": "chips",
+              "items": [
+                "Roger"
+              ]
+            }
+          ]
+        },
+        {
+          "id": 16,
+          "orden": 10,
+          "titulo": "📌Recordatorios",
+          "categoria": "extras",
+          "bloques": [
+            {
+              "tipo": "lista",
+              "contenido": [
+                "25 de Marzo - Asamblea de Conquista",
+                "28 de Marzo - Visiteo Regional",
+                "29 de Marzo - Misa en la Basílica",
+                "6 de Abril - Límite de pago de ANL",
+                "8 de Abril - Asamblea Regional"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "7c6397ee-ef6f-424c-a2f6-2603b473f083",
+          "orden": 11,
+          "titulo": "Visiteo Regional",
+          "categoria": "eventos",
+          "bloques": [
+            {
+              "tipo": "texto",
+              "contenido": "   Este sábado, horarios ya se mandaron por grupo\n   Material para dinámica: Hojas/post it o algo para anotar, plumas\n   Altar para recibir a la Virgen del Roble (con bordones o mesa con mantel)"
+            }
+          ]
+        },
+        {
+          "id": "5f2697dc-900a-4743-9784-8adcfcac914b",
+          "orden": 12,
+          "titulo": "Kermes del Templo El Señor de la Misericordia",
+          "categoria": "eventos",
+          "bloques": [
+            {
+              "tipo": "info",
+              "fecha": "12 de Abril",
+              "lugar": "Templo",
+              "horario": "Por definir"
+            },
+            {
+              "tipo": "lista",
+              "contenido": [
+                "Boletos ya se repartieron por grupo",
+                "Entregar antes del día de la kermes"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "b0d57177-0796-4622-91ef-7874856bd616",
+          "orden": 13,
+          "titulo": "Deudas",
+          "categoria": "admin",
+          "bloques": [
+            {
+              "tipo": "texto",
+              "contenido": "Avisar más tardar mañana cuándo pagarán sus deudas de grupo, relacionadas con el torneo de zonas"
+            },
+            {
+              "tipo": "tabla",
+              "contenido": [
+                [
+                  "Grupo",
+                  "Deuda"
+                ],
+                [
+                  "Hagen",
+                  "$270"
+                ],
+                [
+                  "Alfirk",
+                  "$560"
+                ]
+              ]
+            },
+            {
+              "tipo": "banco",
+              "banco": "Nu",
+              "tipoCuenta": "CLABE",
+              "cuenta": "638180010160134075",
+              "titular": "Carlos Gerardo Hernández Salas",
+              "referencia": "Ejemplo: Deuda - Hagen"
+            }
+          ]
+        }
+      ],
+      "createdAt": "2026-03-27T02:55:30.919Z",
+      "updatedAt": "2026-04-09T02:11:31.162Z"
+    },
+    {
+      "id": "52f3224a-2305-4fbd-ba51-c01cba4ff7be",
+      "code": "HTML-003",
+      "date": "08/04/2026",
+      "title": "AVISOS ZONALES",
+      "avisos": [
+        {
+          "id": 1,
+          "orden": 1,
+          "titulo": "Deudas",
+          "categoria": "admin",
+          "bloques": [
+            {
+              "tipo": "texto",
+              "contenido": "Acércase a hablar con la zona para coordinar pagos de sus deudas (cuarto aviso)"
+            },
+            {
+              "tipo": "tabla",
+              "contenido": [
+                [
+                  "Grupo",
+                  "Deuda"
+                ],
+                [
+                  "Hagen",
+                  "$270"
+                ],
+                [
+                  "Alfirk",
+                  "$560"
+                ]
+              ]
+            },
+            {
+              "tipo": "banco",
+              "banco": "Nu",
+              "tipoCuenta": "CLABE",
+              "cuenta": "638180010160134075",
+              "titular": "Carlos Gerardo Hernández Salas",
+              "referencia": "Ejemplo: Deuda - Hagen"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "orden": 2,
+          "titulo": "ANL 2026",
+          "categoria": "admin",
+          "bloques": [
+            {
+              "tipo": "texto",
+              "contenido": "Precio Nacional"
+            },
+            {
+              "tipo": "tabla",
+              "contenido": [
+                [
+                  "Fase 3 (20 de marzo al 6 de abril)",
+                  "$1,180.00"
+                ]
+              ]
+            },
+            {
+              "tipo": "tabla",
+              "contenido": [
+                [
+                  "Oferta (para los que hicieron ID hasta el 28 de marzo)",
+                  "$880"
+                ]
+              ]
+            },
+            {
+              "tipo": "texto",
+              "contenido": "**Los que paguen la oferta debe ser en transferencia aparte"
+            },
+            {
+              "tipo": "imagen",
+              "url": "https://drive.google.com/thumbnail?id=19byC5LqUECT6QwompVEUC3DqMuDxF-t1&sz=w2000",
+              "normalizedUrl": "https://drive.google.com/thumbnail?id=19byC5LqUECT6QwompVEUC3DqMuDxF-t1&sz=w2000"
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Registro en nueva plataforma (límite el 10 de abril):"
+            },
+            {
+              "tipo": "link",
+              "texto": "Registro (vivemjc.com)",
+              "url": "http://www.vivemjc.com.mx/"
+            },
+            {
+              "tipo": "link",
+              "texto": "Tutorial de cómo hacer el registro",
+              "url": "https://www.canva.com/design/DAHE7C5Qolk/hzuQm_G8RMPmm5noEI8TaA/edit?utm_content=DAHE7C5Qolk&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton"
+            },
+            {
+              "tipo": "chips",
+              "items": [
+                "Sofy",
+                "Carlos"
+              ]
+            }
+          ]
+        },
+        {
+          "id": 10,
+          "orden": 3,
+          "titulo": "Sacramentos",
+          "categoria": "pastoral",
+          "bloques": [
+            {
+              "tipo": "texto",
+              "contenido": "Por parte de la Basílica de NS del Roble se nos facilita la formación para recibir sacramentos a mayores de 14 años, solteros o personas próximas a casarse por la iglesia."
+            },
+            {
+              "tipo": "info",
+              "fecha": "26 de abril",
+              "horario": "8AM-1:30PM"
+            },
+            {
+              "tipo": "texto",
+              "contenido": "INSCRIPCIONES: Hasta el 22 de abril."
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Aportación: 1 sacramento = $750 2 sacramentos = $900 3 sacramentos = $120"
+            },
+            {
+              "tipo": "chips",
+              "items": [
+                "Anavic"
+              ]
+            }
+          ]
+        },
+        {
+          "id": 14,
+          "orden": 4,
+          "titulo": "Curso de Prevención",
+          "categoria": "admin",
+          "bloques": [
+            {
+              "tipo": "texto",
+              "contenido": "Para los dirigentes que acaban de subir (y también algún rezagado) deberán realizar el Curso de Prevención solicitado por la Arquidiócesis de Monterrey."
+            },
+            {
+              "tipo": "info",
+              "fecha": "11 de abril"
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Costo: $50"
+            },
+            {
+              "tipo": "link",
+              "texto": "Link al Curso",
+              "url": "https://www.mayahii.com/arquidiocesismty/c/5535"
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Una vez concluido el curso, deberán subir el comprobante a la siguiente carpeta y cómo titulo del documento el nombre completo y el grupo en el que subieron (sin abreviaciones, en mayúsculas y sin tildes). EJEMPLO: VANESSA GARZA BENÍTEZ MIRPHAK"
+            },
+            {
+              "tipo": "link",
+              "texto": "📂 Subir Comprobante",
+              "url": "https://drive.google.com/drive/folders/1GwFHj_Y9yI3VPkpD1-3kAZFqcSrlfv7D"
+            },
+            {
+              "tipo": "chips",
+              "items": [
+                "Roger"
+              ]
+            }
+          ]
+        },
+        {
+          "id": 16,
+          "orden": 5,
+          "titulo": "📌Recordatorios",
+          "categoria": "extras",
+          "bloques": [
+            {
+              "tipo": "lista",
+              "contenido": [
+                "25 de Marzo - Asamblea de Conquista",
+                "28 de Marzo - Visiteo Regional",
+                "29 de Marzo - Misa en la Basílica",
+                "6 de Abril - Límite de pago de ANL",
+                "8 de Abril - Asamblea Regional"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "5f2697dc-900a-4743-9784-8adcfcac914b",
+          "orden": 6,
+          "titulo": "Kermes del Templo El Señor de la Misericordia",
+          "categoria": "eventos",
+          "bloques": [
+            {
+              "tipo": "info",
+              "fecha": "12 de Abril",
+              "lugar": "Templo",
+              "horario": "Por definir"
+            },
+            {
+              "tipo": "lista",
+              "contenido": [
+                "Boletos ya se repartieron por grupo",
+                "Entregar antes del día de la kermes"
+              ]
+            }
+          ]
+        }
+      ],
+      "createdAt": "2026-04-09T01:54:06.785Z",
+      "updatedAt": "2026-04-09T02:16:21.122Z"
+    },
+    {
+      "id": "e65832fd-f674-4256-a495-17275cf2c7e6",
+      "code": "HTML-004",
+      "date": "08/04/2026",
+      "title": "AVISOS ZONALES",
+      "avisos": [
+        {
+          "id": 1,
+          "orden": 1,
+          "titulo": "Deudas",
+          "categoria": "admin",
+          "bloques": [
+            {
+              "tipo": "texto",
+              "contenido": "Acércase a hablar con la zona para coordinar pagos de sus deudas (cuarto aviso)"
+            },
+            {
+              "tipo": "tabla",
+              "contenido": [
+                [
+                  "Grupo",
+                  "Deuda"
+                ],
+                [
+                  "Hagen",
+                  "$270"
+                ],
+                [
+                  "Alfirk",
+                  "$560"
+                ]
+              ]
+            },
+            {
+              "tipo": "banco",
+              "banco": "Nu",
+              "tipoCuenta": "CLABE",
+              "cuenta": "638180010160134075",
+              "titular": "Carlos Gerardo Hernández Salas",
+              "referencia": "Ejemplo: Deuda - Hagen"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "orden": 2,
+          "titulo": "ANL 2026",
+          "categoria": "admin",
+          "bloques": [
+            {
+              "tipo": "texto",
+              "contenido": "Precio Nacional"
+            },
+            {
+              "tipo": "tabla",
+              "contenido": [
+                [
+                  "Fase 3 (20 de marzo al 6 de abril)",
+                  "$1,180.00"
+                ]
+              ]
+            },
+            {
+              "tipo": "tabla",
+              "contenido": [
+                [
+                  "Oferta (para los que hicieron ID hasta el 28 de marzo)",
+                  "$880"
+                ]
+              ]
+            },
+            {
+              "tipo": "texto",
+              "contenido": "**Los que paguen la oferta debe ser en transferencia aparte"
+            },
+            {
+              "tipo": "imagen",
+              "url": "https://drive.google.com/thumbnail?id=19byC5LqUECT6QwompVEUC3DqMuDxF-t1&sz=w2000",
+              "normalizedUrl": "https://drive.google.com/thumbnail?id=19byC5LqUECT6QwompVEUC3DqMuDxF-t1&sz=w2000"
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Registro en nueva plataforma (límite el 10 de abril):"
+            },
+            {
+              "tipo": "link",
+              "texto": "Registro (vivemjc.com)",
+              "url": "http://www.vivemjc.com.mx/"
+            },
+            {
+              "tipo": "link",
+              "texto": "Tutorial de cómo hacer el registro",
+              "url": "https://www.canva.com/design/DAHE7C5Qolk/hzuQm_G8RMPmm5noEI8TaA/edit?utm_content=DAHE7C5Qolk&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton"
+            },
+            {
+              "tipo": "chips",
+              "items": [
+                "Sofy",
+                "Carlos"
+              ]
+            }
+          ]
+        },
+        {
+          "id": 10,
+          "orden": 3,
+          "titulo": "Sacramentos",
+          "categoria": "pastoral",
+          "bloques": [
+            {
+              "tipo": "texto",
+              "contenido": "Por parte de la Basílica de NS del Roble se nos facilita la formación para recibir sacramentos a mayores de 14 años, solteros o personas próximas a casarse por la iglesia."
+            },
+            {
+              "tipo": "info",
+              "fecha": "26 de abril",
+              "horario": "8AM-1:30PM"
+            },
+            {
+              "tipo": "texto",
+              "contenido": "INSCRIPCIONES: Hasta el 22 de abril."
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Aportación: 1 sacramento = $750 2 sacramentos = $900 3 sacramentos = $120"
+            },
+            {
+              "tipo": "chips",
+              "items": [
+                "Anavic"
+              ]
+            }
+          ]
+        },
+        {
+          "id": 14,
+          "orden": 4,
+          "titulo": "Curso de Prevención",
+          "categoria": "admin",
+          "bloques": [
+            {
+              "tipo": "texto",
+              "contenido": "Para los dirigentes que acaban de subir (y también algún rezagado) deberán realizar el Curso de Prevención solicitado por la Arquidiócesis de Monterrey."
+            },
+            {
+              "tipo": "info",
+              "fecha": "11 de abril"
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Costo: $50"
+            },
+            {
+              "tipo": "link",
+              "texto": "Link al Curso",
+              "url": "https://www.mayahii.com/arquidiocesismty/c/5535"
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Una vez concluido el curso, deberán subir el comprobante a la siguiente carpeta y cómo titulo del documento el nombre completo y el grupo en el que subieron (sin abreviaciones, en mayúsculas y sin tildes). EJEMPLO: VANESSA GARZA BENÍTEZ MIRPHAK"
+            },
+            {
+              "tipo": "link",
+              "texto": "📂 Subir Comprobante",
+              "url": "https://drive.google.com/drive/folders/1GwFHj_Y9yI3VPkpD1-3kAZFqcSrlfv7D"
+            },
+            {
+              "tipo": "chips",
+              "items": [
+                "Roger"
+              ]
+            }
+          ]
+        },
+        {
+          "id": 16,
+          "orden": 5,
+          "titulo": "📌Recordatorios",
+          "categoria": "extras",
+          "bloques": [
+            {
+              "tipo": "lista",
+              "contenido": [
+                "25 de Marzo - Asamblea de Conquista",
+                "28 de Marzo - Visiteo Regional",
+                "29 de Marzo - Misa en la Basílica",
+                "6 de Abril - Límite de pago de ANL",
+                "8 de Abril - Asamblea Regional"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "5f2697dc-900a-4743-9784-8adcfcac914b",
+          "orden": 6,
+          "titulo": "Kermes del Templo El Señor de la Misericordia",
+          "categoria": "eventos",
+          "bloques": [
+            {
+              "tipo": "info",
+              "fecha": "12 de Abril",
+              "lugar": "Templo",
+              "horario": "Por definir"
+            },
+            {
+              "tipo": "lista",
+              "contenido": [
+                "Boletos ya se repartieron por grupo",
+                "Entregar antes del día de la kermes"
+              ]
+            }
+          ]
+        }
+      ],
+      "createdAt": "2026-04-09T02:25:37.864Z",
+      "updatedAt": "2026-04-09T02:25:37.864Z"
+    }
+  ]
+}

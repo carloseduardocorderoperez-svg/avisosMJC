@@ -1,0 +1,405 @@
+{
+  "sets": [
+    {
+      "id": "113d30e6-1a28-4fe1-bc63-8b3879333c2c",
+      "code": "AI-001",
+      "date": "8/4/2026",
+      "title": "AVISOS ZONALES",
+      "avisos": [
+        {
+          "id": 1,
+          "orden": 1,
+          "titulo": "Censo Informativo",
+          "categoria": "admin",
+          "bloques": [
+            {
+              "tipo": "chips",
+              "items": [
+                "Ivan",
+                "Minor",
+                "Mariana",
+                "Balli"
+              ]
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Faltan las siguientes instancias de llenar el censo informativo:"
+            },
+            {
+              "tipo": "lista",
+              "contenido": [
+                "GRUPOS: Blackburn, Horeb, Hunter, Kootenay, Rukbah",
+                "ZONAS: Ruah, Wunand, Itzae"
+              ]
+            },
+            {
+              "tipo": "texto",
+              "contenido": "NOTA: Recuerden a sus grupos (y ustedes) que tienen que seleccionar el semestre 2026A antes de enviar el forms."
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "orden": 2,
+          "titulo": "Semáforo de Status",
+          "categoria": "admin",
+          "bloques": [
+            {
+              "tipo": "chips",
+              "items": [
+                "Ivan",
+                "Minor",
+                "Mariana",
+                "Balli"
+              ]
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Faltan los siguientes grupos de llenar su censo del segundo bimestre:"
+            },
+            {
+              "tipo": "lista",
+              "contenido": [
+                "Alrai, Aragón, Árakar, Arcturus, Aviemore, Baltic, Bellatrix, Blackburn",
+                "Coburai, Chad, Dilgan, Erebus, Eyre, Falkner, Hillier, Horeb",
+                "Hunter, Jotunheim, Kalausi, Kamet, Kootenay, Makalu, Malawi, Meissa",
+                "Mirphak, Moraine, Rukbah, Tabit, Teoyokoyani, Tonalli Iztac",
+                "Tunich, Wolf, Yaitowi, Yoltihuani, Zanah, Zaurak"
+              ]
+            },
+            {
+              "tipo": "texto",
+              "contenido": "NOTA: Recuerden a sus grupos que tienen que seleccionar el semestre 2026A antes de enviar el forms."
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "orden": 3,
+          "titulo": "CFF",
+          "categoria": "pastoral",
+          "bloques": [
+            {
+              "tipo": "chips",
+              "items": [
+                "May",
+                "César",
+                "Potty",
+                "Andrea"
+              ]
+            },
+            {
+              "tipo": "info",
+              "fecha": "Jueves 09 de abril",
+              "lugar": "Casita PJ",
+              "horario": "Cita: 8:15pm, Inicio: 8:30pm"
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Dinámica: llevar su post-it ya escrito con la obra que pusiste en práctica durante la semana para ponerlo en la cajita."
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Recuerden que en cada sesión se toma asistencia. Solo se tienen permitidas 2 faltas."
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "orden": 4,
+          "titulo": "Listado Dirigentes",
+          "categoria": "admin",
+          "bloques": [
+            {
+              "tipo": "chips",
+              "items": [
+                "Asesor Regional"
+              ]
+            },
+            {
+              "tipo": "lista",
+              "contenido": [
+                "Deberán ingresar al link de Drive para ver el estatus de su zona.",
+                "Si alguien ya no está activo, pasar la fecha en que se despidió.",
+                "Para nuevos dirigentes deberán de pasar: Nombre completo, Fecha de nacimiento, Fecha de investidura.",
+                "Completar la información de los dirigentes, en caso de que así se requiera.",
+                "Para nuevos ECZ pasar la fecha de investidura."
+              ]
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "orden": 5,
+          "titulo": "Curso de Prevención",
+          "categoria": "formacion",
+          "bloques": [
+            {
+              "tipo": "chips",
+              "items": [
+                "Vane",
+                "Viri",
+                "Potty",
+                "Deb"
+              ]
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Para los dirigentes que acaban de subir (y también algún rezagado) deberán realizar el Curso de Prevención solicitado por la Arquidiócesis de Monterrey."
+            },
+            {
+              "tipo": "info",
+              "fecha": "11 de abril",
+              "lugar": "",
+              "horario": ""
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Una vez concluido el curso, deberán subir el comprobante."
+            }
+          ]
+        },
+        {
+          "id": 6,
+          "orden": 6,
+          "titulo": "ANL 2026 - Fase 3",
+          "categoria": "admin",
+          "bloques": [
+            {
+              "tipo": "chips",
+              "items": [
+                "Dany Loz",
+                "Potty",
+                "Balli",
+                "Iván"
+              ]
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Costo de la actividad Fase 3: 20 de marzo al 19 de abril (nueva fecha)."
+            },
+            {
+              "tipo": "tabla",
+              "contenido": [
+                [
+                  "Lineas",
+                  "$1,180"
+                ],
+                [
+                  "Asamblea",
+                  "$950"
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "id": 7,
+          "orden": 7,
+          "titulo": "ANL 2026 - Transporte y Hospedaje",
+          "categoria": "admin",
+          "bloques": [
+            {
+              "tipo": "chips",
+              "items": [
+                "Dany Loz",
+                "Potty",
+                "Balli",
+                "Iván"
+              ]
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Costo de transporte y hospedaje."
+            },
+            {
+              "tipo": "tabla",
+              "contenido": [
+                [
+                  "Camión",
+                  "$1,200",
+                  "$1,700"
+                ],
+                [
+                  "Avión",
+                  "$675",
+                  "$1,000"
+                ]
+              ]
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Fecha límite para liquidar: 08 de abril, 15 de abril recargo de +$150."
+            }
+          ]
+        },
+        {
+          "id": 8,
+          "orden": 8,
+          "titulo": "ANL 2026 - Encargados de Zonas",
+          "categoria": "admin",
+          "bloques": [
+            {
+              "tipo": "chips",
+              "items": [
+                "Dany Loz",
+                "Potty",
+                "Balli",
+                "Iván"
+              ]
+            },
+            {
+              "tipo": "tabla",
+              "contenido": [
+                [
+                  "Balli",
+                  "Yolkini, Tonauak, Itzae, Otokani, Zuazua"
+                ],
+                [
+                  "Dany",
+                  "Kinich, Yuhani, Killari, Noceneyeliz, Bacabs"
+                ],
+                [
+                  "Potty",
+                  "Tamahru, Ruah, Taiyari, Kamat, Ikiga"
+                ],
+                [
+                  "Ivan",
+                  "Tiskani, Omaha, Wunand, Khuyana, Yanai"
+                ]
+              ]
+            },
+            {
+              "tipo": "texto",
+              "contenido": "¿Dónde pagar? Martes: Junta de ECR en PU. Retiro sin tarjeta: Mandar referencia a cualquiera de los encargados para retirar el dinero."
+            }
+          ]
+        },
+        {
+          "id": 9,
+          "orden": 9,
+          "titulo": "ANL 2026 - Registro",
+          "categoria": "admin",
+          "bloques": [
+            {
+              "tipo": "chips",
+              "items": [
+                "Dany Loz",
+                "Potty",
+                "Balli",
+                "Iván"
+              ]
+            },
+            {
+              "tipo": "link",
+              "texto": "www.vivemjc.com.mx",
+              "url": ""
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Fecha límite de registro: 20 de abril. Tutorial de como usar la plataforma y realizar registro."
+            }
+          ]
+        },
+        {
+          "id": 10,
+          "orden": 10,
+          "titulo": "Asamblea Nacional Virtual",
+          "categoria": "eventos",
+          "bloques": [
+            {
+              "tipo": "texto",
+              "contenido": "Fecha: Jueves 23 de Abril 2026. Hora: 9:15 pm. Vía Zoom"
+            },
+            {
+              "tipo": "lista",
+              "contenido": [
+                "Coordinadores de Equipo",
+                "Equipos de Coordinación Zona",
+                "Equipo de Coordinación Regional"
+              ]
+            }
+          ]
+        },
+        {
+          "id": 11,
+          "orden": 11,
+          "titulo": "Asamblea Regional",
+          "categoria": "eventos",
+          "bloques": [
+            {
+              "tipo": "chips",
+              "items": [
+                "Dany",
+                "Joan",
+                "Kary"
+              ]
+            },
+            {
+              "tipo": "info",
+              "fecha": "Miércoles 8 de abril 2026",
+              "lugar": "PU",
+              "horario": "8:30 pm"
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Formación: Vivir en sinodalidad"
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Favor de llevar botes de la colecta del seminario para entregar: Meissa, Arcturus, Kamat, Wolf, Kinich, Zaniah, Zaurak, Tabit, Moraine y Aberdeen."
+            }
+          ]
+        },
+        {
+          "id": 12,
+          "orden": 12,
+          "titulo": "Sacramentos",
+          "categoria": "formacion",
+          "bloques": [
+            {
+              "tipo": "chips",
+              "items": [
+                "Mau",
+                "Marina"
+              ]
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Por parte de la Basílica de NS del Roble se nos facilita la formación para recibir sacramentos a mayores de 14 años."
+            },
+            {
+              "tipo": "info",
+              "fecha": "26 de abril",
+              "horario": "8AM-1:30PM",
+              "lugar": ""
+            },
+            {
+              "tipo": "texto",
+              "contenido": "INSCRIPCIONES: Hasta el 22 de abril."
+            },
+            {
+              "tipo": "tabla",
+              "contenido": [
+                [
+                  "1 sacramento",
+                  "$750"
+                ],
+                [
+                  "2 sacramentos",
+                  "$900"
+                ],
+                [
+                  "3 sacramentos",
+                  "$1200"
+                ]
+              ]
+            }
+          ]
+        }
+      ],
+      "createdAt": "2026-04-09T02:26:32.466Z",
+      "updatedAt": "2026-04-09T02:26:32.466Z"
+    }
+  ]
+}
