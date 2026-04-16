@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "dev:client": "npm run dev --prefix client",
+    "dev:client": "timeout /t 5 /nobreak > nul && npm run dev --prefix client",
     "dev:server": "npm run dev --prefix server",
     "dev": "npm-run-all --parallel dev:client dev:server"
   },

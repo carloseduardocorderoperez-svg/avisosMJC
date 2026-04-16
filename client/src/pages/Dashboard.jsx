@@ -11,6 +11,39 @@ export default function Dashboard() {
   const navigate = useNavigate()
   const clearCurrentSet = useAvisosStore((s) => s.clearCurrentSet)
 
+  // Función para formatear fechas de manera relativa
+  const formatRelativeDate = (dateStr) => {
+    if (!dateStr) return ""
+    const date = new Date(dateStr)
+    const now = new Date()
+    const diffMs = now - date
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+
+    if (diffDays === 0) return "Hoy"
+    if (diffDays === 1) return "Ayer"
+    if (diffDays === 2) return "Hace dos días"
+    if (diffDays < 7) return `Hace ${diffDays} días`
+    if (diffDays < 30) {
+      const weeks = Math.floor(diffDays / 7)
+      return weeks === 1 ? "Hace una semana" : `Hace ${weeks} semanas`
+    }
+    const months = Math.floor(diffDays / 30)
+    return months === 1 ? "Hace un mes" : `Hace ${months} meses`
+  }
+
+  // Función para parsear string de fecha dd/mm/aa o dd/mm/yyyy
+  const parseDateString = (dateStr) => {
+    if (!dateStr) return null
+    const parts = dateStr.split('/')
+    if (parts.length === 3) {
+      const day = parseInt(parts[0])
+      const month = parseInt(parts[1]) - 1
+      const year = parts[2].length === 2 ? 2000 + parseInt(parts[2]) : parseInt(parts[2])
+      return new Date(year, month, day)
+    }
+    return null
+  }
+
   // Al entrar al Dashboard limpiar el set activo para que la navbar no muestre breadcrumb
   useEffect(() => {
     clearCurrentSet()
@@ -25,7 +58,9 @@ export default function Dashboard() {
       if (!res.ok) throw new Error("No se pudieron cargar los grupos de avisos")
 
       const data = await res.json()
-      setSets(data.sets || [])
+      // Ordenar por updatedAt descendente (más reciente primero)
+      const sortedSets = (data.sets || []).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+      setSets(sortedSets)
     } catch (err) {
       console.error(err)
       setError(err.message || "Error cargando dashboard")
@@ -49,7 +84,7 @@ export default function Dashboard() {
       if (!res.ok) throw new Error("No se pudo crear el grupo de avisos")
 
       const nuevo = await res.json()
-      setSets((prev) => [...prev, { ...nuevo, avisosCount: nuevo.avisos?.length || 0 }])
+      setSets((prev) => [...prev, { ...nuevo, avisosCount: nuevo.avisos?.length || 0 }].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)))
       navigate(`/avisos/${nuevo.id}`)
     } catch (err) {
       console.error(err)
@@ -69,7 +104,7 @@ export default function Dashboard() {
 
       if (!res.ok) throw new Error("No se pudo eliminar el grupo de avisos")
 
-      setSets((prev) => prev.filter((s) => s.id !== id))
+      setSets((prev) => prev.filter((s) => s.id !== id).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)))
     } catch (err) {
       console.error(err)
       setError(err.message || "Error eliminando grupo de avisos")
@@ -85,7 +120,7 @@ export default function Dashboard() {
       if (!res.ok) throw new Error("No se pudo duplicar el grupo de avisos")
 
       const copia = await res.json()
-      setSets((prev) => [...prev, { ...copia, avisosCount: copia.avisos?.length || 0 }])
+      setSets((prev) => [...prev, { ...copia, avisosCount: copia.avisos?.length || 0 }].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)))
     } catch (err) {
       console.error(err)
       setError(err.message || "Error duplicando grupo de avisos")
@@ -122,26 +157,6 @@ export default function Dashboard() {
     }
   }
 
-  const handleFechaChange = async (id, nuevaFecha) => {
-    try {
-      const res = await fetch(`http://localhost:3000/sets/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ date: nuevaFecha }),
-      })
-
-      if (!res.ok) throw new Error("No se pudo actualizar la fecha")
-
-      const updated = await res.json()
-      setSets((prev) =>
-        prev.map((s) => (s.id === id ? { ...s, date: updated.date } : s)),
-      )
-    } catch (err) {
-      console.error(err)
-      setError(err.message || "Error actualizando fecha")
-    }
-  }
-
   return (
     <div className="page-card designer-page">
       <div className="dashboard-header">
@@ -166,19 +181,20 @@ export default function Dashboard() {
               <th>ID</th>
               <th>Fecha</th>
               <th>Cantidad de avisos</th>
+              <th>Última modificación</th>
               <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={4} style={{ textAlign: "center" }}>
+                <td colSpan={5} style={{ textAlign: "center" }}>
                   Cargando grupos de avisos…
                 </td>
               </tr>
             ) : sets.length === 0 ? (
               <tr>
-                <td colSpan={4} style={{ textAlign: "center" }}>
+                <td colSpan={5} style={{ textAlign: "center" }}>
                   Aún no hay grupos de avisos. Crea uno nuevo para empezar.
                 </td>
               </tr>
@@ -186,18 +202,13 @@ export default function Dashboard() {
               sets.map((set) => (
                 <tr key={set.id}>
                   <td>{set.code || set.id}</td>
-                  <td>
-                    <input
-                      type="text"
-                      className="dashboard-date-input"
-                      value={set.date || ""}
-                      placeholder="dd/mm/aa"
-                      onChange={(e) =>
-                        handleFechaChange(set.id, e.target.value)
-                      }
-                    />
+                  <td title={set.createdAt ? new Date(set.createdAt).toLocaleString('es-ES') : ""}>
+                    {formatRelativeDate(set.createdAt)}
                   </td>
                   <td>{set.avisosCount ?? 0}</td>
+                  <td title={set.updatedAt ? new Date(set.updatedAt).toLocaleString('es-ES') : ""}>
+                    {formatRelativeDate(set.updatedAt)}
+                  </td>
                   <td className="dashboard-actions-cell">
                     <button
                       className="btn btn-small btn-primary"
