@@ -193,13 +193,14 @@ Los avisos deben dividirse en bloques.
 Puedes usar SOLO estos tipos:
 
 texto
-lista
 tabla
 link
 imagen
 info
 chips
 banco
+
+NOTA: El tipo "lista" ya NO existe. Las listas ahora van DENTRO del bloque "texto" con formato HTML.
 
 Si detectas un QR, usa un bloque "link" en su lugar.
 
@@ -208,28 +209,24 @@ Si detectas un QR, usa un bloque "link" en su lugar.
 BLOQUE TEXTO
 --------------------------------
 
-Para párrafos normales.
+Para párrafos normales, texto formateado y listas.
+
+IMPORTANTE: Este bloque acepta HTML rico (formatos, colores, estilos).
+
+El contenido debe ser HTML válido. Ejemplos:
+
+- Párrafos: <p>Contenido del párrafo</p>
+- Listas viñetas: <ul><li>item 1</li><li>item 2</li></ul>
+- Listas numeradas: <ol><li>item 1</li><li>item 2</li></ol>
+- Texto con formato: <p>Texto <strong>en negrita</strong> o <em>en cursiva</em></p>
+- Texto con color: <p style="color: #FF0000;">Texto rojo</p>
+
+Estructura:
 
 {
  "tipo":"texto",
- "contenido":""
+ "contenido":"<p>Contenido HTML...</p>"
 }
-
-
---------------------------------
-BLOQUE LISTA
---------------------------------
-
-Para listas con viñetas o enumeraciones.
-
-{
- "tipo":"lista",
- "contenido":[
-  "item1",
-  "item2"
- ]
-}
-
 
 --------------------------------
 BLOQUE TABLA
@@ -375,8 +372,13 @@ REGLAS DE EXTRACCIÓN
 6. Detecta encargados y conviértelos en chips.
 7. Detecta datos bancarios.
 8. Detecta fechas importantes.
-9. Detecta listas.
+9. Detecta listas (úsalas dentro del bloque "texto" como HTML).
 10. Un aviso debe quedar listo para renderizar como una CARD en una página web.
+
+ORDEN DE BLOQUES (IMPORTANTE):
+- Los bloques de tipo "info" (con fecha/horario/lugar) SIEMPRE van al INICIO del aviso.
+- Los bloques de tipo "chips" (encargados/responsables) SIEMPRE van al FINAL del aviso.
+- Los demás bloques van en el medio en el orden lógico del documento.
 
 
 --------------------------------
