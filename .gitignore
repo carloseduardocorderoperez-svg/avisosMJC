@@ -6,6 +6,7 @@ mjc-avisos-ia-*.json
 uploads/
 images/
 output/
+data/
 
 # Archivos compilados
 client/dist/
