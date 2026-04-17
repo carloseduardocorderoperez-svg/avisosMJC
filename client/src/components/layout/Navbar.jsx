@@ -90,14 +90,17 @@ export default function Navbar() {
       setAvisos(merged)
       setToast({ type: "success", message: `${aiAvisos.length} avisos adjuntados al set actual` })
     } else {
-      // replace — switch to the AI-created backend set
-      if (backendSet) {
-        initializeFromServer({ avisos: aiAvisos, set: backendSet })
-      } else {
-        setAvisos(aiAvisos)
-        setSelectedAvisoId(aiAvisos[0]?.id || null)
-      }
-      setToast({ type: "success", message: `${aiAvisos.length} avisos importados` })
+      // replace — reemplaza avisos dentro del set actual
+      // Los avisos generados se usan solo en el contexto del set donde se invocó la IA
+      const processedAvisos = aiAvisos.map((a, i) => ({
+        ...a,
+        id: crypto.randomUUID(),
+        orden: i + 1,
+      }))
+      
+      setAvisos(processedAvisos)
+      setSelectedAvisoId(processedAvisos[0]?.id || null)
+      setToast({ type: "success", message: `${aiAvisos.length} avisos importados y reemplazados` })
     }
   }
 

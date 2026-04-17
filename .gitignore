@@ -8,6 +8,11 @@ images/
 output/
 data/
 
+# Archivos generados
+avisos.json
+avisos_generados.html
+*.html
+
 # Archivos compilados
 client/dist/
 dist/
