@@ -274,9 +274,12 @@ app.post("/sets/:id/generar-html", (req, res) => {
       return res.status(404).json({ error: "Set no encontrado" });
     }
 
-    const title = set.date
-      ? `AVISOS ZONALES - ${set.date}`
-      : set.title || "AVISOS ZONALES";
+    // Actualizar la fecha del set a la fecha actual
+    const currentDate = new Date().toLocaleDateString("es-MX");
+    set.date = currentDate;
+    updateSet(id, set);
+
+    const title = set.title || "AVISOS ZONALES";
 
     const htmlFile = generateHTML({
       avisos: Array.isArray(set.avisos) ? set.avisos : [],
