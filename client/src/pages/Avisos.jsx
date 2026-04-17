@@ -31,7 +31,6 @@ const CATEGORIES = [
 
 const BLOCK_TYPES = [
   "texto",
-  "lista",
   "tabla",
   "link",
   "imagen",
@@ -181,7 +180,6 @@ function BlockTemplateItem({ tipo, onAdd }) {
 
   const labelMap = {
     texto: "Texto",
-    lista: "Lista",
     tabla: "Tabla",
     link: "Botón / Link",
     imagen: "Imagen",
@@ -209,13 +207,6 @@ function BlockTemplateItem({ tipo, onAdd }) {
       <div className="block-template-preview">
         {tipo === "texto" && (
           <p className="canvas-block-text">Texto de ejemplo para el aviso.</p>
-        )}
-
-        {tipo === "lista" && (
-          <ul className="canvas-list">
-            <li>Elemento 1</li>
-            <li>Elemento 2</li>
-          </ul>
         )}
 
         {tipo === "tabla" && (
@@ -377,9 +368,12 @@ function CanvasBlock({
 
   if (bloque.tipo === "texto") {
     contenidoVista = (
-      <p className="canvas-block-text">
-        {bloque.contenido || "Texto vacío"}
-      </p>
+      <div
+        className="canvas-block-text"
+        dangerouslySetInnerHTML={{
+          __html: bloque.contenido || "<p>Texto vacío</p>",
+        }}
+      />
     );
   } else if (bloque.tipo === "lista") {
     const items = bloque.contenido || [];
@@ -534,7 +528,6 @@ function CanvasBlock({
       }
       onClick={handleClick}
       onDoubleClick={enterEdit}
-      onContextMenu={enterEdit}
     >
       {contenidoVista}
     </div>

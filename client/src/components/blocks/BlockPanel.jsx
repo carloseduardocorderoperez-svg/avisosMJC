@@ -25,10 +25,6 @@ export default function BlockPanel() {
       nuevoBloque.contenido = ""
     }
 
-    if (tipo === "lista") {
-      nuevoBloque.contenido = ["item"]
-    }
-
     if (tipo === "tabla") {
       nuevoBloque.contenido = [["celda"]]
     }
@@ -68,7 +64,6 @@ export default function BlockPanel() {
 
   const bloques = [
     "texto",
-    "lista",
     "tabla",
     "link",
     "imagen",

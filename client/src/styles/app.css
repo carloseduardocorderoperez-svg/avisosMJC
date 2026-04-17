@@ -835,6 +835,52 @@ textarea {
   resize: vertical;
 }
 
+.rich-text-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+  align-items: center;
+}
+
+.rich-text-toolbar button,
+.rich-text-select,
+.rich-text-color {
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  padding: 7px 10px;
+  background: var(--bg-soft);
+  color: var(--text-main);
+  cursor: pointer;
+}
+
+.rich-text-toolbar button.active {
+  background: rgba(44, 109, 255, 0.15);
+  border-color: rgba(44, 109, 255, 0.4);
+}
+
+.rich-text-toolbar button:hover,
+.rich-text-select:hover,
+.rich-text-color:hover {
+  border-color: rgba(44, 109, 255, 0.6);
+}
+
+.rich-text-select {
+  min-width: 80px;
+}
+
+.rich-text-editor {
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  padding: 12px;
+  min-height: 160px;
+  background: var(--bg-soft);
+}
+
+.rich-text-editor :where(p, ul, ol) {
+  margin: 0 0 0.75em;
+}
+
 .modern-file {
   color: var(--text-muted);
   border: 1px dashed var(--border-strong);
@@ -1622,15 +1668,25 @@ textarea {
 
 .canvas-block-selected {
   border-color: rgba(129, 140, 248, 0.9);
-  box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.6);
-  background: radial-gradient(circle at top left, #1e293b, #020617);
+  box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.25);
+  background: rgba(129, 140, 248, 0.06);
 }
 
 .canvas-block-editing {
   border-style: solid;
   border-color: rgba(250, 204, 21, 0.9);
-  box-shadow: 0 0 0 1px rgba(250, 204, 21, 0.7);
-  background: radial-gradient(circle at top left, #1f2937, #020617);
+  box-shadow: 0 0 0 1px rgba(250, 204, 21, 0.18);
+  background: transparent;
+}
+
+.canvas-block-editing .rich-text-editor {
+  background: rgba(248, 249, 251, 0.12);
+  border-color: rgba(250, 204, 21, 0.25);
+}
+
+.canvas-block-editing .rich-text-toolbar {
+  background: rgba(248, 249, 251, 0.08);
+  border: 1px solid rgba(250, 204, 21, 0.2);
 }
 
 .side-title {

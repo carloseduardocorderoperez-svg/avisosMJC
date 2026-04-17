@@ -1443,6 +1443,278 @@
       "createdAt": "2026-04-09T02:25:37.864Z",
       "updatedAt": "2026-04-16T23:01:31.560Z",
       "bannerMessage": "Muchas gracias por leer todos los avisos, ten una excelente semana!"
+    },
+    {
+      "id": "6f6b698f-3eaa-4551-982b-b871b4c0c841",
+      "code": "HTML-005",
+      "date": "08/04/2026",
+      "title": "AVISOS ZONALES",
+      "avisos": [
+        {
+          "id": "9252a11c-a643-4165-b436-7c6aef65d66d",
+          "orden": 1,
+          "titulo": "Exámen de documentos",
+          "categoria": "admin",
+          "bloques": [
+            {
+              "tipo": "info",
+              "fecha": "Este sábado",
+              "lugar": "Templo el Señor de la Misericordia",
+              "horario": "Por definir"
+            },
+            {
+              "tipo": "texto",
+              "contenido": "<p style=\"text-align: left;\"><span style=\"color: rgb(181, 226, 18);\"><u>Este texto es de prueba</u></span></p><p style=\"text-align: left;\"><span style=\"color: rgb(224, 206, 0); background-color: rgb(214, 67, 67);\">Hola Mi nombre es paco</span></p>"
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "orden": 2,
+          "titulo": "Deudas",
+          "categoria": "admin",
+          "bloques": [
+            {
+              "tipo": "texto",
+              "contenido": "Acércase a hablar con la zona para coordinar pagos de sus deudas (quinto aviso)"
+            },
+            {
+              "tipo": "tabla",
+              "contenido": [
+                [
+                  "Grupo",
+                  "Deuda"
+                ],
+                [
+                  "Alfirk",
+                  "$560"
+                ]
+              ]
+            },
+            {
+              "tipo": "banco",
+              "banco": "Nu",
+              "tipoCuenta": "CLABE",
+              "cuenta": "638180010160134075",
+              "titular": "Carlos Gerardo Hernández Salas",
+              "referencia": "Ejemplo: Deuda - Hagen"
+            }
+          ]
+        },
+        {
+          "id": 10,
+          "orden": 3,
+          "titulo": "Sacramentos",
+          "categoria": "pastoral",
+          "bloques": [
+            {
+              "tipo": "texto",
+              "contenido": "Por parte de la Basílica de NS del Roble se nos facilita la formación para recibir sacramentos a mayores de 14 años, solteros o personas próximas a casarse por la iglesia."
+            },
+            {
+              "tipo": "info",
+              "fecha": "26 de abril",
+              "horario": "8AM-1:30PM"
+            },
+            {
+              "tipo": "texto",
+              "contenido": "INSCRIPCIONES: Hasta el 22 de abril."
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Aportación: 1 sacramento = $750 2 sacramentos = $900 3 sacramentos = $120"
+            },
+            {
+              "tipo": "chips",
+              "items": [
+                "Anavic"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "5f2697dc-900a-4743-9784-8adcfcac914b",
+          "orden": 4,
+          "titulo": "Kermes del Templo El Señor de la Misericordia",
+          "categoria": "eventos",
+          "bloques": [
+            {
+              "tipo": "info",
+              "fecha": "12 de Abril",
+              "lugar": "Templo",
+              "horario": "Por definir"
+            },
+            {
+              "tipo": "imagen",
+              "url": "https://drive.google.com/thumbnail?id=1Auz4rxTO6zVIUj7IVcbmrvXR0_3OYdBN&sz=w2000",
+              "normalizedUrl": "https://drive.google.com/thumbnail?id=1Auz4rxTO6zVIUj7IVcbmrvXR0_3OYdBN&sz=w2000"
+            },
+            {
+              "tipo": "lista",
+              "contenido": [
+                "Boletos ya se repartieron por grupo",
+                "Entregar antes del día de la kermes",
+                "Estar pendientes de los cargos y roles por grupo para el apoyo en la kermes (POR CONFIRMAR)"
+              ]
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "orden": 5,
+          "titulo": "ANL 2026",
+          "categoria": "admin",
+          "bloques": [
+            {
+              "tipo": "texto",
+              "contenido": "Precio Nacional"
+            },
+            {
+              "tipo": "tabla",
+              "contenido": [
+                [
+                  "FECHAS CUOTA NACIONAL",
+                  "PRECIO"
+                ],
+                [
+                  "20 de marzo al 19 de abril (NUEVA FECHA)",
+                  "$1,180.00"
+                ]
+              ]
+            },
+            {
+              "tipo": "imagen",
+              "url": "https://drive.google.com/thumbnail?id=1enuydOcA0ulu3gePHuM6TZVmKe9X1gmX&sz=w2000",
+              "normalizedUrl": "https://drive.google.com/thumbnail?id=1enuydOcA0ulu3gePHuM6TZVmKe9X1gmX&sz=w2000"
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Registro en nueva plataforma (límite el 20 de abril):"
+            },
+            {
+              "tipo": "link",
+              "texto": "Registro (vivemjc.com)",
+              "url": "http://www.vivemjc.com.mx/"
+            },
+            {
+              "tipo": "link",
+              "texto": "Tutorial de cómo hacer el registro",
+              "url": "https://www.canva.com/design/DAHE7C5Qolk/hzuQm_G8RMPmm5noEI8TaA/edit?utm_content=DAHE7C5Qolk&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton"
+            },
+            {
+              "tipo": "chips",
+              "items": [
+                "Sofy",
+                "Carlos"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "8e92cb13-fb89-4e72-9816-86166a99588a",
+          "orden": 6,
+          "titulo": "ANV - Asamblea Nacional Virtual",
+          "categoria": "eventos",
+          "bloques": [
+            {
+              "tipo": "info",
+              "fecha": "23 de Abril 2026",
+              "lugar": "Vía Zoom",
+              "horario": "9:15 pm"
+            },
+            {
+              "tipo": "lista",
+              "contenido": [
+                "Coordinadores de Equipo",
+                "Equipos de Coordinación Zona",
+                "Equipo de Coordinación Regional"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "834164f8-bf6b-4cf2-98ff-7e0d63c4103a",
+          "orden": 7,
+          "titulo": "A. Espirituales",
+          "categoria": "pastoral",
+          "bloques": [
+            {
+              "tipo": "imagen",
+              "url": "https://drive.google.com/thumbnail?id=1RJ0wUJhyi7lMoyydrvf0QFSg8eg4oHrq&sz=w2000",
+              "descripcion": "Sacerdote celebrando misa al aire libre",
+              "normalizedUrl": "https://drive.google.com/thumbnail?id=1RJ0wUJhyi7lMoyydrvf0QFSg8eg4oHrq&sz=w2000"
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Sigamos pidiendo por nuestros párrocos, presbíteros y diáconos, así como seminaristas, consagrados y laicos que nos ayudan al crecimiento espiritual del Movimiento."
+            }
+          ]
+        },
+        {
+          "id": "3baf7ab4-ca6f-405d-8549-067181e0c617",
+          "orden": 8,
+          "titulo": "Recordatorios",
+          "categoria": "extras",
+          "bloques": [
+            {
+              "tipo": "lista",
+              "contenido": [
+                "08 de Abril - Asamblea Regional",
+                "15 de Abril - Asamblea de Líneas/Límite de pago de traslado y hospedaje (ECR)",
+                "19 de Abril - Límite de pago de ANL (COMINADES)",
+                "16 de Abril - Hora Santa de Escuadrones",
+                "18 de Abril - Dream Team",
+                "18-19 de Abril - Girl Camp",
+                "19 de Abril - Noche Estrellada",
+                "23 de Abril - Asamblea Nacional Virtual"
+              ]
+            }
+          ]
+        },
+        {
+          "id": 14,
+          "orden": 9,
+          "titulo": "Curso de Prevención",
+          "categoria": "admin",
+          "bloques": [
+            {
+              "tipo": "texto",
+              "contenido": "Para los dirigentes que acaban de subir (y también algún rezagado) deberán realizar el Curso de Prevención solicitado por la Arquidiócesis de Monterrey."
+            },
+            {
+              "tipo": "info",
+              "fecha": "11 de abril"
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Costo: $50"
+            },
+            {
+              "tipo": "link",
+              "texto": "Link al Curso",
+              "url": "https://www.mayahii.com/arquidiocesismty/c/5535"
+            },
+            {
+              "tipo": "texto",
+              "contenido": "Una vez concluido el curso, deberán subir el comprobante a la siguiente carpeta y cómo titulo del documento el nombre completo y el grupo en el que subieron (sin abreviaciones, en mayúsculas y sin tildes). EJEMPLO: VANESSA GARZA BENÍTEZ MIRPHAK"
+            },
+            {
+              "tipo": "link",
+              "texto": "📂 Subir Comprobante",
+              "url": "https://drive.google.com/drive/folders/1GwFHj_Y9yI3VPkpD1-3kAZFqcSrlfv7D"
+            },
+            {
+              "tipo": "chips",
+              "items": [
+                "Roger"
+              ]
+            }
+          ]
+        }
+      ],
+      "createdAt": "2026-04-16T23:05:18.818Z",
+      "updatedAt": "2026-04-17T00:06:29.166Z",
+      "bannerMessage": "Muchas gracias por leer todos los avisos, ten una excelente semana!"
     }
   ]
 }
