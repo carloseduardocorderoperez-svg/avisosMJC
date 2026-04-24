@@ -1,0 +1,1 @@
+//Documento con instrucciones explicitas para conectar mi aplicacion con una base de datos en firebase y autenticacion con google donde solo permita el ingreso a la app a un correo en especifico, detallar instrucciones para crear cada una de las instancias en firebase y como conectarlo en mi aplicacion
