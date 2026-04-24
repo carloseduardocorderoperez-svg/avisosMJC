@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { useAvisosStore } from "../store/avisosStore";
 import BlockRenderer from "../components/blocks/BlockRenderer";
 import CopyToSetModal from "../components/CopyToSetModal";
+import apiUrl from "../utils/api"
 
 import {
   DndContext,
