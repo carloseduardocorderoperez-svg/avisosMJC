@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { Sparkles, Upload, X, CheckCircle, AlertCircle, FileText, RotateCcw, Download } from "lucide-react"
+import apiUrl from "../utils/api"
 
 const CATEGORY_COLORS = {
   admin:     { bg: "rgba(245,158,11,0.12)",  border: "rgba(245,158,11,0.5)",  text: "#fcd34d" },
@@ -96,7 +97,7 @@ export default function AiImportModal({
       const formData = new FormData()
       formData.append("pdf", file)
 
-      const uploadRes = await fetch("http://localhost:3000/upload-pdf", {
+      const uploadRes = await fetch(apiUrl("/upload-pdf"), {
         method: "POST",
         body: formData,
       })
@@ -108,7 +109,7 @@ export default function AiImportModal({
 
       setProcessStep(2)
 
-      const analyzeRes = await fetch("http://localhost:3000/analyze-slides", {
+      const analyzeRes = await fetch(apiUrl("/analyze-slides"), {
         method: "POST",
       })
 

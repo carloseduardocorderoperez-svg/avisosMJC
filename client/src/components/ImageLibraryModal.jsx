@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-
-const API = "http://localhost:3000";
+import apiUrl from "../utils/api";
 
 export default function ImageLibraryModal({ isOpen, onClose, onSelect }) {
   const [images, setImages] = useState([]);
@@ -17,7 +16,7 @@ export default function ImageLibraryModal({ isOpen, onClose, onSelect }) {
 
   const checkAuth = useCallback(async () => {
     try {
-      const res = await fetch(`${API}/auth/status`);
+      const res = await fetch(apiUrl("/auth/status"));
       const data = await res.json();
       return data.authorized === true;
     } catch {
@@ -29,7 +28,7 @@ export default function ImageLibraryModal({ isOpen, onClose, onSelect }) {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API}/images`);
+      const res = await fetch(apiUrl("/images"));
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al cargar imágenes");
       setImages(data.images || []);
@@ -73,7 +72,7 @@ export default function ImageLibraryModal({ isOpen, onClose, onSelect }) {
   }, [waitingAuth, checkAuth, fetchImages]);
 
   const handleConnectDrive = () => {
-    window.open(`${API}/auth/start`, "_blank", "width=500,height=640");
+    window.open(apiUrl("/auth/start"), "_blank", "width=500,height=640");
     setWaitingAuth(true);
   };
 
@@ -87,7 +86,7 @@ export default function ImageLibraryModal({ isOpen, onClose, onSelect }) {
         setUploadProgress(`Subiendo imagen ${i + 1} de ${imageFiles.length}...`);
         const formData = new FormData();
         formData.append("image", imageFiles[i]);
-        const res = await fetch(`${API}/images/upload`, { method: "POST", body: formData });
+        const res = await fetch(apiUrl("/images/upload"), { method: "POST", body: formData });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Error al subir imagen");
       }
@@ -105,7 +104,7 @@ export default function ImageLibraryModal({ isOpen, onClose, onSelect }) {
     if (!window.confirm(`¿Eliminar "${img.name}" de Drive?`)) return;
     setError(null);
     try {
-      const res = await fetch(`${API}/images/${img.id}`, { method: "DELETE" });
+      const res = await fetch(apiUrl(`/images/${img.id}`), { method: "DELETE" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al eliminar");
       setImages((prev) => prev.filter((i) => i.id !== img.id));

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { Plus, Pencil, Eye, Clipboard, Copy, Trash2 } from "lucide-react"
 import { useAvisosStore } from "../store/avisosStore"
+import apiUrl from "../utils/api"
 
 export default function Dashboard() {
   const [sets, setSets] = useState([])
@@ -54,7 +55,7 @@ export default function Dashboard() {
       setLoading(true)
       setError("")
 
-      const res = await fetch("http://localhost:3000/sets")
+      const res = await fetch(apiUrl("/sets"))
       if (!res.ok) throw new Error("No se pudieron cargar los grupos de avisos")
 
       const data = await res.json()
@@ -75,7 +76,7 @@ export default function Dashboard() {
 
   const handleCrear = async () => {
     try {
-      const res = await fetch("http://localhost:3000/sets", {
+      const res = await fetch(apiUrl("/sets"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code: "", date: "", title: "AVISOS ZONALES", avisos: [] }),
@@ -98,7 +99,7 @@ export default function Dashboard() {
     }
 
     try {
-      const res = await fetch(`http://localhost:3000/sets/${id}`, {
+      const res = await fetch(apiUrl(`/sets/${id}`), {
         method: "DELETE",
       })
 
@@ -113,7 +114,7 @@ export default function Dashboard() {
 
   const handleDuplicar = async (id) => {
     try {
-      const res = await fetch(`http://localhost:3000/sets/${id}/duplicate`, {
+      const res = await fetch(apiUrl(`/sets/${id}/duplicate`), {
         method: "POST",
       })
 
@@ -137,7 +138,7 @@ export default function Dashboard() {
 
   const handleCopiarHtml = async (id) => {
     try {
-      const res = await fetch(`http://localhost:3000/sets/${id}/generar-html`, {
+      const res = await fetch(apiUrl(`/sets/${id}/generar-html`), {
         method: "POST",
       })
 
@@ -146,7 +147,7 @@ export default function Dashboard() {
       const data = await res.json()
       if (!data.archivo) throw new Error("Respuesta inválida del servidor")
 
-      const htmlRes = await fetch(`http://localhost:3000/output/${data.archivo}`)
+      const htmlRes = await fetch(apiUrl(`/output/${data.archivo}`))
       const htmlText = await htmlRes.text()
 
       await navigator.clipboard.writeText(htmlText)

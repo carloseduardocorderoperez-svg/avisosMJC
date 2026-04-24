@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react"
 import { useParams } from "react-router-dom"
+import apiUrl from "../utils/api"
 
 export default function Preview() {
 
@@ -18,7 +19,7 @@ export default function Preview() {
 
       setLoading(true)
 
-      const res = await fetch(`http://localhost:3000/sets/${setId}/generar-html`, {
+      const res = await fetch(apiUrl(`/sets/${setId}/generar-html`), {
         method: "POST"
       })
 
@@ -30,7 +31,7 @@ export default function Preview() {
 
       const file = data.archivo
 
-      const htmlRes = await fetch(`http://localhost:3000/output/${file}`)
+      const htmlRes = await fetch(apiUrl(`/output/${file}`))
 
       const htmlText = await htmlRes.text()
       setHtmlSource(htmlText)

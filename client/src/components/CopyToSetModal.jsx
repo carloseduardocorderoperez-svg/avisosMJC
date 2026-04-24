@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { X, ArrowRight } from "lucide-react"
+import apiUrl from "../utils/api"
 
 export default function CopyToSetModal({ isOpen, onClose, aviso, currentSetId }) {
   const [sets, setSets]             = useState([])
@@ -21,7 +22,7 @@ export default function CopyToSetModal({ isOpen, onClose, aviso, currentSetId })
 
     setLoading(true)
     setError("")
-    fetch("http://localhost:3000/sets")
+    fetch(apiUrl("/sets"))
       .then((r) => r.json())
       .then((data) => setSets((data.sets || []).filter((s) => s.id !== currentSetId)))
       .catch(() => setError("No se pudieron cargar los sets"))
@@ -35,7 +36,7 @@ export default function CopyToSetModal({ isOpen, onClose, aviso, currentSetId })
     setCopying(true)
     setError("")
     try {
-      const res = await fetch(`http://localhost:3000/sets/${selectedId}/copy-avisos`, {
+      const res = await fetch(apiUrl(`/sets/${selectedId}/copy-avisos`), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ avisos: [aviso] }),

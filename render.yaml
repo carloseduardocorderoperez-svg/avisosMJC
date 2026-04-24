@@ -1,0 +1,30 @@
+services:
+  - type: web_service
+    name: mjc-avisos-ia-backend
+    env: node
+    plan: free
+    region: oregon
+    branch: main
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    autoDeploy: true
+
+  - type: static_site
+    name: mjc-avisos-ia-frontend
+    env: static
+    plan: free
+    region: oregon
+    branch: main
+    rootDir: client
+    buildCommand: npm install && npm run build
+    publishPath: dist
+    autoDeploy: true
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://<your-backend>.onrender.com
+
+# Nota:
+# - No incluimos aquí los secretos de Google ni OpenAI.
+# - Agrega en el panel de Render los valores secretos para el backend.
+# - Asegúrate de reemplazar https://<your-backend>.onrender.com por la URL real del servicio backend.

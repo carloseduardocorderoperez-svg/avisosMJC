@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { FileCode, ArrowRight, Loader } from "lucide-react"
+import apiUrl from "../utils/api"
 
 export default function Extra() {
   const [html, setHtml] = useState("")
@@ -18,7 +19,7 @@ export default function Extra() {
     setSuccess(null)
 
     try {
-      const res = await fetch("http://localhost:3000/import-html", {
+      const res = await fetch(apiUrl("/import-html"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ html }),

@@ -3,6 +3,7 @@ import { NavLink, useLocation } from "react-router-dom"
 import { useAvisosStore } from "../../store/avisosStore"
 import { Sparkles, Trash2 } from "lucide-react"
 import AiImportModal from "../AiImportModal"
+import apiUrl from "../../utils/api"
 
 export default function Navbar() {
 
@@ -131,7 +132,7 @@ export default function Navbar() {
         if (currentSet.bannerMessage != null) payload.bannerMessage = currentSet.bannerMessage
       }
 
-      const res = await fetch("http://localhost:3000/avisos", {
+      const res = await fetch(apiUrl("/avisos"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

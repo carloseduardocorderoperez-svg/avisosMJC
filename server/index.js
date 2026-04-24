@@ -632,6 +632,10 @@ app.get("/images/thumb/:id", async (req, res) => {
   }
 });
 
+app.get("/healthz", (req, res) => {
+  res.status(200).json({ status: "ok" });
+});
+
 // ===============================
 // Iniciar servidor
 // ===============================

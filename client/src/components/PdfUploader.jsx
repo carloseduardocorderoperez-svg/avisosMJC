@@ -1,5 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
+import apiUrl from "../utils/api";
 
 function PdfUploader() {
 
@@ -27,7 +28,7 @@ function PdfUploader() {
       setMessage("Subiendo PDF y generando imágenes...");
 
       const response = await axios.post(
-        "http://localhost:3000/upload-pdf",
+        apiUrl("/upload-pdf"),
         formData
       );
 

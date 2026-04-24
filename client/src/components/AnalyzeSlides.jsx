@@ -1,5 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
+import apiUrl from "../utils/api";
 
 function AnalyzeSlides() {
   const [loading, setLoading] = useState(false);
@@ -9,7 +10,7 @@ function AnalyzeSlides() {
     try {
       setLoading(true);
 
-      const response = await axios.post("http://localhost:3000/analyze-slides");
+      const response = await axios.post(apiUrl("/analyze-slides"));
 
       setResults(response.data.avisos);
     } catch (error) {

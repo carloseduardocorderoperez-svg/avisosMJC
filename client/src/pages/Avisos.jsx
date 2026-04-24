@@ -752,9 +752,7 @@ export default function Avisos() {
   const cargarAvisos = useCallback(async () => {
     if (!setId) return;
 
-    const res = await fetch(
-      `http://localhost:3000/avisos?setId=${encodeURIComponent(setId)}`,
-    );
+    const res = await fetch(apiUrl(`/avisos?setId=${encodeURIComponent(setId)}`));
 
     if (!res.ok) {
       console.error("Error cargando avisos del set");

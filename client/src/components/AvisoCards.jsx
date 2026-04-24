@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import apiUrl from "../utils/api";
 
 function AvisoCards({ onSelect }) {
 
@@ -11,7 +12,7 @@ function AvisoCards({ onSelect }) {
 
       try {
 
-        const res = await axios.get("http://localhost:3000/avisos");
+        const res = await axios.get(apiUrl("/avisos"));
 
         setAvisos(res.data.avisos);
 
