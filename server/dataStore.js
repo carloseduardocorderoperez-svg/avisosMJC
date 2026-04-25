@@ -6,45 +6,51 @@ const dataPath = path.join(__dirname, "../data/avisos.json");
 const SIMPLE_CODE_RE = /^([A-Z0-9]+)-(\d{3,})$/;
 const LEGACY_AUTO_CODE_RE = /^(HTML|AI)-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z(?:-copy(?:\d+)?)*$/i;
 
-function readRawData() {
-  if (!fs.existsSync(dataPath)) {
-    return {};
-  }
+let admin;
+let db;
+let firestoreInitError = null;
+
+function getServiceAccountPath() {
+  return (
+    process.env.FIREBASE_SERVICE_ACCOUNT_PATH ||
+    process.env.GOOGLE_APPLICATION_CREDENTIALS ||
+    path.join(__dirname, "../mjc-avisos-ia-2fe93603f300.json")
+  );
+}
+
+function initializeFirestore() {
+  if (db || firestoreInitError) return;
 
   try {
-    const raw = fs.readFileSync(dataPath, "utf8");
-    if (!raw.trim()) return {};
-    return JSON.parse(raw);
-  } catch (e) {
-    console.error("Error leyendo avisos.json:", e);
-    return {};
+    const adminModule = require("firebase-admin");
+    const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+    const serviceAccountPath = getServiceAccountPath();
+
+    let credential;
+    if (serviceAccountJson) {
+      const serviceAccount = JSON.parse(serviceAccountJson);
+      credential = adminModule.credential.cert(serviceAccount);
+    } else if (serviceAccountPath && fs.existsSync(serviceAccountPath)) {
+      const serviceAccount = require(serviceAccountPath);
+      credential = adminModule.credential.cert(serviceAccount);
+    } else {
+      credential = adminModule.credential.applicationDefault();
+    }
+
+    admin = adminModule;
+    admin.initializeApp({ credential });
+    db = admin.firestore();
+  } catch (error) {
+    firestoreInitError = error;
+    console.warn("Firebase Admin no inicializado. Se usará almacenamiento local:", error.message);
   }
 }
 
-function normalizeToMultiSet(raw) {
-  if (raw && Array.isArray(raw.sets)) {
-    return { sets: raw.sets };
-  }
-
-  const avisos = Array.isArray(raw && raw.avisos) ? raw.avisos : [];
-
-  if (!avisos.length) {
-    return { sets: [] };
-  }
-
-  const now = new Date().toISOString();
-
-  const defaultSet = {
-    id: uuidv4(),
-    code: "DEFAULT",
-    date: new Date().toLocaleDateString("es-MX"),
-    title: "AVISOS ZONALES",
-    avisos,
-    createdAt: now,
-    updatedAt: now,
-  };
-
-  return { sets: [defaultSet] };
+function isFirestoreAvailable() {
+  if (db) return true;
+  if (firestoreInitError) return false;
+  initializeFirestore();
+  return !!db;
 }
 
 function normalizeCodeValue(code) {
@@ -170,13 +176,157 @@ function migrateLegacySetCodes(sets) {
   return { sets: normalizedSets, changed };
 }
 
-function loadAllSets() {
-  const raw = readRawData();
-  const normalized = normalizeToMultiSet(raw);
-  const migrated = migrateLegacySetCodes(normalized.sets);
+function readRawData() {
+  if (!fs.existsSync(dataPath)) {
+    return {};
+  }
+
+  try {
+    const raw = fs.readFileSync(dataPath, "utf8");
+    if (!raw.trim()) return {};
+    return JSON.parse(raw);
+  } catch (e) {
+    console.error("Error leyendo avisos.json:", e);
+    return {};
+  }
+}
+
+function normalizeToMultiSet(raw) {
+  if (raw && Array.isArray(raw.sets)) {
+    return { sets: raw.sets };
+  }
+
+  const avisos = Array.isArray(raw && raw.avisos) ? raw.avisos : [];
+
+  if (!avisos.length) {
+    return { sets: [] };
+  }
+
+  const now = new Date().toISOString();
+
+  const defaultSet = {
+    id: uuidv4(),
+    code: "DEFAULT",
+    date: new Date().toLocaleDateString("es-MX"),
+    title: "AVISOS ZONALES",
+    avisos,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  return { sets: [defaultSet] };
+}
+
+function restoreFirestoreValue(value) {
+  if (Array.isArray(value)) {
+    return value.map(restoreFirestoreValue);
+  }
+
+  if (value && typeof value === "object") {
+    if (value._firestore_json_) {
+      try {
+        return restoreFirestoreValue(JSON.parse(value._firestore_json_));
+      } catch (e) {
+        return value._firestore_json_;
+      }
+    }
+
+    return Object.fromEntries(
+      Object.entries(value).map(([key, val]) => [key, restoreFirestoreValue(val)]),
+    );
+  }
+
+  return value;
+}
+
+function toPlainSet(data, id) {
+  const restored = restoreFirestoreValue(data);
+
+  return {
+    id,
+    code: restored.code || "",
+    codeLower: String(restored.code || "").trim().toLowerCase(),
+    date: restored.date || new Date().toLocaleDateString("es-MX"),
+    title: restored.title || "AVISOS ZONALES",
+    bannerMessage:
+      restored.bannerMessage ||
+      "Gracias por revisar todos los avisos! Reacciona con un 🚬 si llegaste hasta aquí",
+    avisos: Array.isArray(restored.avisos) ? restored.avisos : [],
+    createdAt:
+      restored.createdAt && typeof restored.createdAt.toDate === "function"
+        ? restored.createdAt.toDate().toISOString()
+        : restored.createdAt || new Date().toISOString(),
+    updatedAt:
+      restored.updatedAt && typeof restored.updatedAt.toDate === "function"
+        ? restored.updatedAt.toDate().toISOString()
+        : restored.updatedAt || new Date().toISOString(),
+  };
+}
+
+function encodeFirestoreValue(value) {
+  if (Array.isArray(value)) {
+    const containsNestedArray = value.some((item) => Array.isArray(item));
+    if (containsNestedArray) {
+      return { _firestore_json_: JSON.stringify(value) };
+    }
+    return value.map(encodeFirestoreValue);
+  }
+
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, val]) => [key, encodeFirestoreValue(val)]),
+    );
+  }
+
+  return value;
+}
+
+function sanitizeSetForFirestore(set) {
+  return encodeFirestoreValue(set);
+}
+
+async function saveAllSetsToFirestore(data) {
+  if (!isFirestoreAvailable()) {
+    return saveAllSets(data);
+  }
+
+  const setsCollection = db.collection("sets");
+  const existing = await setsCollection.get();
+  const existingIds = new Set(existing.docs.map((doc) => doc.id));
+  const batch = db.batch();
+
+  const incomingIds = new Set();
+
+  (data.sets || []).forEach((set) => {
+    incomingIds.add(String(set.id));
+    const ref = setsCollection.doc(String(set.id));
+    batch.set(ref, sanitizeSetForFirestore({
+      ...set,
+      codeLower: String(set.code || "").trim().toLowerCase(),
+    }));
+  });
+
+  existingIds.forEach((id) => {
+    if (!incomingIds.has(id)) {
+      batch.delete(setsCollection.doc(id));
+    }
+  });
+
+  await batch.commit();
+}
+
+async function loadAllSetsFromFirestore() {
+  if (!isFirestoreAvailable()) {
+    return loadAllSets();
+  }
+
+  const setsCollection = db.collection("sets");
+  const snapshot = await setsCollection.orderBy("createdAt", "asc").get();
+  const sets = snapshot.docs.map((doc) => toPlainSet(doc.data(), doc.id));
+  const migrated = migrateLegacySetCodes(sets);
 
   if (migrated.changed) {
-    saveAllSets({ sets: migrated.sets });
+    await saveAllSetsToFirestore({ sets: migrated.sets });
   }
 
   return { sets: migrated.sets };
@@ -190,8 +340,32 @@ function saveAllSets(data) {
   fs.writeFileSync(dataPath, JSON.stringify(payload, null, 2));
 }
 
-function findSetById(id) {
-  const { sets } = loadAllSets();
+async function loadAllSets() {
+  if (isFirestoreAvailable()) {
+    return loadAllSetsFromFirestore();
+  }
+
+  return loadAllSetsFromFile();
+}
+
+function loadAllSetsFromFile() {
+  const raw = readRawData();
+  const normalized = normalizeToMultiSet(raw);
+  const migrated = migrateLegacySetCodes(normalized.sets);
+
+  if (migrated.changed) {
+    saveAllSets({ sets: migrated.sets });
+  }
+
+  return { sets: migrated.sets };
+}
+
+async function findSetById(id) {
+  if (!id) {
+    return { set: null, sets: [] };
+  }
+
+  const { sets } = await loadAllSets();
   const set = sets.find((s) => String(s.id) === String(id));
   return { set, sets };
 }
@@ -213,8 +387,8 @@ function ensureUniqueCode(sets, code, ignoreId) {
   }
 }
 
-function createSet({ code, date, title, bannerMessage, avisos, source = "SET" }) {
-  const { sets } = loadAllSets();
+async function createSet({ code, date, title, bannerMessage, avisos, source = "SET" }) {
+  const { sets } = await loadAllSets();
 
   const now = new Date().toISOString();
 
@@ -232,13 +406,21 @@ function createSet({ code, date, title, bannerMessage, avisos, source = "SET" })
   ensureUniqueCode(sets, newSet.code);
 
   const updated = { sets: [...sets, newSet] };
-  saveAllSets(updated);
+
+  if (isFirestoreAvailable()) {
+    await db.collection("sets").doc(newSet.id).set(sanitizeSetForFirestore({
+      ...newSet,
+      codeLower: String(newSet.code || "").trim().toLowerCase(),
+    }));
+  } else {
+    saveAllSets(updated);
+  }
 
   return newSet;
 }
 
-function updateSet(id, partial) {
-  const { sets } = loadAllSets();
+async function updateSet(id, partial) {
+  const { sets } = await loadAllSets();
   const idx = sets.findIndex((s) => String(s.id) === String(id));
 
   if (idx === -1) {
@@ -263,20 +445,32 @@ function updateSet(id, partial) {
   const nextSets = [...sets];
   nextSets[idx] = merged;
 
-  saveAllSets({ sets: nextSets });
+  if (isFirestoreAvailable()) {
+    await db.collection("sets").doc(merged.id).set(sanitizeSetForFirestore({
+      ...merged,
+      codeLower: String(merged.code || "").trim().toLowerCase(),
+    }));
+  } else {
+    saveAllSets({ sets: nextSets });
+  }
 
   return merged;
 }
 
-function deleteSet(id) {
-  const { sets } = loadAllSets();
+async function deleteSet(id) {
+  if (isFirestoreAvailable()) {
+    await db.collection("sets").doc(String(id)).delete();
+    return { removed: 1 };
+  }
+
+  const { sets } = loadAllSetsFromFile();
   const nextSets = sets.filter((s) => String(s.id) !== String(id));
   saveAllSets({ sets: nextSets });
   return { removed: sets.length - nextSets.length };
 }
 
-function duplicateSet(id) {
-  const { sets } = loadAllSets();
+async function duplicateSet(id) {
+  const { sets } = await loadAllSets();
   const original = sets.find((s) => String(s.id) === String(id));
 
   if (!original) {
@@ -300,8 +494,15 @@ function duplicateSet(id) {
     updatedAt: now,
   };
 
-  const nextSets = [...sets, cloned];
-  saveAllSets({ sets: nextSets });
+  if (isFirestoreAvailable()) {
+    await db.collection("sets").doc(cloned.id).set(sanitizeSetForFirestore({
+      ...cloned,
+      codeLower: String(cloned.code || "").trim().toLowerCase(),
+    }));
+  } else {
+    const nextSets = [...sets, cloned];
+    saveAllSets({ sets: nextSets });
+  }
 
   return cloned;
 }

@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react"
 import { NavLink, useLocation } from "react-router-dom"
 import { useAvisosStore } from "../../store/avisosStore"
-import { Sparkles, Trash2 } from "lucide-react"
+import { Sparkles, Trash2, LogIn, LogOut, User } from "lucide-react"
 import AiImportModal from "../AiImportModal"
-import apiUrl from "../../utils/api"
+import { checkAuthStatus, loginWithGoogle, logout, authenticatedRequest } from "../../utils/api"
 
 export default function Navbar() {
 
@@ -25,12 +25,27 @@ export default function Navbar() {
   const [isAiOpen, setIsAiOpen] = useState(false)
   const [lastBackup, setLastBackup] = useState(null)
   const [clearConfirm, setClearConfirm] = useState(false)
+  const [authStatus, setAuthStatus] = useState({ authorized: false, user: null })
 
   useEffect(() => {
     if (!toast) return
     const id = setTimeout(() => setToast(null), 3500)
     return () => clearTimeout(id)
   }, [toast])
+
+  // Verificar estado de autenticación al cargar
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const status = await checkAuthStatus()
+        setAuthStatus(status)
+      } catch (error) {
+        console.error('Error verificando autenticación:', error)
+        setAuthStatus({ authorized: false, user: null })
+      }
+    }
+    checkAuth()
+  }, [])
 
   // Auto-cancel clear confirmation after 3 s if no second click
   useEffect(() => {
@@ -71,6 +86,13 @@ export default function Navbar() {
     setToast({ type: "success", message: "JSON exportado" })
   }
 
+  const handleRestoreBackup = () => {
+    if (!lastBackup?.avisos) return
+    setAvisos(lastBackup.avisos)
+    setSelectedAvisoId(lastBackup.avisos[0]?.id || null)
+    setToast({ type: "success", message: "Backup restaurado" })
+  }
+
   const handleImported = (result) => {
     if (!result) return
 
@@ -105,11 +127,23 @@ export default function Navbar() {
     }
   }
 
-  const handleRestoreBackup = () => {
-    if (!lastBackup?.avisos) return
-    setAvisos(lastBackup.avisos)
-    setSelectedAvisoId(lastBackup.avisos[0]?.id || null)
-    setToast({ type: "success", message: "Backup restaurado" })
+  const handleLogout = async () => {
+    try {
+      await logout()
+      setAuthStatus({ authorized: false, user: null })
+      setToast({ type: "success", message: "Sesión cerrada" })
+      // Redirigir a login después de un breve delay
+      setTimeout(() => {
+        window.location.href = '/login'
+      }, 1000)
+    } catch (error) {
+      console.error('Error cerrando sesión:', error)
+      setToast({ type: "error", message: "Error cerrando sesión" })
+    }
+  }
+
+  const handleLogin = () => {
+    loginWithGoogle()
   }
 
   const handleSave = async () => {
@@ -132,11 +166,8 @@ export default function Navbar() {
         if (currentSet.bannerMessage != null) payload.bannerMessage = currentSet.bannerMessage
       }
 
-      const res = await fetch(apiUrl("/avisos"), {
+      const res = await authenticatedRequest("/avisos", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
         body: JSON.stringify(payload)
       })
 
@@ -292,6 +323,33 @@ export default function Navbar() {
         )}
 
         <div className="navbar-actions" style={{ marginLeft: "auto" }}>
+          {/* Botones de autenticación */}
+          <div className="auth-section">
+            {authStatus.authorized ? (
+              <div className="auth-user">
+                <User size={14} />
+                <span>{authStatus.user?.name || authStatus.user?.email}</span>
+                <button
+                  onClick={handleLogout}
+                  title="Cerrar sesión"
+                >
+                  <LogOut size={14} />
+                </button>
+              </div>
+            ) : (
+              <button
+                className="btn btn-primary small-btn"
+                onClick={handleLogin}
+                title="Iniciar sesión con Google"
+              >
+                <LogIn size={14} />
+                Login
+              </button>
+            )}
+          </div>
+
+          <div className="navbar-divider" />
+
           {isSetContext && avisos.length > 0 && (
             <>
               <button

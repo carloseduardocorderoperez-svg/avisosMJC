@@ -1,6 +1,5 @@
 const fs = require("fs");
 const path = require("path");
-const { loadAllSets } = require("./dataStore");
 
 // ===============================
 // Helpers de estilos por bloque
@@ -423,8 +422,7 @@ function generateHTML(options = {}) {
     if (Array.isArray(raw.avisos)) {
       avisos = raw.avisos;
     } else {
-      const { sets } = loadAllSets();
-      const current = sets[0];
+      const current = Array.isArray(raw.sets) ? raw.sets[0] : null;
       if (current) {
         avisos = Array.isArray(current.avisos) ? current.avisos : [];
         if (!options.title && current.title) {
@@ -437,6 +435,8 @@ function generateHTML(options = {}) {
         if (!options.bannerMessage && current.bannerMessage) {
           metaBanner = current.bannerMessage;
         }
+      } else {
+        avisos = [];
       }
     }
   }

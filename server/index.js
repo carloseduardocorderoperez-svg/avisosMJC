@@ -1,5 +1,7 @@
 require("dotenv").config();
 const express = require("express");
+// const session = require("express-session");
+const cookieParser = require("cookie-parser");
 const multer = require("multer");
 const cors = require("cors");
 const fs = require("fs");
@@ -14,7 +16,7 @@ const {
   listImagesFromDrive,
   deleteImageFromDrive,
   getImageStream,
-  getAuthUrl,
+  getAuthUrl: getDriveAuthUrl,
   exchangeCodeForTokens,
 } = require("./driveUploader");
 const {
@@ -25,6 +27,14 @@ const {
   deleteSet,
   duplicateSet,
 } = require("./dataStore");
+const {
+  getOAuthClient,
+  generateToken,
+  verifyToken,
+  requireAuth,
+  getAuthUrl,
+  getUserInfo,
+} = require("./auth");
 
 const app = express();
 const PORT = 3000;
@@ -42,8 +52,22 @@ function clearFolder(folderPath) {
 // Middlewares
 // ===============================
 
-app.use(cors());
+app.use(cors({
+  origin: true,
+  credentials: true,
+}));
 app.use(express.json());
+app.use(cookieParser());
+// app.use(session({
+//   secret: process.env.JWT_SECRET || 'mjc-avisos-session-secret',
+//   resave: false,
+//   saveUninitialized: false,
+//   cookie: {
+//     secure: false, // En desarrollo, false. En producción, true con HTTPS
+//     httpOnly: true,
+//     maxAge: 24 * 60 * 60 * 1000, // 24 horas
+//   },
+// }));
 app.use("/output", express.static(path.join(__dirname, "../output")));
 
 // ===============================
@@ -138,6 +162,7 @@ app.get("/", (req, res) => {
 
 app.post(
   "/upload-pdf",
+  requireAuth,
   cleanBeforeUpload,
   upload.single("pdf"),
   async (req, res) => {
@@ -167,12 +192,12 @@ app.post(
 );
 
 // ===============================
-// Sets de avisos (multi-set)
+// Sets de avisos (multi-set) - PROTEGIDAS
 // ===============================
 
 // Listar sets (solo metadatos básicos)
-app.get("/sets", (req, res) => {
-  const { sets } = loadAllSets();
+app.get("/sets", requireAuth, async (req, res) => {
+  const { sets } = await loadAllSets();
 
   const payload = sets.map((s) => ({
     id: s.id,
@@ -188,11 +213,11 @@ app.get("/sets", (req, res) => {
 });
 
 // Crear un nuevo set vacío (o con avisos iniciales opcionales)
-app.post("/sets", (req, res) => {
+app.post("/sets", requireAuth, async (req, res) => {
   try {
     const { code, date, title, avisos } = req.body || {};
 
-    const nuevo = createSet({ code, date, title, avisos, source: "SET" });
+    const nuevo = await createSet({ code, date, title, avisos, source: "SET" });
 
     res.status(201).json(nuevo);
   } catch (error) {
@@ -207,12 +232,12 @@ app.post("/sets", (req, res) => {
 });
 
 // Actualizar metadatos o avisos de un set
-app.put("/sets/:id", (req, res) => {
+app.put("/sets/:id", requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { code, date, title, bannerMessage, avisos } = req.body || {};
 
-    const updated = updateSet(id, {
+    const updated = await updateSet(id, {
       ...(code != null ? { code } : {}),
       ...(date != null ? { date } : {}),
       ...(title != null ? { title } : {}),
@@ -236,10 +261,10 @@ app.put("/sets/:id", (req, res) => {
 });
 
 // Eliminar un set completo
-app.delete("/sets/:id", (req, res) => {
+app.delete("/sets/:id", requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
-    const result = deleteSet(id);
+    const result = await deleteSet(id);
     res.json(result);
   } catch (error) {
     console.error("Error eliminando set:", error);
@@ -248,10 +273,10 @@ app.delete("/sets/:id", (req, res) => {
 });
 
 // Duplicar un set (clona avisos y asigna nuevo código único)
-app.post("/sets/:id/duplicate", (req, res) => {
+app.post("/sets/:id/duplicate", requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
-    const cloned = duplicateSet(id);
+    const cloned = await duplicateSet(id);
     res.status(201).json(cloned);
   } catch (error) {
     console.error("Error duplicando set:", error);
@@ -265,10 +290,10 @@ app.post("/sets/:id/duplicate", (req, res) => {
 });
 
 // Generar HTML sólo para un set concreto
-app.post("/sets/:id/generar-html", (req, res) => {
+app.post("/sets/:id/generar-html", requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
-    const { set } = findSetById(id);
+    const { set } = await findSetById(id);
 
     if (!set) {
       return res.status(404).json({ error: "Set no encontrado" });
@@ -277,7 +302,7 @@ app.post("/sets/:id/generar-html", (req, res) => {
     // Actualizar la fecha del set a la fecha actual
     const currentDate = new Date().toLocaleDateString("es-MX");
     set.date = currentDate;
-    updateSet(id, set);
+    await updateSet(id, set);
 
     const title = set.title || "AVISOS ZONALES";
 
@@ -296,7 +321,7 @@ app.post("/sets/:id/generar-html", (req, res) => {
 });
 
 // Copiar avisos a un set destino
-app.post("/sets/:targetSetId/copy-avisos", (req, res) => {
+app.post("/sets/:targetSetId/copy-avisos", requireAuth, async (req, res) => {
   try {
     const { targetSetId } = req.params;
     const { avisos } = req.body || {};
@@ -305,7 +330,7 @@ app.post("/sets/:targetSetId/copy-avisos", (req, res) => {
       return res.status(400).json({ error: "Se requiere un array 'avisos' no vacío" });
     }
 
-    const { set: targetSet } = findSetById(targetSetId);
+    const { set: targetSet } = await findSetById(targetSetId);
 
     if (!targetSet) {
       return res.status(404).json({ error: "Set destino no encontrado" });
@@ -320,7 +345,7 @@ app.post("/sets/:targetSetId/copy-avisos", (req, res) => {
       orden: nextOrden + index + 1,
     }));
 
-    const updated = updateSet(targetSetId, {
+    const updated = await updateSet(targetSetId, {
       avisos: [...existingAvisos, ...newAvisos],
     });
 
@@ -335,10 +360,10 @@ app.post("/sets/:targetSetId/copy-avisos", (req, res) => {
 // Obtener avisos guardados (compat y por set)
 // ===============================
 
-app.get("/avisos", (req, res) => {
+app.get("/avisos", requireAuth, async (req, res) => {
   const { setId } = req.query;
 
-  const { sets } = loadAllSets();
+  const { sets } = await loadAllSets();
 
   if (!sets.length) {
     return res.json({ avisos: [], set: null });
@@ -360,7 +385,7 @@ app.get("/avisos", (req, res) => {
 // Guardar avisos (actualizar/crear set)
 // ===============================
 
-app.post("/avisos", (req, res) => {
+app.post("/avisos", requireAuth, async (req, res) => {
   try {
     const { setId, avisos, code, date, title, bannerMessage } = req.body || {};
 
@@ -368,7 +393,7 @@ app.post("/avisos", (req, res) => {
       return res.status(400).json({ error: "Faltan avisos a guardar" });
     }
 
-    const { sets } = loadAllSets();
+    const { sets } = await loadAllSets();
 
     let targetSet;
 
@@ -376,7 +401,7 @@ app.post("/avisos", (req, res) => {
       // Actualizar set concreto (con fallback si el setId es inválido / sesión vieja)
       const setExists = sets.some((s) => String(s.id) === String(setId));
       if (setExists) {
-        targetSet = updateSet(setId, {
+        targetSet = await updateSet(setId, {
           avisos,
           ...(code != null ? { code } : {}),
           ...(date != null ? { date } : {}),
@@ -385,7 +410,7 @@ app.post("/avisos", (req, res) => {
         });
       } else {
         // El set ya no existe — crear uno nuevo para no perder los avisos del cliente
-        targetSet = createSet({
+        targetSet = await createSet({
           code,
           date,
           title,
@@ -397,7 +422,7 @@ app.post("/avisos", (req, res) => {
     } else if (sets.length) {
       // Compat: actualizar el primer set existente
       const first = sets[0];
-      targetSet = updateSet(first.id, {
+      targetSet = await updateSet(first.id, {
         avisos,
         ...(code != null ? { code } : {}),
         ...(date != null ? { date } : {}),
@@ -406,7 +431,7 @@ app.post("/avisos", (req, res) => {
       });
     } else {
       // No había sets: crear uno nuevo
-      targetSet = createSet({
+      targetSet = await createSet({
         code,
         date,
         title,
@@ -448,7 +473,7 @@ app.post("/avisos", (req, res) => {
 // ===============================
 // Importar avisos desde HTML viejo
 // ===============================
-app.post("/import-html", async (req, res) => {
+app.post("/import-html", requireAuth, async (req, res) => {
   try {
     const { html, code, date } = req.body || {};
 
@@ -482,7 +507,7 @@ app.post("/import-html", async (req, res) => {
 // ===============================
 // Analizar slides (crea un nuevo set con los avisos)
 // ===============================
-app.post("/analyze-slides", async (req, res) => {
+app.post("/analyze-slides", requireAuth, async (req, res) => {
   try {
     const aiResult = await analyzeAllSlides();
 
@@ -512,13 +537,25 @@ app.post("/analyze-slides", async (req, res) => {
 // generar HTML con avisos
 // ===============================
 
-app.post("/generar-html", (req, res) => {
+app.post("/generar-html", requireAuth, async (req, res) => {
   try {
-    const file = generateHTML();
+    const { sets } = await loadAllSets();
+    const set = sets[0];
+
+    if (!set) {
+      return res.status(404).json({ error: "No hay sets disponibles para generar HTML" });
+    }
+
+    const htmlFile = generateHTML({
+      avisos: Array.isArray(set.avisos) ? set.avisos : [],
+      date: set.date,
+      title: set.title || "AVISOS ZONALES",
+      bannerMessage: set.bannerMessage,
+    });
 
     res.json({
       ok: true,
-      archivo: file,
+      archivo: htmlFile,
     });
   } catch (error) {
     console.error(error);
@@ -530,44 +567,112 @@ app.post("/generar-html", (req, res) => {
 });
 
 // ===============================
-// Auth Google OAuth2 (una sola vez)
+// Auth Google OAuth2 (con verificación de email)
 // ===============================
 
 app.get("/auth/status", (req, res) => {
-  res.json({ authorized: !!process.env.GOOGLE_REFRESH_TOKEN });
+  // Verificar si hay token JWT en headers o cookies
+  const authHeader = req.headers.authorization;
+  const token = authHeader && authHeader.startsWith('Bearer ')
+    ? authHeader.substring(7)
+    : req.cookies?.['auth_token'];
+
+  if (!token) {
+    return res.json({ authorized: false });
+  }
+
+  const user = verifyToken(token);
+  if (!user) {
+    return res.json({ authorized: false });
+  }
+
+  const allowedEmail = process.env.ALLOWED_GOOGLE_EMAIL;
+  if (allowedEmail && user.email !== allowedEmail) {
+    return res.json({ authorized: false, error: 'Email no autorizado' });
+  }
+
+  res.json({
+    authorized: true,
+    user: {
+      email: user.email,
+      name: user.name,
+      picture: user.picture,
+    },
+  });
 });
 
-app.get("/auth/start", (req, res) => {
+app.get("/auth/login", (req, res) => {
   try {
     const url = getAuthUrl();
     res.redirect(url);
   } catch (err) {
-    res.status(500).send(`Error: ${err.message}`);
+    res.status(500).json({ error: `Error al iniciar login: ${err.message}` });
   }
 });
 
 app.get("/auth/callback", async (req, res) => {
   const code = req.query.code;
-  if (!code) return res.status(400).send("Falta el código de autorización.");
+  if (!code) {
+    return res.status(400).send("Falta el código de autorización.");
+  }
+
   try {
-    const envPath = path.join(__dirname, ".env");
-    await exchangeCodeForTokens(code, envPath);
+    const oauth2Client = getOAuthClient();
+    const { tokens } = await oauth2Client.getToken(code);
+    oauth2Client.setCredentials(tokens);
+
+    const userInfo = await getUserInfo(tokens.access_token);
+    const allowedEmail = process.env.ALLOWED_GOOGLE_EMAIL;
+
+    if (allowedEmail && userInfo.email !== allowedEmail) {
+      return res.status(403).send(`
+        <html><body style="font-family:sans-serif;padding:40px;background:#111;color:#fff">
+          <h2>❌ Acceso denegado</h2>
+          <p>El email <strong>${userInfo.email}</strong> no está autorizado para acceder a esta aplicación.</p>
+          <p>Solo se permite acceso con: <strong>${allowedEmail}</strong></p>
+        </body></html>
+      `);
+    }
+
+    // Generar JWT y guardarlo en cookie
+    const jwtToken = generateToken(userInfo);
+    res.cookie('auth_token', jwtToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000, // 24 horas
+    });
+
+    // Redirigir a la app (el cliente abrió esto en un popup, así que esta redirección cerrará el popup)
     res.send(`
       <html><body style="font-family:sans-serif;padding:40px;background:#111;color:#fff">
-        <h2>✅ Autorización exitosa</h2>
-        <p>Ya puedes cerrar esta ventana y usar la galería de imágenes.</p>
+        <h2>✅ Login exitoso</h2>
+        <p>Bienvenido <strong>${userInfo.name}</strong> (${userInfo.email})</p>
+        <p>Redirigiendo...</p>
+        <script>
+          // Cerrar ventana popup después de guardar la cookie
+          setTimeout(() => {
+            window.close();
+          }, 1000);
+        </script>
       </body></html>
     `);
   } catch (err) {
+    console.error('Error en callback:', err);
     res.status(500).send(`Error: ${err.message}`);
   }
+});
+
+app.post("/auth/logout", (req, res) => {
+  res.clearCookie('auth_token');
+  res.json({ success: true });
 });
 
 // ===============================
 // Galería de imágenes (Google Drive)
 // ===============================
 
-app.get("/images", async (req, res) => {
+app.get("/images", requireAuth, async (req, res) => {
   try {
     const folderId = process.env.DRIVE_IMAGES_FOLDER_ID;
     if (!folderId) {
@@ -581,7 +686,7 @@ app.get("/images", async (req, res) => {
   }
 });
 
-app.post("/images/upload", imageUpload.single("image"), async (req, res) => {
+app.post("/images/upload", requireAuth, imageUpload.single("image"), async (req, res) => {
   try {
     const folderId = process.env.DRIVE_IMAGES_FOLDER_ID;
     if (!folderId) {
@@ -609,7 +714,7 @@ app.post("/images/upload", imageUpload.single("image"), async (req, res) => {
   }
 });
 
-app.delete("/images/:id", async (req, res) => {
+app.delete("/images/:id", requireAuth, async (req, res) => {
   try {
     await deleteImageFromDrive(req.params.id);
     res.json({ ok: true });

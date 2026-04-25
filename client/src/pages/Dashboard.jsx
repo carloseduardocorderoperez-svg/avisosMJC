@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { Plus, Pencil, Eye, Clipboard, Copy, Trash2 } from "lucide-react"
 import { useAvisosStore } from "../store/avisosStore"
-import apiUrl from "../utils/api"
+import { authenticatedRequest, checkAuthStatus } from "../utils/api"
 
 export default function Dashboard() {
   const [sets, setSets] = useState([])
@@ -55,9 +55,7 @@ export default function Dashboard() {
       setLoading(true)
       setError("")
 
-      const res = await fetch(apiUrl("/sets"))
-      if (!res.ok) throw new Error("No se pudieron cargar los grupos de avisos")
-
+      const res = await authenticatedRequest("/sets")
       const data = await res.json()
       // Ordenar por updatedAt descendente (más reciente primero)
       const sortedSets = (data.sets || []).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
@@ -76,13 +74,10 @@ export default function Dashboard() {
 
   const handleCrear = async () => {
     try {
-      const res = await fetch(apiUrl("/sets"), {
+      const res = await authenticatedRequest("/sets", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code: "", date: "", title: "AVISOS ZONALES", avisos: [] }),
       })
-
-      if (!res.ok) throw new Error("No se pudo crear el grupo de avisos")
 
       const nuevo = await res.json()
       setSets((prev) => [...prev, { ...nuevo, avisosCount: nuevo.avisos?.length || 0 }].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)))
@@ -99,11 +94,9 @@ export default function Dashboard() {
     }
 
     try {
-      const res = await fetch(apiUrl(`/sets/${id}`), {
+      await authenticatedRequest(`/sets/${id}`, {
         method: "DELETE",
       })
-
-      if (!res.ok) throw new Error("No se pudo eliminar el grupo de avisos")
 
       setSets((prev) => prev.filter((s) => s.id !== id).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)))
     } catch (err) {
@@ -114,11 +107,9 @@ export default function Dashboard() {
 
   const handleDuplicar = async (id) => {
     try {
-      const res = await fetch(apiUrl(`/sets/${id}/duplicate`), {
+      const res = await authenticatedRequest(`/sets/${id}/duplicate`, {
         method: "POST",
       })
-
-      if (!res.ok) throw new Error("No se pudo duplicar el grupo de avisos")
 
       const copia = await res.json()
       setSets((prev) => [...prev, { ...copia, avisosCount: copia.avisos?.length || 0 }].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)))
@@ -138,16 +129,14 @@ export default function Dashboard() {
 
   const handleCopiarHtml = async (id) => {
     try {
-      const res = await fetch(apiUrl(`/sets/${id}/generar-html`), {
+      const res = await authenticatedRequest(`/sets/${id}/generar-html`, {
         method: "POST",
       })
-
-      if (!res.ok) throw new Error("No se pudo generar el HTML")
 
       const data = await res.json()
       if (!data.archivo) throw new Error("Respuesta inválida del servidor")
 
-      const htmlRes = await fetch(apiUrl(`/output/${data.archivo}`))
+      const htmlRes = await authenticatedRequest(`/output/${data.archivo}`)
       const htmlText = await htmlRes.text()
 
       await navigator.clipboard.writeText(htmlText)
