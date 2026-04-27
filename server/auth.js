@@ -7,7 +7,11 @@ const ALLOWED_EMAIL = process.env.ALLOWED_GOOGLE_EMAIL;
 function getOAuthClient() {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  const redirectUri = 'http://localhost:3000/auth/callback';
+  // Usar la URL del servidor dinámicamente para desarrollo y producción
+  const baseUrl = process.env.SERVER_URL || (process.env.NODE_ENV === 'production'
+    ? (process.env.RENDER_EXTERNAL_URL || process.env.ONRENDER_URL || `https://${process.env.HOST || 'localhost'}:${process.env.PORT || 3000}`)
+    : 'http://localhost:3000');
+  const redirectUri = `${baseUrl}/auth/callback`;
 
   return new google.auth.OAuth2(clientId, clientSecret, redirectUri);
 }
