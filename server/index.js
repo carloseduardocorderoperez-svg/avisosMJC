@@ -643,20 +643,9 @@ app.get("/auth/callback", async (req, res) => {
       maxAge: 24 * 60 * 60 * 1000, // 24 horas
     });
 
-    // Redirigir a la app (el cliente abrió esto en un popup, así que esta redirección cerrará el popup)
-    res.send(`
-      <html><body style="font-family:sans-serif;padding:40px;background:#111;color:#fff">
-        <h2>✅ Login exitoso</h2>
-        <p>Bienvenido <strong>${userInfo.name}</strong> (${userInfo.email})</p>
-        <p>Redirigiendo...</p>
-        <script>
-          // Cerrar ventana popup después de guardar la cookie
-          setTimeout(() => {
-            window.close();
-          }, 1000);
-        </script>
-      </body></html>
-    `);
+    // Redirigir de vuelta a la aplicación (al dashboard)
+    const redirectUrl = `${process.env.CLIENT_URL || 'http://localhost:5173'}/dashboard`;
+    res.redirect(redirectUrl);
   } catch (err) {
     console.error('Error en callback:', err);
     res.status(500).send(`Error: ${err.message}`);

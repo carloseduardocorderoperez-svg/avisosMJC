@@ -71,6 +71,15 @@ export async function checkAuthStatus() {
       authStatus = data;
       if (data.authorized) {
         saveAuthToStorage(data);
+
+        // Si acabamos de iniciar sesión, redirigir automáticamente
+        const redirectPath = sessionStorage.getItem('redirectAfterLogin');
+        if (redirectPath && window.location.pathname === '/login') {
+          sessionStorage.removeItem('redirectAfterLogin');
+          setTimeout(() => {
+            window.location.href = redirectPath;
+          }, 100);
+        }
       } else {
         localStorage.removeItem(STORAGE_KEY);
       }
@@ -90,28 +99,12 @@ export async function checkAuthStatus() {
 
 // Login con Google OAuth
 export function loginWithGoogle() {
-  // Abrir ventana popup para el login
-  const loginUrl = apiUrl('/auth/login');
-  const popup = window.open(loginUrl, 'Google Login', 'width=500,height=600');
-  
-  // Detectar cuando se cierra la ventana y verificar autenticación
-  const checkInterval = setInterval(() => {
-    if (popup.closed) {
-      clearInterval(checkInterval);
-      
-      // Esperar un momento y luego verificar estado
-      setTimeout(async () => {
-        authStatus = null;
-        authCheckPromise = null;
-        const status = await checkAuthStatus();
-        
-        if (status.authorized) {
-          // Redirigir al dashboard
-          window.location.href = '/dashboard';
-        }
-      }, 500);
-    }
-  }, 500);
+  // Guardar la URL actual para redirigir después del login
+  const currentPath = window.location.pathname;
+  sessionStorage.setItem('redirectAfterLogin', currentPath);
+
+  // Redirigir a Google OAuth
+  window.location.href = apiUrl('/auth/login');
 }
 
 // Logout
