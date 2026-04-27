@@ -4,6 +4,19 @@ This document describes the current architecture of the "mjc-avisos-ia" project 
 
 ---
 
+## 📚 Documentation
+
+Para documentación completa del proyecto, consulta la carpeta [`docs/`](./docs/):
+
+- **[📋 README](./docs/README.md)** - Visión general completa del proyecto
+- **[🔌 API](./docs/API.md)** - Documentación completa de la API REST
+- **[🎨 Frontend](./docs/FRONTEND.md)** - Arquitectura y desarrollo del frontend
+- **[🚀 Deployment](./docs/DEPLOYMENT.md)** - Guía de despliegue en OnRender
+- **[🛠️ Development](./docs/DEVELOPMENT.md)** - Guía para desarrolladores
+- **[📝 Changelog](./docs/CHANGELOG.md)** - Historial de versiones y cambios
+
+---
+
 ## 1. Project goal
 
 The "MJC Avisos IA" project automates the generation of parish announcements from a PDF of slides:

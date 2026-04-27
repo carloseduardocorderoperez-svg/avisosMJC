@@ -5,9 +5,23 @@
   "scripts": {
     "dev:client": "timeout /t 5 /nobreak > nul && npm run dev --prefix client",
     "dev:server": "npm run dev --prefix server",
-    "dev": "npm-run-all --parallel dev:client dev:server"
+    "dev": "npm-run-all --parallel dev:client dev:server",
+    "build:client": "npm run build --prefix client",
+    "build:server": "npm run build --prefix server",
+    "build": "npm-run-all build:client build:server",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
+    "test": "npm-run-all test:client test:server",
+    "test:client": "npm test --prefix client",
+    "test:server": "npm test --prefix server",
+    "clean": "rimraf client/dist server/dist output uploads images",
+    "validate": "npm-run-all lint test build"
   },
   "devDependencies": {
-    "npm-run-all": "^4.1.5"
+    "npm-run-all": "^4.1.5",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "rimraf": "^5.0.0"
   }
 }
