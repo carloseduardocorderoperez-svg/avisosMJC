@@ -1,0 +1,3 @@
+# Esta carpeta contiene templates detallados de cambios
+# Los archivos aquí documentan cambios complejos del proyecto
+# Usa: npm run docs:create-template <nombre> para crear nuevos templates

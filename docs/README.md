@@ -410,7 +410,56 @@ npm run dev        # Desarrollo con nodemon
 
 ---
 
-## 📞 Soporte y Contacto
+## � Sistema de Documentación Continua
+
+### 🎯 Importancia de la Documentación
+
+Mantener la documentación actualizada es **crucial** para:
+- **Facilitar onboarding** de nuevos desarrolladores
+- **Preservar conocimiento** del proyecto
+- **Rastrear evolución** del sistema
+- **Mantener consistencia** en procesos
+
+### 🚀 Cómo Documentar Cambios
+
+#### Cambios Simples
+```bash
+# Agregar entrada rápida al changelog
+npm run docs:add-changelog added "Nueva funcionalidad de búsqueda"
+```
+
+#### Cambios Complejos
+```bash
+# Crear template detallado
+npm run docs:create-template "user-profile-feature"
+# Completar docs/changes/user-profile-feature.md
+```
+
+#### Nuevas Versiones
+```bash
+# Preparar release
+npm run docs:prepare-release 1.1.0
+```
+
+### 📋 Checklist de Documentación
+
+Antes de commit:
+- [ ] CHANGELOG.md actualizado
+- [ ] Documentos técnicos actualizados si aplica
+- [ ] Variables de entorno documentadas
+- [ ] Tests documentados
+
+### 📚 Recursos de Documentación
+
+- **[CHANGELOG.md](./CHANGELOG.md)** - Historial de versiones
+- **[API.md](./API.md)** - Documentación técnica de API
+- **[DEVELOPMENT.md](./DEVELOPMENT.md)** - Guía para desarrolladores
+- **[CHANGE_TEMPLATE.md](./CHANGE_TEMPLATE.md)** - Template para cambios detallados
+- **[changes/](./changes/)** - Templates de cambios específicos
+
+---
+
+## �📞 Soporte y Contacto
 
 **Desarrollador Principal**: Carlos (omaha.zona@gmail.com)
 **Proyecto**: MJC Avisos IA

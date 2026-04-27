@@ -15,7 +15,11 @@
     "test:client": "npm test --prefix client",
     "test:server": "npm test --prefix server",
     "clean": "rimraf client/dist server/dist output uploads images",
-    "validate": "npm-run-all lint test build"
+    "validate": "npm-run-all lint test build",
+    "docs:add-changelog": "node scripts/docs-helper.js changelog",
+    "docs:create-template": "node scripts/docs-helper.js template",
+    "docs:prepare-release": "node scripts/docs-helper.js release",
+    "docs:help": "node scripts/docs-helper.js help"
   },
   "devDependencies": {
     "npm-run-all": "^4.1.5",

@@ -56,7 +56,8 @@ export default function App() {
   const isDesignerRoute =
     location.pathname === "/" ||
     location.pathname.startsWith("/dashboard") ||
-    location.pathname.startsWith("/avisos/")
+    location.pathname.startsWith("/avisos/") ||
+    location.pathname.startsWith("/extra")
 
   return (
     <div className="app-shell">

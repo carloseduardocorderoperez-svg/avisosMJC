@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### ✨ Added
+- Sistema de documentación continua implementado
+- Nueva página de Importar con flujo completo PDF → IA → Editor
 <!-- Nuevas funcionalidades agregadas -->
 
 ### 🔧 Changed

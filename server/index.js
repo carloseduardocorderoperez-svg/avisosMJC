@@ -510,23 +510,24 @@ app.post("/import-html", requireAuth, async (req, res) => {
 app.post("/analyze-slides", requireAuth, async (req, res) => {
   try {
     const aiResult = await analyzeAllSlides();
+    const avisos = Array.isArray(aiResult.avisos) ? aiResult.avisos : [];
+    const persist = String(req.query.persist || "true").toLowerCase() !== "false";
 
-    const avisos = aiResult.avisos || [];
+    console.log("AVISOS GENERADOS:", avisos.length, "persist=", persist);
 
-    console.log("AVISOS GENERADOS:", avisos.length);
+    if (persist) {
+      const autoDate = new Date().toLocaleDateString("es-MX");
+      const nuevoSet = await createSet({
+        date: autoDate,
+        avisos,
+        source: "AI",
+      });
+      return res.json({ avisos: nuevoSet.avisos, set: nuevoSet });
+    }
 
-    const autoDate = new Date().toLocaleDateString("es-MX");
-
-    const nuevoSet = createSet({
-      date: autoDate,
-      avisos,
-      source: "AI",
-    });
-
-    res.json({ avisos: nuevoSet.avisos, set: nuevoSet });
+    return res.json({ avisos });
   } catch (error) {
     console.error("Error analizando slides:", error);
-
     res.status(500).json({
       error: "Error analizando slides",
     });

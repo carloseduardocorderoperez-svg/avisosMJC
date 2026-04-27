@@ -44,6 +44,7 @@ export default function AiImportModal({
   const [isDragging, setIsDragging] = useState(false)
   const [processStep, setProcessStep] = useState(-1)         // index in PROCESS_STEPS currently active
   const [result, setResult]         = useState(null)         // { avisos, byCategory, set }
+  const [message, setMessage]       = useState("")
   const [errorMsg, setErrorMsg]     = useState("")
 
   // Import-mode state (only relevant in review step)
@@ -61,6 +62,7 @@ export default function AiImportModal({
         setFile(null)
         setProcessStep(-1)
         setResult(null)
+        setMessage("")
         setErrorMsg("")
         setImportMode("replace")
         setCheckedAvisoIds(new Set())
@@ -100,6 +102,7 @@ export default function AiImportModal({
       const uploadRes = await fetch(apiUrl("/upload-pdf"), {
         method: "POST",
         body: formData,
+        credentials: "include",
       })
 
       if (!uploadRes.ok) throw new Error("No se pudo subir el PDF")
@@ -109,15 +112,26 @@ export default function AiImportModal({
 
       setProcessStep(2)
 
-      const analyzeRes = await fetch(apiUrl("/analyze-slides"), {
+      const analyzeRes = await fetch(apiUrl("/analyze-slides?persist=false"), {
         method: "POST",
+        credentials: "include",
       })
 
       if (!analyzeRes.ok) throw new Error("Falló el análisis de IA")
 
       const data = await analyzeRes.json()
-      const avisos = data.avisos || []
+      console.debug("AiImportModal analysis response:", data)
+      const avisosFromResponse = Array.isArray(data.avisos) ? data.avisos : []
       const backendSet = data.set || null
+      const setAvisos = Array.isArray(backendSet?.avisos) ? backendSet.avisos : []
+      const avisos = avisosFromResponse.length > 0 ? avisosFromResponse : setAvisos
+
+      if (avisosFromResponse.length === 0 && setAvisos.length > 0) {
+        console.warn("AiImportModal: uso avisos del set backend porque data.avisos estaba vacío", {
+          data,
+          backendSet,
+        })
+      }
 
       const byCategory = avisos.reduce((acc, aviso) => {
         const cat = (aviso.categoria || "extras").toLowerCase()
@@ -125,6 +139,11 @@ export default function AiImportModal({
         return acc
       }, {})
 
+      const fallbackNotice = avisosFromResponse.length === 0 && setAvisos.length > 0
+        ? " (usando avisos guardados en el set de backend)"
+        : ""
+
+      setMessage(`¡Análisis completado! Se encontraron ${avisos.length} avisos.${fallbackNotice}`)
       setResult({ avisos, byCategory, set: backendSet })
       setImportMode("replace")
       setCheckedAvisoIds(new Set(avisos.map((a, i) => a.id ?? i)))
@@ -321,6 +340,18 @@ export default function AiImportModal({
                 ))}
               </div>
             </div>
+            {result.avisos.length === 0 && (
+              <div style={{
+                marginTop: "16px",
+                padding: "12px 16px",
+                backgroundColor: "#fff3cd",
+                color: "#856404",
+                borderRadius: "8px",
+                border: "1px solid #ffeeba"
+              }}>
+                No se detectaron avisos en este PDF. Revisa el documento o prueba con otro archivo.
+              </div>
+            )}
 
             {/* Aviso list — with checkboxes when mode = choose */}
             <div className="ai-aviso-list">

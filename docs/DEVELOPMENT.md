@@ -592,7 +592,134 @@ test: add unit tests for auth middleware
 
 ---
 
-## 🚀 Despliegue Local
+## � Documentación de Cambios
+
+### ¿Cuándo Documentar?
+
+**SIEMPRE documenta cuando:**
+
+- ✅ Agregas nueva funcionalidad
+- ✅ Modificas API endpoints
+- ✅ Cambias la interfaz de usuario
+- ✅ Agregas nuevas dependencias
+- ✅ Modificas configuración de despliegue
+- ✅ Corriges bugs importantes
+- ✅ Cambias estructura de base de datos
+
+**NO es necesario documentar:**
+
+- ❌ Cambios menores de estilo
+- ❌ Refactorización interna sin impacto externo
+- ❌ Cambios en comentarios o formato
+- ❌ Actualizaciones de dependencias menores
+
+### Cómo Documentar
+
+#### 1. Actualizar CHANGELOG.md
+
+Cada cambio debe documentarse en la sección `[Unreleased]` del CHANGELOG:
+
+```markdown
+## [Unreleased]
+
+### ✨ Added
+- Nueva funcionalidad agregada
+
+### 🔧 Changed
+- Cambio en funcionalidad existente
+
+### 🐛 Fixed
+- Corrección de bug
+
+### 🗑️ Removed
+- Funcionalidad removida
+
+### 📚 Documentation
+- Cambios en documentación
+
+### 🔒 Security
+- Cambios relacionados con seguridad
+```
+
+#### 2. Usar Template de Cambios
+
+Para cambios complejos, usa el template [`CHANGE_TEMPLATE.md`](../CHANGE_TEMPLATE.md):
+
+```bash
+# Copia el template
+cp docs/CHANGE_TEMPLATE.md docs/changes/cambio-descriptivo.md
+
+# Completa toda la información requerida
+# Incluye archivos modificados, testing, despliegue, etc.
+```
+
+#### 3. Actualizar Documentación Técnica
+
+- **API.md**: Cambios en endpoints, autenticación, errores
+- **FRONTEND.md**: Nuevos componentes, cambios en UI
+- **DEPLOYMENT.md**: Nuevas variables, configuración
+- **README.md**: Cambios en funcionalidad principal
+
+#### 4. Commits Relacionados
+
+```bash
+# Para cambios que requieren documentación
+git commit -m "feat: add user profile page
+
+- Add profile component with avatar upload
+- Update user API endpoint
+- Add profile route in router
+
+Closes #123"
+
+# Para documentación
+git commit -m "docs: update CHANGELOG and API docs for user profile feature"
+```
+
+### Checklist de Documentación
+
+Antes de hacer commit, verifica:
+
+- [ ] **CHANGELOG.md** actualizado
+- [ ] **Documentos técnicos** actualizados si aplica
+- [ ] **Template de cambios** usado para features complejas
+- [ ] **Variables de entorno** documentadas
+- [ ] **Tests documentados** si agregados
+- [ ] **Breaking changes** claramente marcados
+
+### Ejemplos de Documentación
+
+#### Para una nueva funcionalidad:
+```markdown
+### ✨ Added
+- **User Profile Page**: Nueva página de perfil con upload de avatar
+  - Componente `Profile.jsx` con formulario de edición
+  - Endpoint `GET/PUT /api/user/profile` para datos
+  - Validación de imagen y límites de tamaño
+  - Integración con Google Drive para storage
+```
+
+#### Para corrección de bug:
+```markdown
+### 🐛 Fixed
+- **OAuth Redirect Error**: Corregido error de redirección en producción
+  - URL dinámica usando `SERVER_URL` environment variable
+  - Fallback para desarrollo local
+  - Validación de URLs permitidas
+```
+
+#### Para cambio técnico:
+```markdown
+### 🔧 Changed
+- **Database Schema**: Optimización de consultas en Firestore
+  - Índices compuestos para búsquedas por fecha
+  - Cache de 24 horas para datos estáticos
+  - Reducción de 40% en tiempo de respuesta
+```
+
+---
+
+## �🚀 Despliegue Local
 
 ### Build de Producción
 
