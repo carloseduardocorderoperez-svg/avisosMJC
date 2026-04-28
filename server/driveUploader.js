@@ -31,7 +31,7 @@ function getDriveClient() {
   const refreshToken = process.env.GOOGLE_REFRESH_TOKEN;
   if (!refreshToken) {
     throw new Error(
-      "GOOGLE_REFRESH_TOKEN no está configurado. Visita http://localhost:3000/auth/start para autorizar.",
+      `GOOGLE_REFRESH_TOKEN no está configurado. Visita ${baseUrl}/auth/start para autorizar.`,
     );
   }
   const oauth2Client = getOAuthClient();
@@ -109,7 +109,7 @@ async function uploadImageToDrive(filePath, originalName, folderId) {
   return {
     id: fileId,
     name: originalName,
-    thumbnailUrl: `http://localhost:3000/images/thumb/${fileId}`,
+    thumbnailUrl: `${baseUrl}/images/thumb/${fileId}`,
     url: `https://drive.google.com/thumbnail?id=${fileId}&sz=w2000`,
   };
 }
@@ -131,7 +131,7 @@ async function listImagesFromDrive(folderId) {
   return (res.data.files || []).map((f) => ({
     id: f.id,
     name: f.name,
-    thumbnailUrl: `http://localhost:3000/images/thumb/${f.id}`,
+    thumbnailUrl: `${baseUrl}/images/thumb/${f.id}`,
     url: `https://drive.google.com/thumbnail?id=${f.id}&sz=w2000`,
     createdAt: f.createdTime,
   }));
