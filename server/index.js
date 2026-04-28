@@ -681,7 +681,10 @@ app.get("/auth/callback", async (req, res) => {
     });
 
     // Redirigir de vuelta a la aplicación (al dashboard)
-    const redirectUrl = `${process.env.CLIENT_URL || 'http://localhost:5173'}/dashboard`;
+    const clientBase = (process.env.CLIENT_URL || 'http://localhost:5173').replace(/\/$/, '');
+    const redirectUrl = process.env.CLIENT_USE_HASH === 'true'
+      ? `${clientBase}/#/dashboard`
+      : `${clientBase}/dashboard`;
     res.redirect(redirectUrl);
   } catch (err) {
     console.error('Error en callback:', err);
