@@ -75,6 +75,31 @@ export function formatDayMonth(value) {
   return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })
 }
 
+export function formatFullDate(value, opts = { capitalizeWeekday: true, useDelYear: true }) {
+  const d = parseFlexibleDate(value)
+  if (!d) {
+    if (typeof value === 'string') {
+      // try to return a sanitized fallback
+      const m = value.match(/(\d{1,2})\s+de\s+([a-záéíóúñ]+)(?:\s+(?:del|de)\s+(\d{2,4}))?/i)
+      if (m) {
+        const day = parseInt(m[1], 10)
+        const month = m[2].toLowerCase()
+        const year = m[3] ? m[3] : null
+        return year ? `${opts.capitalizeWeekday ? '' : ''}${day} de ${month}${opts.useDelYear && year ? ` del ${year}` : year ? ` ${year}` : ''}` : `${day} de ${month}`
+      }
+      return value
+    }
+    return 'Set sin fecha'
+  }
+
+  const weekday = d.toLocaleDateString('es-ES', { weekday: 'long' })
+  const weekdayStr = opts.capitalizeWeekday ? weekday.charAt(0).toUpperCase() + weekday.slice(1) : weekday
+  const day = d.getDate()
+  const month = d.toLocaleDateString('es-ES', { month: 'long' })
+  const year = d.getFullYear()
+  return `${weekdayStr} ${day} de ${month}${opts.useDelYear ? ` del ${year}` : ` ${year}`}`
+}
+
 export function getYear(value) {
   const d = parseFlexibleDate(value)
   return d ? d.getFullYear() : null

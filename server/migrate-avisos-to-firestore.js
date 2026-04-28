@@ -32,7 +32,7 @@ function normalizeData(raw) {
       {
         id: raw.id || raw.code || `set-${Date.now()}`,
         code: raw.code || "DEFAULT",
-        date: raw.date || new Date().toLocaleDateString("es-MX"),
+        date: raw.date || new Date().toISOString(),
         title: raw.title || "AVISOS ZONALES",
         bannerMessage: raw.bannerMessage,
         avisos: raw.avisos,

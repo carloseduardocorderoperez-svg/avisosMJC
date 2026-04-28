@@ -207,7 +207,7 @@ function normalizeToMultiSet(raw) {
   const defaultSet = {
     id: uuidv4(),
     code: "DEFAULT",
-    date: new Date().toLocaleDateString("es-MX"),
+    date: new Date().toISOString(),
     title: "AVISOS ZONALES",
     avisos,
     createdAt: now,
@@ -242,24 +242,55 @@ function restoreFirestoreValue(value) {
 function toPlainSet(data, id) {
   const restored = restoreFirestoreValue(data);
 
+  function tsObjectToIso(obj) {
+    if (!obj || typeof obj !== 'object') return null;
+
+    // Firestore client/server representation: {_seconds, _nanoseconds}
+    const s = obj._seconds != null ? obj._seconds : obj.seconds != null ? obj.seconds : null;
+    const n = obj._nanoseconds != null ? obj._nanoseconds : obj.nanoseconds != null ? obj.nanoseconds : null;
+
+    if (s != null) {
+      const ms = Number(s) * 1000 + (Number(n || 0) / 1e6);
+      const d = new Date(ms);
+      if (!isNaN(d.getTime())) return d.toISOString();
+    }
+
+    return null;
+  }
+
+  const makeIso = (val) => {
+    if (!val && val !== 0) return null;
+    if (typeof val === 'string') return val;
+    if (typeof val === 'object') {
+      if (typeof val.toDate === 'function') {
+        try { return val.toDate().toISOString(); } catch (e) { /* ignore */ }
+      }
+      const iso = tsObjectToIso(val);
+      if (iso) return iso;
+      // fallback to JSON stringify if nothing else
+      try { return JSON.stringify(val); } catch (e) { return String(val); }
+    }
+    // other types
+    try {
+      const d = new Date(val);
+      return isNaN(d.getTime()) ? String(val) : d.toISOString();
+    } catch (e) {
+      return String(val);
+    }
+  };
+
   return {
     id,
     code: restored.code || "",
     codeLower: String(restored.code || "").trim().toLowerCase(),
-    date: restored.date || new Date().toLocaleDateString("es-MX"),
+    date: makeIso(restored.date) || new Date().toISOString(),
     title: restored.title || "AVISOS ZONALES",
     bannerMessage:
       restored.bannerMessage ||
       "Gracias por revisar todos los avisos! Reacciona con un 🚬 si llegaste hasta aquí",
     avisos: Array.isArray(restored.avisos) ? restored.avisos : [],
-    createdAt:
-      restored.createdAt && typeof restored.createdAt.toDate === "function"
-        ? restored.createdAt.toDate().toISOString()
-        : restored.createdAt || new Date().toISOString(),
-    updatedAt:
-      restored.updatedAt && typeof restored.updatedAt.toDate === "function"
-        ? restored.updatedAt.toDate().toISOString()
-        : restored.updatedAt || new Date().toISOString(),
+    createdAt: makeIso(restored.createdAt) || new Date().toISOString(),
+    updatedAt: makeIso(restored.updatedAt) || new Date().toISOString(),
   };
 }
 
@@ -273,6 +304,23 @@ function encodeFirestoreValue(value) {
   }
 
   if (value && typeof value === "object") {
+    // Preserve Firestore Timestamp and Date objects as-is when possible
+    try {
+      if (
+        typeof admin !== "undefined" &&
+        admin &&
+        admin.firestore &&
+        typeof admin.firestore.Timestamp === "function" &&
+        value instanceof admin.firestore.Timestamp
+      ) {
+        return value;
+      }
+    } catch (e) {
+      // ignore
+    }
+
+    if (value instanceof Date) return value;
+
     return Object.fromEntries(
       Object.entries(value).map(([key, val]) => [key, encodeFirestoreValue(val)]),
     );
@@ -283,6 +331,88 @@ function encodeFirestoreValue(value) {
 
 function sanitizeSetForFirestore(set) {
   return encodeFirestoreValue(set);
+}
+
+function convertDatesToFirestoreValues(obj) {
+  if (!isFirestoreAvailable()) return obj;
+
+  const copy = { ...obj };
+
+  try {
+    // createdAt
+    if (copy.createdAt) {
+      if (typeof copy.createdAt === 'string') {
+        const d = new Date(copy.createdAt);
+        copy.createdAt = isNaN(d.getTime()) ? admin.firestore.Timestamp.now() : admin.firestore.Timestamp.fromDate(d);
+      } else if (copy.createdAt instanceof Date) {
+        copy.createdAt = admin.firestore.Timestamp.fromDate(copy.createdAt);
+      }
+    } else {
+      copy.createdAt = admin.firestore.Timestamp.now();
+    }
+
+    // updatedAt
+    if (copy.updatedAt) {
+      if (typeof copy.updatedAt === 'string') {
+        const d = new Date(copy.updatedAt);
+        copy.updatedAt = isNaN(d.getTime()) ? admin.firestore.Timestamp.now() : admin.firestore.Timestamp.fromDate(d);
+      } else if (copy.updatedAt instanceof Date) {
+        copy.updatedAt = admin.firestore.Timestamp.fromDate(copy.updatedAt);
+      }
+    } else {
+      copy.updatedAt = admin.firestore.Timestamp.now();
+    }
+
+    // date (user-visible date)
+    if (copy.date) {
+      if (typeof copy.date === 'string') {
+        let parsed = null;
+        // dd/mm[/yyyy]
+        const parts = copy.date.split('/');
+        if (parts.length === 3) {
+          const day = parseInt(parts[0], 10);
+          const month = parseInt(parts[1], 10) - 1;
+          const year = parts[2].length === 2 ? 2000 + parseInt(parts[2], 10) : parseInt(parts[2], 10);
+          const d = new Date(year, month, day);
+          if (!isNaN(d.getTime())) parsed = d;
+        }
+
+        if (!parsed) {
+          const iso = new Date(copy.date);
+          if (!isNaN(iso.getTime())) parsed = iso;
+        }
+
+        if (!parsed) {
+          const m = copy.date.match(/(?:^[A-Za-záéíóúñÁÉÍÓÚÑ]+\s+)?(\d{1,2})\s+de\s+([a-záéíóúñ]+)(?:\s+(?:del|de)\s+(\d{2,4}))?/i);
+          if (m) {
+            const day = parseInt(m[1], 10);
+            const monthName = m[2].toLowerCase();
+            const monthNames = {
+              enero: 0, febrero: 1, marzo: 2, abril: 3, mayo: 4, junio: 5,
+              julio: 6, agosto: 7, septiembre: 8, octubre: 9, noviembre: 10, diciembre: 11,
+            };
+            const monthIndex = monthNames[monthName];
+            const year = m[3] ? parseInt(m[3], 10) : new Date().getFullYear();
+            if (typeof monthIndex === 'number') {
+              const d = new Date(year, monthIndex, day);
+              if (!isNaN(d.getTime())) parsed = d;
+            }
+          }
+        }
+
+        if (parsed) {
+          copy.date = admin.firestore.Timestamp.fromDate(parsed);
+        }
+        // otherwise keep as string
+      } else if (copy.date instanceof Date) {
+        copy.date = admin.firestore.Timestamp.fromDate(copy.date);
+      }
+    }
+  } catch (e) {
+    console.warn('Error converting date fields for Firestore:', e && e.message ? e.message : e);
+  }
+
+  return copy;
 }
 
 async function saveAllSetsToFirestore(data) {
@@ -300,10 +430,12 @@ async function saveAllSetsToFirestore(data) {
   (data.sets || []).forEach((set) => {
     incomingIds.add(String(set.id));
     const ref = setsCollection.doc(String(set.id));
-    batch.set(ref, sanitizeSetForFirestore({
+    const payload = sanitizeSetForFirestore(convertDatesToFirestoreValues({
       ...set,
       codeLower: String(set.code || "").trim().toLowerCase(),
     }));
+
+    batch.set(ref, payload);
   });
 
   existingIds.forEach((id) => {
@@ -395,7 +527,7 @@ async function createSet({ code, date, title, bannerMessage, avisos, source = "S
   const newSet = {
     id: uuidv4(),
     code: resolveSetCode(sets, code, source),
-    date: date || new Date().toLocaleDateString("es-MX"),
+    date: date || new Date().toISOString(),
     title: title || "AVISOS ZONALES",
     bannerMessage: bannerMessage || "Gracias por revisar todos los avisos! Reacciona con un 🚬 si llegaste hasta aquí",
     avisos: Array.isArray(avisos) ? avisos : [],
@@ -408,10 +540,10 @@ async function createSet({ code, date, title, bannerMessage, avisos, source = "S
   const updated = { sets: [...sets, newSet] };
 
   if (isFirestoreAvailable()) {
-    await db.collection("sets").doc(newSet.id).set(sanitizeSetForFirestore({
+    await db.collection("sets").doc(newSet.id).set(sanitizeSetForFirestore(convertDatesToFirestoreValues({
       ...newSet,
       codeLower: String(newSet.code || "").trim().toLowerCase(),
-    }));
+    })));
   } else {
     saveAllSets(updated);
   }
@@ -446,10 +578,10 @@ async function updateSet(id, partial) {
   nextSets[idx] = merged;
 
   if (isFirestoreAvailable()) {
-    await db.collection("sets").doc(merged.id).set(sanitizeSetForFirestore({
+    await db.collection("sets").doc(merged.id).set(sanitizeSetForFirestore(convertDatesToFirestoreValues({
       ...merged,
       codeLower: String(merged.code || "").trim().toLowerCase(),
-    }));
+    })));
   } else {
     saveAllSets({ sets: nextSets });
   }
@@ -495,10 +627,10 @@ async function duplicateSet(id) {
   };
 
   if (isFirestoreAvailable()) {
-    await db.collection("sets").doc(cloned.id).set(sanitizeSetForFirestore({
+    await db.collection("sets").doc(cloned.id).set(sanitizeSetForFirestore(convertDatesToFirestoreValues({
       ...cloned,
       codeLower: String(cloned.code || "").trim().toLowerCase(),
-    }));
+    })));
   } else {
     const nextSets = [...sets, cloned];
     saveAllSets({ sets: nextSets });

@@ -336,7 +336,7 @@ app.post("/sets/:id/generar-html", requireAuth, async (req, res) => {
     }
 
     // Actualizar la fecha del set a la fecha actual
-    const currentDate = new Date().toLocaleDateString("es-MX");
+    const currentDate = new Date().toISOString();
     set.date = currentDate;
     await updateSet(id, set);
 
@@ -520,7 +520,7 @@ app.post("/import-html", requireAuth, async (req, res) => {
     const aiResult = await extractFromHtml(html);
 
     const avisos = aiResult.avisos || [];
-    const autoDate = date || aiResult.date || new Date().toLocaleDateString("es-MX");
+    const autoDate = date || aiResult.date || new Date().toISOString();
     const autoTitle = aiResult.title || "AVISOS ZONALES";
 
     const nuevoSet = createSet({
@@ -552,7 +552,7 @@ app.post("/analyze-slides", requireAuth, async (req, res) => {
     console.log("AVISOS GENERADOS:", avisos.length, "persist=", persist);
 
     if (persist) {
-      const autoDate = new Date().toLocaleDateString("es-MX");
+      const autoDate = new Date().toISOString();
       const nuevoSet = await createSet({
         date: autoDate,
         avisos,

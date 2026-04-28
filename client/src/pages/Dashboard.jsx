@@ -4,7 +4,7 @@ import { Plus } from "lucide-react"
 import { useAvisosStore } from "../store/avisosStore"
 import { authenticatedRequest } from "../utils/api"
 import DashboardSetCard from "../components/dashboard/DashboardSetCard"
-import { formatDayMonth } from "../utils/dateUtils"
+import { formatDayMonth, formatFullDate } from "../utils/dateUtils"
 import "../styles/dashboard.css"
 
 export default function Dashboard() {
@@ -172,8 +172,8 @@ export default function Dashboard() {
   }
 
   const getSetLabel = (set) => {
-    if (set?.date) return formatDayMonth(set.date)
-    if (set?.createdAt) return formatDayMonth(set.createdAt)
+    if (set?.date) return formatFullDate(set.date)
+    if (set?.createdAt) return formatFullDate(set.createdAt)
     return 'Set sin fecha'
   }
 
