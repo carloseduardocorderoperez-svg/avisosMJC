@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { useAvisosStore } from "../store/avisosStore";
 import BlockRenderer from "../components/blocks/BlockRenderer";
 import CopyToSetModal from "../components/CopyToSetModal";
-import apiUrl from "../utils/api"
+import apiUrl, { apiRequest } from "../utils/api"
 
 import {
   DndContext,
@@ -753,7 +753,7 @@ export default function Avisos() {
   const cargarAvisos = useCallback(async () => {
     if (!setId) return;
 
-    const res = await fetch(apiUrl(`/avisos?setId=${encodeURIComponent(setId)}`));
+    const res = await apiRequest(`/avisos?setId=${encodeURIComponent(setId)}`);
 
     if (!res.ok) {
       console.error("Error cargando avisos del set");
