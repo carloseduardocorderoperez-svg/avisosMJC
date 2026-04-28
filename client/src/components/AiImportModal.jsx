@@ -120,18 +120,10 @@ export default function AiImportModal({
       if (!analyzeRes.ok) throw new Error("Falló el análisis de IA")
 
       const data = await analyzeRes.json()
-      console.debug("AiImportModal analysis response:", data)
       const avisosFromResponse = Array.isArray(data.avisos) ? data.avisos : []
       const backendSet = data.set || null
       const setAvisos = Array.isArray(backendSet?.avisos) ? backendSet.avisos : []
       const avisos = avisosFromResponse.length > 0 ? avisosFromResponse : setAvisos
-
-      if (avisosFromResponse.length === 0 && setAvisos.length > 0) {
-        console.warn("AiImportModal: uso avisos del set backend porque data.avisos estaba vacío", {
-          data,
-          backendSet,
-        })
-      }
 
       const byCategory = avisos.reduce((acc, aviso) => {
         const cat = (aviso.categoria || "extras").toLowerCase()

@@ -11,7 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ✨ Added
 - Sistema de documentación continua implementado
-- Nueva página de Importar con flujo completo PDF → IA → Editor
 <!-- Nuevas funcionalidades agregadas -->
 
 ### 🔧 Changed
@@ -21,10 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- Corrección de bugs -->
 
 ### 🗑️ Removed
-<!-- Funcionalidades removidas -->
+- Página `/importar` eliminada; ahora el flujo IA se ejecuta desde el modal en la barra de navegación
 
 ### 📚 Documentation
-<!-- Cambios en documentación -->
+- Actualizada la documentación de cambios para reflejar la limpieza del flujo de importación
 
 ### 🔒 Security
 <!-- Cambios relacionados con seguridad -->

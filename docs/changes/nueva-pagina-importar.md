@@ -1,6 +1,6 @@
-# 📋 Documentación: Nueva Página de Importar
+﻿# 📋 Documentación: Limpieza de la página `Importar`
 
-Usa este template para documentar cambios en el proyecto MJC Avisos IA.
+Este documento describe la limpieza del flujo de importación IA tras la eliminación de la página temporal `/importar`.
 
 ---
 
@@ -8,39 +8,33 @@ Usa este template para documentar cambios en el proyecto MJC Avisos IA.
 
 **Fecha:** 2026-04-27
 **Autor:** Carlos
-**Tipo de Cambio:** Feature
-**Área Afectada:** Frontend, Backend, UI/UX
+**Tipo de Cambio:** Cleanup
+**Área Afectada:** Frontend, Documentación
 
 ---
 
 ## 🎯 Descripción del Cambio
 
-### ¿Qué se cambió?
-Se creó una nueva página "Importar" que integra completamente el flujo de subida de PDFs y procesamiento con IA, solucionando el problema donde los avisos se creaban en el backend pero no se mostraban correctamente en el frontend.
+### ¿Qué se limpió?
+Se eliminó la página `Importar` y las referencias asociadas, dejando como único punto de entrada para la importación de avisos IA el modal disponible en la barra de navegación.
 
-### ¿Por qué se cambió?
-El usuario reportó que al usar la funcionalidad de "leer PDF con IA", el sistema indicaba "0 avisos" pero al ir al dashboard aparecía un nuevo set con 16 avisos. Esto se debía a que el componente `AnalyzeSlides` funcionaba de manera aislada y no estaba integrado con el flujo normal de la aplicación.
+### ¿Por qué se limpió?
+La página `/importar` ya no estaba en uso y generaba documentación y changelog inconsistentes con el estado actual del proyecto.
 
 ### ¿Cómo se implementó?
-1. **Nueva página `Importar.jsx`**: Página completa con flujo paso a paso
-2. **Integración de componentes**: `PdfUploader` y `AnalyzeSlides` ahora trabajan juntos
-3. **Mejora de `AnalyzeSlides`**: Agregado navegación automática y feedback visual
-4. **Actualización de rutas**: Nueva ruta `/importar` en el sistema de navegación
-5. **Estilos CSS**: Interfaz moderna con indicadores de progreso
+1. Se eliminó el componente redundante `client/src/components/AnalyzeSlides.jsx`.
+2. Se retiró cualquier referencia a la ruta `/importar` en el frontend.
+3. Se actualizó `docs/CHANGELOG.md` para reflejar la limpieza.
+4. Se actualizó la documentación de cambios para documentar esta limpieza.
 
 ---
 
 ## 📋 Checklist de Documentación
 
-- [x] **CHANGELOG.md** actualizado en sección `[Unreleased]`
-- [ ] **README.md** actualizado si afecta funcionalidad principal
-- [ ] **API.md** actualizado si hay cambios en endpoints
-- [x] **FRONTEND.md** actualizado si hay cambios en componentes
-- [ ] **DEPLOYMENT.md** actualizado si hay cambios en configuración
-- [ ] **DEVELOPMENT.md** actualizado si hay cambios en procesos
-- [ ] Variables de entorno documentadas si se agregaron nuevas
-- [ ] Tests agregados o actualizados
-- [ ] Comentarios en código si es necesario
+- [x] **CHANGELOG.md** actualizado en la sección `[Unreleased]`
+- [x] Documento de cambios adaptado al flujo actual
+- [ ] README.md revisado si es necesario reflejar la eliminación del flujo obsoleto
+- [ ] API.md revisado si hay cambios en endpoints (no aplica)
 
 ---
 
@@ -49,86 +43,39 @@ El usuario reportó que al usar la funcionalidad de "leer PDF con IA", el sistem
 ### Archivos Modificados
 ```
 📁 client/src/
-├── 📄 pages/Importar.jsx - [NUEVO] Página principal de importar
-├── 📄 components/AnalyzeSlides.jsx - Mejorado con navegación y feedback
-├── 📄 components/PdfUploader.jsx - Agregado callback onUploadSuccess
-├── 📄 components/layout/Navbar.jsx - Agregado enlace a "Importar"
-├── 📄 App.jsx - Agregada nueva ruta /importar
-└── 📄 styles/app.css - Agregados estilos para página de importar
+├── 📄 components/AiImportModal.jsx - Eliminado debug innecesario y se mantiene el flujo IA estable
+├── 📄 components/AnalyzeSlides.jsx - [ELIMINADO] Componente obsoleto no referenciado
 
 📁 docs/
-├── 📄 changes/nueva-pagina-importar.md - [NUEVO] Esta documentación
-└── 📄 CHANGELOG.md - Actualizado con nueva entrada
+├── 📄 CHANGELOG.md - Actualizado para reflejar la limpieza
+├── 📄 changes/nueva-pagina-importar.md - Actualizado para documentar la eliminación del flujo obsoleto
 ```
 
-### Nuevas Dependencias
-- Ninguna nueva dependencia agregada
-
-### Variables de Entorno Nuevas
-- Ninguna variable nueva requerida
-
-### Endpoints Nuevos/Modificados
-- Ningún endpoint nuevo (se usan existentes `/upload-pdf` y `/analyze-slides`)
+### Cambios en el flujo IA
+- El modal IA en la barra de navegación es ahora el único punto de entrada para importar PDFs.
+- El backend conserva el endpoint `/analyze-slides` y el frontend usa `?persist=false` en el flujo modal.
+- No queda ninguna ruta pública `/importar` ni página duplicada.
 
 ---
 
-## 🧪 Testing
+## 🧪 Validación
 
-### Casos de Prueba Agregados
-- [ ] Flujo completo: Subir PDF → Procesar con IA → Redirigir al editor
-- [ ] Manejo de errores en subida de PDF
-- [ ] Manejo de errores en procesamiento IA
-- [ ] Navegación automática después del éxito
+### Casos de prueba realizados
+- [x] Verificar que no existen referencias a `/importar` en el frontend
+- [x] Confirmar que el modal IA sigue funcionando
+- [x] Confirmar que el changelog refleja la limpieza
 
-### Comandos para Probar
-```bash
-# Probar la nueva funcionalidad
-1. Ir a /importar
-2. Subir un PDF de avisos
-3. Hacer click en "Analizar Slides con IA"
-4. Verificar que se crea el set y redirige al editor
-```
+### Recomendaciones de verificación adicionales
+- [ ] Ejecutar el build del frontend para comprobar que no haya imports rotos
+- [ ] Revisar README.md si antes se documentó el flujo `/importar`
 
 ---
 
-## 🚀 Despliegue
+## 📚 Notas
 
-### ¿Requiere migración?
-- [ ] Sí - [descripción de la migración]
-- [x] No - Solo nueva funcionalidad frontend
-
-### Variables de entorno requeridas
-- [x] Ninguna nueva
-
-### Pasos de despliegue especiales
-1. Deploy normal del frontend
-2. La funcionalidad usa endpoints existentes
-
----
-
-## 📚 Documentación Adicional
-
-### Enlaces relacionados
-- Issue: Reporte del usuario sobre "0 avisos" pero set creado
-- Componentes relacionados: `PdfUploader`, `AnalyzeSlides`
-- Página anterior: No existía flujo integrado
-
-### Notas para revisores
-- El backend ya funcionaba correctamente
-- El problema estaba en la UX/UI - falta de integración
-- Ahora hay un flujo completo y claro para el usuario
-- Se mantiene compatibilidad con métodos anteriores
-
----
-
-## ✅ Validación Final
-
-- [x] Código revisado
-- [x] Tests básicos realizados
-- [x] Linting pasa
-- [x] Build funciona
-- [x] Documentación completa
-- [x] Listo para merge
+- Esta limpieza mantiene el comportamiento actual de la aplicación.
+- Facilita la mantenibilidad al eliminar flujos obsoletos.
+- No introduce cambios nuevos en la lógica de importación.
 
 ---
 
