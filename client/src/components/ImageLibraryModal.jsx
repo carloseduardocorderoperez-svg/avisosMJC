@@ -16,7 +16,8 @@ export default function ImageLibraryModal({ isOpen, onClose, onSelect }) {
 
   const checkAuth = useCallback(async () => {
     try {
-      const res = await fetch(apiUrl("/auth/status"));
+      const res = await fetch(apiUrl("/auth/status"), { credentials: 'include' });
+      if (!res.ok) return false;
       const data = await res.json();
       return data.authorized === true;
     } catch {
@@ -28,7 +29,7 @@ export default function ImageLibraryModal({ isOpen, onClose, onSelect }) {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(apiUrl("/images"));
+      const res = await fetch(apiUrl("/images"), { credentials: 'include' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al cargar imágenes");
       setImages(data.images || []);
@@ -72,8 +73,14 @@ export default function ImageLibraryModal({ isOpen, onClose, onSelect }) {
   }, [waitingAuth, checkAuth, fetchImages]);
 
   const handleConnectDrive = () => {
-    window.open(apiUrl("/auth/start"), "_blank", "width=500,height=640");
+    const popup = window.open(apiUrl("/auth/start"), "_blank", "width=500,height=640");
     setWaitingAuth(true);
+
+    // Fallback: si el popup está en el mismo origen y puede comunicarse, espera mensaje
+    // También escuchamos postMessage globalmente (hook abajo) para detectar success.
+    try {
+      if (popup && popup.focus) popup.focus();
+    } catch (e) {}
   };
 
   const handleFiles = async (files) => {
@@ -86,7 +93,7 @@ export default function ImageLibraryModal({ isOpen, onClose, onSelect }) {
         setUploadProgress(`Subiendo imagen ${i + 1} de ${imageFiles.length}...`);
         const formData = new FormData();
         formData.append("image", imageFiles[i]);
-        const res = await fetch(apiUrl("/images/upload"), { method: "POST", body: formData });
+        const res = await fetch(apiUrl("/images/upload"), { method: "POST", body: formData, credentials: 'include' });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Error al subir imagen");
       }
@@ -104,7 +111,7 @@ export default function ImageLibraryModal({ isOpen, onClose, onSelect }) {
     if (!window.confirm(`¿Eliminar "${img.name}" de Drive?`)) return;
     setError(null);
     try {
-      const res = await fetch(apiUrl(`/images/${img.id}`), { method: "DELETE" });
+      const res = await fetch(apiUrl(`/images/${img.id}`), { method: "DELETE", credentials: 'include' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al eliminar");
       setImages((prev) => prev.filter((i) => i.id !== img.id));
@@ -113,6 +120,22 @@ export default function ImageLibraryModal({ isOpen, onClose, onSelect }) {
       setError(err.message);
     }
   };
+
+  // Escuchar mensajes desde el popup de autorización para manejar cierre inmediato
+  useEffect(() => {
+    function onMessage(e) {
+      try {
+        if (e.data && e.data.type === 'drive-auth-success') {
+          setWaitingAuth(false);
+          setAuthorized(true);
+          fetchImages();
+        }
+      } catch (err) {}
+    }
+
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  }, [fetchImages]);
 
   const handleInsert = () => {
     if (!selected) return;
