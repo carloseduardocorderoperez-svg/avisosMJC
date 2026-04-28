@@ -73,8 +73,10 @@ textarea {
 .page-container {
   padding: 16px 22px;
   max-width: 100%;
-  margin: 0;
-  flex: 1 1 auto;
+  margin: 20px;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
 }
 
 .page-container-fixed {

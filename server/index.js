@@ -197,19 +197,55 @@ app.post(
 
 // Listar sets (solo metadatos básicos)
 app.get("/sets", requireAuth, async (req, res) => {
+  const page = Math.max(1, parseInt(req.query.page || "1", 10) || 1);
+  const pageSize = Math.max(1, Math.min(200, parseInt(req.query.pageSize || "18", 10) || 18));
+
   const { sets } = await loadAllSets();
 
-  const payload = sets.map((s) => ({
-    id: s.id,
-    code: s.code,
-    date: s.date,
-    title: s.title,
-    avisosCount: Array.isArray(s.avisos) ? s.avisos.length : 0,
-    createdAt: s.createdAt,
-    updatedAt: s.updatedAt,
-  }));
+  const mapped = sets.map((s) => {
+    const avisosList = Array.isArray(s.avisos) ? s.avisos : [];
+    const previewAvisos = avisosList.slice(0, 3).map((aviso) => ({
+      id: aviso.id,
+      titulo: aviso.titulo || aviso.texto || aviso.categoria || "Aviso",
+      categoria: aviso.categoria || "",
+      texto: aviso.texto || "",
+    }));
 
-  res.json({ sets: payload });
+    return {
+      id: s.id,
+      code: s.code,
+      date: s.date,
+      title: s.title,
+      avisosCount: avisosList.length,
+      previewAvisos,
+      overflowCount: Math.max(0, avisosList.length - previewAvisos.length),
+      createdAt: s.createdAt,
+      updatedAt: s.updatedAt,
+    };
+  });
+
+  // ordenar por updatedAt descendente (más reciente primero)
+  // filtro por query 'q' si provista (search server-side)
+  const q = String(req.query.q || "").trim().toLowerCase();
+  const filtered = q
+    ? mapped.filter((s) => {
+        if ((s.title || "").toLowerCase().includes(q)) return true;
+        if ((s.code || "").toLowerCase().includes(q)) return true;
+        if ((s.date || "").toLowerCase().includes(q)) return true;
+        if (Array.isArray(s.previewAvisos) && s.previewAvisos.some((p) => (p.titulo || "").toLowerCase().includes(q))) return true;
+        return false;
+      })
+    : mapped;
+
+  const ordered = filtered.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+
+  const total = ordered.length;
+  const start = (page - 1) * pageSize;
+  const end = start + pageSize;
+  const pageItems = ordered.slice(start, end);
+  const hasMore = end < total;
+
+  res.json({ sets: pageItems, total, page, pageSize, hasMore });
 });
 
 // Crear un nuevo set vacío (o con avisos iniciales opcionales)

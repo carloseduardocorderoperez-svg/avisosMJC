@@ -1,13 +1,20 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { Plus, Pencil, Eye, Clipboard, Copy, Trash2 } from "lucide-react"
+import { Plus } from "lucide-react"
 import { useAvisosStore } from "../store/avisosStore"
-import { authenticatedRequest, checkAuthStatus } from "../utils/api"
+import { authenticatedRequest } from "../utils/api"
+import DashboardSetCard from "../components/dashboard/DashboardSetCard"
+import "../styles/dashboard.css"
 
 export default function Dashboard() {
   const [sets, setSets] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [page, setPage] = useState(1)
+  const [pageSize] = useState(18)
+  const [hasMore, setHasMore] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [query, setQuery] = useState("")
 
   const navigate = useNavigate()
   const clearCurrentSet = useAvisosStore((s) => s.clearCurrentSet)
@@ -50,27 +57,43 @@ export default function Dashboard() {
     clearCurrentSet()
   }, [clearCurrentSet])
 
-  const cargarSets = async () => {
+  const cargarPagina = async (p = 1, append = false) => {
     try {
-      setLoading(true)
+      if (append) setLoadingMore(true)
+      else setLoading(true)
       setError("")
 
-      const res = await authenticatedRequest("/sets")
+      const qParam = query && String(query).trim() ? `&q=${encodeURIComponent(String(query).trim())}` : ""
+      const res = await authenticatedRequest(`/sets?page=${p}&pageSize=${pageSize}${qParam}`)
       const data = await res.json()
-      // Ordenar por updatedAt descendente (más reciente primero)
-      const sortedSets = (data.sets || []).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
-      setSets(sortedSets)
+      const incoming = (data.sets || []).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+
+      setSets((prev) => (append ? [...prev, ...incoming] : incoming))
+      setHasMore(Boolean(data.hasMore))
+      setPage(p)
     } catch (err) {
       console.error(err)
       setError(err.message || "Error cargando dashboard")
     } finally {
-      setLoading(false)
+      if (append) setLoadingMore(false)
+      else setLoading(false)
     }
   }
 
   useEffect(() => {
-    cargarSets()
+    cargarPagina(1, false)
   }, [])
+
+  // debounce search
+  useEffect(() => {
+    const t = setTimeout(() => cargarPagina(1, false), 300)
+    return () => clearTimeout(t)
+  }, [query])
+
+  const handleLoadMore = () => {
+    if (!hasMore || loadingMore) return
+    cargarPagina(page + 1, true)
+  }
 
   const handleCrear = async () => {
     try {
@@ -147,96 +170,100 @@ export default function Dashboard() {
     }
   }
 
+  const getSetLabel = (set) => {
+    const parseToDate = (dateStr) => {
+      if (!dateStr) return null
+      if (dateStr instanceof Date) return dateStr
+      if (typeof dateStr === 'string' && dateStr.includes('/')) {
+        return parseDateString(dateStr)
+      }
+      const d = new Date(dateStr)
+      return isNaN(d.getTime()) ? null : d
+    }
+
+    const formatSetLabelDate = (dateStr) => {
+      const d = parseToDate(dateStr)
+      if (!d) {
+        if (typeof dateStr === 'string') return dateStr.replace(/\s+del\s+/i, ' de ')
+        return 'Set sin fecha'
+      }
+      return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })
+    }
+
+    if (set?.date) return formatSetLabelDate(set.date)
+    if (set?.createdAt) return formatSetLabelDate(set.createdAt)
+    return 'Set sin fecha'
+  }
+
+  const setsWithDisplayTitle = (() => {
+    const titleCounts = {}
+    return sets.map((set) => {
+      const baseLabel = getSetLabel(set)
+      const count = titleCounts[baseLabel] || 0
+      titleCounts[baseLabel] = count + 1
+      const displayTitle = count === 0 ? baseLabel : `${baseLabel} (${count})`
+      return {
+        ...set,
+        displayTitle,
+      }
+    })
+  })()
+
   return (
     <div className="page-card designer-page">
       <div className="dashboard-header">
         <div>
-          <h1 className="page-title">Dashboard</h1>
-          <p className="page-subtitle">
-            Gestiona tus grupos de avisos: crea nuevos, edita, duplica, elimina,
-            copia el HTML completo o abre la vista previa.
-          </p>
+          <h1 className="page-title">Sets de Avisos</h1>
+          <p className="page-subtitle">Gestiona y organiza tus conjuntos de anuncios</p>
+
+          <div className="dashboard-search-row">
+            <input
+              className="modern-input dashboard-search"
+              placeholder="Buscar sets de avisos..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </div>
         </div>
-        <button className="btn btn-primary" onClick={handleCrear}>
-          <Plus size={14} /> Crear nuevo grupo de avisos
+
+        <button className="btn btn-create" onClick={handleCrear}>
+          <Plus size={14} /> Nuevo Set
         </button>
       </div>
 
       {error && <div className="error-banner">{error}</div>}
 
-      <div className="dashboard-table-wrapper">
-        <table className="dashboard-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Fecha</th>
-              <th>Cantidad de avisos</th>
-              <th>Última modificación</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan={5} style={{ textAlign: "center" }}>
-                  Cargando grupos de avisos…
-                </td>
-              </tr>
-            ) : sets.length === 0 ? (
-              <tr>
-                <td colSpan={5} style={{ textAlign: "center" }}>
-                  Aún no hay grupos de avisos. Crea uno nuevo para empezar.
-                </td>
-              </tr>
-            ) : (
-              sets.map((set) => (
-                <tr key={set.id}>
-                  <td>{set.code || set.id}</td>
-                  <td title={set.createdAt ? new Date(set.createdAt).toLocaleString('es-ES') : ""}>
-                    {formatRelativeDate(set.createdAt)}
-                  </td>
-                  <td>{set.avisosCount ?? 0}</td>
-                  <td title={set.updatedAt ? new Date(set.updatedAt).toLocaleString('es-ES') : ""}>
-                    {formatRelativeDate(set.updatedAt)}
-                  </td>
-                  <td className="dashboard-actions-cell">
-                    <button
-                      className="btn btn-small btn-primary"
-                      onClick={() => handleEditar(set.id)}
-                    >
-                      <Pencil size={13} /> Editar
-                    </button>
-                    <button
-                      className="btn btn-small btn-neutral"
-                      onClick={() => handlePreview(set.id)}
-                    >
-                      <Eye size={13} /> Vista previa
-                    </button>
-                    <button
-                      className="btn btn-small btn-neutral"
-                      onClick={() => handleCopiarHtml(set.id)}
-                    >
-                      <Clipboard size={13} /> Copiar HTML
-                    </button>
-                    <button
-                      className="btn btn-small btn-neutral"
-                      onClick={() => handleDuplicar(set.id)}
-                    >
-                      <Copy size={13} /> Duplicar
-                    </button>
-                    <button
-                      className="btn btn-small btn-danger"
-                      onClick={() => handleEliminar(set.id)}
-                    >
-                      <Trash2 size={13} /> Eliminar
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+      <div className="dashboard-grid-wrapper">
+        {loading ? (
+          <div className="dashboard-loading">Cargando grupos de avisos…</div>
+        ) : sets.length === 0 ? (
+          <div className="dashboard-empty">
+            Aún no hay grupos de avisos. Crea uno nuevo para empezar.
+          </div>
+        ) : (
+          <div className="dashboard-grid">
+            {setsWithDisplayTitle.map((set) => (
+              <DashboardSetCard
+                key={set.id}
+                set={set}
+                displayTitle={set.displayTitle}
+                onEdit={() => handleEditar(set.id)}
+                onPreview={() => handlePreview(set.id)}
+                onCopyHtml={() => handleCopiarHtml(set.id)}
+                onDuplicate={() => handleDuplicar(set.id)}
+                onDelete={() => handleEliminar(set.id)}
+              />
+            ))}
+          </div>
+        )}
       </div>
+      {hasMore && (
+        <div className="dashboard-load-more" style={{ marginTop: 14, textAlign: 'center' }}>
+          <button className="btn btn-primary" onClick={handleLoadMore} disabled={loadingMore}>
+            {loadingMore ? "Cargando…" : "Cargar más"}
+          </button>
+        </div>
+      )}
     </div>
   )
 }
