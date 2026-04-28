@@ -255,9 +255,15 @@
   border-radius: 2px;
 }
 .dashboard-card-year {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
   font-size: 11px;
   color: var(--text-muted);
 }
+
+/* ensure there's room for the absolute year at the bottom */
+.dashboard-card { padding-bottom: 46px; }
 
 /* Search input in header */
 .dashboard-search-row {

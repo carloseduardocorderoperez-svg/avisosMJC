@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react"
 import { Pencil, Eye, Clipboard, Copy, Trash2, MoreVertical, Calendar, FileText } from "lucide-react"
+import { getYear } from "../../utils/dateUtils"
 
 export default function DashboardSetCard({
   set,
@@ -56,14 +57,7 @@ export default function DashboardSetCard({
     ? set.overflowCount
     : Math.max(0, count - previewToShow.length)
 
-  const year = (() => {
-    try {
-      const d = new Date(set?.date || set?.updatedAt || set?.createdAt)
-      return isNaN(d.getTime()) ? null : d.getFullYear()
-    } catch {
-      return null
-    }
-  })()
+  const year = getYear(set?.date || set?.updatedAt || set?.createdAt)
   const actionAndClose = (action) => {
     action()
     setMenuOpen(false)
@@ -138,8 +132,9 @@ export default function DashboardSetCard({
 
       <div className="dashboard-card-stats">
         <div className="dashboard-card-count">{count} {count === 1 ? 'aviso' : 'avisos'}</div>
-        {year && <div className="dashboard-card-year">{year}</div>}
       </div>
+
+      {year && <div className="dashboard-card-year">{year}</div>}
     </article>
   )
 }

@@ -4,6 +4,7 @@ import { Plus } from "lucide-react"
 import { useAvisosStore } from "../store/avisosStore"
 import { authenticatedRequest } from "../utils/api"
 import DashboardSetCard from "../components/dashboard/DashboardSetCard"
+import { formatDayMonth } from "../utils/dateUtils"
 import "../styles/dashboard.css"
 
 export default function Dashboard() {
@@ -171,27 +172,8 @@ export default function Dashboard() {
   }
 
   const getSetLabel = (set) => {
-    const parseToDate = (dateStr) => {
-      if (!dateStr) return null
-      if (dateStr instanceof Date) return dateStr
-      if (typeof dateStr === 'string' && dateStr.includes('/')) {
-        return parseDateString(dateStr)
-      }
-      const d = new Date(dateStr)
-      return isNaN(d.getTime()) ? null : d
-    }
-
-    const formatSetLabelDate = (dateStr) => {
-      const d = parseToDate(dateStr)
-      if (!d) {
-        if (typeof dateStr === 'string') return dateStr.replace(/\s+del\s+/i, ' de ')
-        return 'Set sin fecha'
-      }
-      return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })
-    }
-
-    if (set?.date) return formatSetLabelDate(set.date)
-    if (set?.createdAt) return formatSetLabelDate(set.createdAt)
+    if (set?.date) return formatDayMonth(set.date)
+    if (set?.createdAt) return formatDayMonth(set.createdAt)
     return 'Set sin fecha'
   }
 
