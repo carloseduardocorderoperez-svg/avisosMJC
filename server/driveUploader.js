@@ -16,7 +16,7 @@ const SCOPES = ["https://www.googleapis.com/auth/drive"];
 const baseUrl = process.env.SERVER_URL || (process.env.NODE_ENV === 'production'
   ? (process.env.RENDER_EXTERNAL_URL || process.env.ONRENDER_URL || `https://${process.env.HOST || 'localhost'}:${process.env.PORT || 3000}`)
   : 'http://localhost:3000');
-const REDIRECT_URI = `${baseUrl}/auth/callback`;
+const REDIRECT_URI = `${baseUrl}/auth/drive/callback`;
 
 function getOAuthClient() {
   const clientId = process.env.GOOGLE_CLIENT_ID;

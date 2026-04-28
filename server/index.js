@@ -647,6 +647,17 @@ app.get("/auth/login", (req, res) => {
   }
 });
 
+// Iniciar autorización para Google Drive (ventana popup desde cliente)
+app.get('/auth/start', (req, res) => {
+  try {
+    const url = getDriveAuthUrl();
+    return res.redirect(url);
+  } catch (err) {
+    console.error('Error iniciando Drive auth:', err);
+    return res.status(500).send(`Error iniciando autorización: ${err.message}`);
+  }
+});
+
 app.get("/auth/callback", async (req, res) => {
   const code = req.query.code;
   if (!code) {
@@ -689,6 +700,45 @@ app.get("/auth/callback", async (req, res) => {
   } catch (err) {
     console.error('Error en callback:', err);
     res.status(500).send(`Error: ${err.message}`);
+  }
+});
+
+// Callback específico para la autorización de Google Drive
+app.get('/auth/drive/callback', async (req, res) => {
+  const code = req.query.code;
+  if (!code) {
+    return res.status(400).send('Falta el código de autorización.');
+  }
+
+  try {
+    const envPath = path.join(__dirname, '..', '.env');
+    // Asegurar que exista .env para poder escribir (si no existe, crear vacío)
+    if (!fs.existsSync(envPath)) {
+      try { fs.writeFileSync(envPath, '', 'utf8'); } catch (_) {}
+    }
+
+    await exchangeCodeForTokens(code, envPath);
+
+    // Responder con una página que cierre la ventana popup y notifique al opener
+    return res.send(`
+      <html>
+        <body style="font-family:sans-serif;padding:24px;">
+          <h2>Autorización completada</h2>
+          <p>Puedes cerrar esta ventana.</p>
+          <script>
+            try {
+              if (window.opener && !window.opener.closed) {
+                window.opener.postMessage({ type: 'drive-auth-success' }, '*');
+              }
+            } catch(e){}
+            setTimeout(()=>window.close(), 1200);
+          </script>
+        </body>
+      </html>
+    `);
+  } catch (err) {
+    console.error('Error en Drive callback:', err);
+    return res.status(500).send(`Error autorizando Drive: ${err.message}`);
   }
 });
 
