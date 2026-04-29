@@ -214,6 +214,10 @@ app.get("/sets", requireAuth, async (req, res) => {
     return {
       id: s.id,
       code: s.code,
+      // publication metadata exposed to admin UI
+      published: !!s.published,
+      publicSlug: s.publicSlug || null,
+      publishedAt: s.publishedAt || s.updatedAt,
       date: s.date,
       title: s.title,
       avisosCount: avisosList.length,
