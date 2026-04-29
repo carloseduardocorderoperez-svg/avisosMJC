@@ -760,8 +760,11 @@ app.get("/images", requireAuth, async (req, res) => {
     const images = await listImagesFromDrive(folderId);
     res.json({ images });
   } catch (err) {
-    console.error("Error listando imágenes de Drive:", err.message);
-    res.status(500).json({ error: err.message });
+    console.error("Error listando imágenes de Drive:", err && err.message ? err.message : err);
+    if (err && (err.name === 'DriveAuthError' || err.reauthUrl)) {
+      return res.status(401).json({ error: 'drive_token_revoked', reauthUrl: err.reauthUrl || '/auth/start', message: err.message });
+    }
+    res.status(500).json({ error: err.message || String(err) });
   }
 });
 
@@ -787,9 +790,12 @@ app.post("/images/upload", requireAuth, imageUpload.single("image"), async (req,
 
     res.json(result);
   } catch (err) {
-    console.error("Error subiendo imagen a Drive:", err.message);
+    console.error("Error subiendo imagen a Drive:", err && err.message ? err.message : err);
     if (req.file) try { fs.unlinkSync(req.file.path); } catch (_) {}
-    res.status(500).json({ error: err.message });
+    if (err && (err.name === 'DriveAuthError' || err.reauthUrl)) {
+      return res.status(401).json({ error: 'drive_token_revoked', reauthUrl: err.reauthUrl || '/auth/start', message: err.message });
+    }
+    res.status(500).json({ error: err.message || String(err) });
   }
 });
 
@@ -798,8 +804,11 @@ app.delete("/images/:id", requireAuth, async (req, res) => {
     await deleteImageFromDrive(req.params.id);
     res.json({ ok: true });
   } catch (err) {
-    console.error("Error eliminando imagen de Drive:", err.message);
-    res.status(500).json({ error: err.message });
+    console.error("Error eliminando imagen de Drive:", err && err.message ? err.message : err);
+    if (err && (err.name === 'DriveAuthError' || err.reauthUrl)) {
+      return res.status(401).json({ error: 'drive_token_revoked', reauthUrl: err.reauthUrl || '/auth/start', message: err.message });
+    }
+    res.status(500).json({ error: err.message || String(err) });
   }
 });
 
@@ -811,7 +820,11 @@ app.get("/images/thumb/:id", async (req, res) => {
     res.setHeader("Cache-Control", "public, max-age=86400");
     stream.pipe(res);
   } catch (err) {
-    console.error("Error sirviendo thumbnail:", err.message);
+    console.error("Error sirviendo thumbnail:", err && err.message ? err.message : err);
+    if (err && (err.name === 'DriveAuthError' || err.reauthUrl)) {
+      // Respond with 401 and json so clients know they must reauthorize.
+      return res.status(401).json({ error: 'drive_token_revoked', reauthUrl: err.reauthUrl || '/auth/start' });
+    }
     res.status(500).end();
   }
 });

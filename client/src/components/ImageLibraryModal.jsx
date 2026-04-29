@@ -13,6 +13,7 @@ export default function ImageLibraryModal({ isOpen, onClose, onSelect }) {
   const [waitingAuth, setWaitingAuth] = useState(false);
   const fileInputRef = useRef(null);
   const pollRef = useRef(null);
+  const reauthTriggeredRef = useRef(false);
 
   const checkAuth = useCallback(async () => {
     try {
@@ -31,7 +32,18 @@ export default function ImageLibraryModal({ isOpen, onClose, onSelect }) {
     try {
       const res = await fetch(apiUrl("/images"), { credentials: 'include' });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Error al cargar imágenes");
+      if (!res.ok) {
+        if (res.status === 401 && data?.error === 'drive_token_revoked') {
+          setAuthorized(false);
+          setError(data.message || 'Necesita reautorizar Google Drive');
+          if (!reauthTriggeredRef.current) {
+            reauthTriggeredRef.current = true;
+            handleConnectDrive();
+          }
+          return;
+        }
+        throw new Error(data.error || "Error al cargar imágenes");
+      }
       setImages(data.images || []);
     } catch (err) {
       setError(err.message);
@@ -53,6 +65,7 @@ export default function ImageLibraryModal({ isOpen, onClose, onSelect }) {
     (async () => {
       const ok = await checkAuth();
       setAuthorized(ok);
+      reauthTriggeredRef.current = false;
       if (ok) fetchImages();
     })();
   }, [isOpen, checkAuth, fetchImages]);
@@ -95,7 +108,18 @@ export default function ImageLibraryModal({ isOpen, onClose, onSelect }) {
         formData.append("image", imageFiles[i]);
         const res = await fetch(apiUrl("/images/upload"), { method: "POST", body: formData, credentials: 'include' });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Error al subir imagen");
+        if (!res.ok) {
+          if (res.status === 401 && data?.error === 'drive_token_revoked') {
+            setAuthorized(false);
+            setError(data.message || 'Necesita reautorizar Google Drive');
+            if (!reauthTriggeredRef.current) {
+              reauthTriggeredRef.current = true;
+              handleConnectDrive();
+            }
+            return;
+          }
+          throw new Error(data.error || "Error al subir imagen");
+        }
       }
       await fetchImages();
     } catch (err) {
@@ -113,7 +137,18 @@ export default function ImageLibraryModal({ isOpen, onClose, onSelect }) {
     try {
       const res = await fetch(apiUrl(`/images/${img.id}`), { method: "DELETE", credentials: 'include' });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Error al eliminar");
+      if (!res.ok) {
+        if (res.status === 401 && data?.error === 'drive_token_revoked') {
+          setAuthorized(false);
+          setError(data.message || 'Necesita reautorizar Google Drive');
+          if (!reauthTriggeredRef.current) {
+            reauthTriggeredRef.current = true;
+            handleConnectDrive();
+          }
+          return;
+        }
+        throw new Error(data.error || "Error al eliminar");
+      }
       setImages((prev) => prev.filter((i) => i.id !== img.id));
       if (selected?.id === img.id) setSelected(null);
     } catch (err) {
@@ -128,6 +163,7 @@ export default function ImageLibraryModal({ isOpen, onClose, onSelect }) {
         if (e.data && e.data.type === 'drive-auth-success') {
           setWaitingAuth(false);
           setAuthorized(true);
+          reauthTriggeredRef.current = false;
           fetchImages();
         }
       } catch (err) {}
@@ -220,7 +256,18 @@ export default function ImageLibraryModal({ isOpen, onClose, onSelect }) {
               ) : (
                 images.map((img) => (
                   <div key={img.id} className={`img-library-item ${selected?.id === img.id ? "selected" : ""}`} onClick={() => setSelected(img)} title={img.name}>
-                    <img src={img.thumbnailUrl} alt={img.name} loading="lazy" draggable={false} />
+                    <img
+                      src={img.thumbnailUrl}
+                      alt={img.name}
+                      loading="lazy"
+                      draggable={false}
+                      onError={() => {
+                        if (!waitingAuth && !reauthTriggeredRef.current) {
+                          reauthTriggeredRef.current = true;
+                          handleConnectDrive();
+                        }
+                      }}
+                    />
                     <div className="img-library-item-overlay">
                       <span className="img-library-item-name">{img.name}</span>
                       <button className="img-library-delete-btn" onClick={(e) => handleDelete(e, img)} title="Eliminar de Drive">🗑</button>

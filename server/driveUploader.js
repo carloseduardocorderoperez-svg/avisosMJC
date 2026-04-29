@@ -13,9 +13,15 @@ const IMAGE_MIME_TYPES = {
 };
 
 const SCOPES = ["https://www.googleapis.com/auth/drive"];
-const baseUrl = process.env.SERVER_URL || (process.env.NODE_ENV === 'production'
+// Normalize base URL for redirect URIs (ensure scheme and no trailing slash)
+const rawBaseUrl = process.env.SERVER_URL || (process.env.NODE_ENV === 'production'
   ? (process.env.RENDER_EXTERNAL_URL || process.env.ONRENDER_URL || `https://${process.env.HOST || 'localhost'}:${process.env.PORT || 3000}`)
   : 'http://localhost:3000');
+let baseUrl = rawBaseUrl || '';
+if (baseUrl && !baseUrl.startsWith('http')) {
+  baseUrl = `https://${baseUrl}`;
+}
+baseUrl = baseUrl.replace(/\/$/, '');
 const REDIRECT_URI = `${baseUrl}/auth/drive/callback`;
 
 function getOAuthClient() {
@@ -27,11 +33,31 @@ function getOAuthClient() {
   return new google.auth.OAuth2(clientId, clientSecret, REDIRECT_URI);
 }
 
+// Error type used to signal the app needs re-authorization for Drive
+class DriveAuthError extends Error {
+  constructor(message, reauthUrl) {
+    super(message);
+    this.name = 'DriveAuthError';
+    this.reauthUrl = reauthUrl;
+  }
+}
+
+function isDriveAuthError(err) {
+  if (!err) return false;
+  const msg = (err.message || '').toLowerCase();
+  const resp = err.response && err.response.data;
+  if (msg.includes('invalid_grant') || msg.includes('invalid credentials')) return true;
+  if (resp && (resp.error === 'invalid_grant' || resp.error === 'invalid_credentials')) return true;
+  if (Array.isArray(err.errors) && err.errors.some(e => e.reason === 'authError' || (e.message || '').toLowerCase().includes('invalid'))) return true;
+  return false;
+}
+
 function getDriveClient() {
   const refreshToken = process.env.GOOGLE_REFRESH_TOKEN;
   if (!refreshToken) {
-    throw new Error(
+    throw new DriveAuthError(
       `GOOGLE_REFRESH_TOKEN no está configurado. Visita ${baseUrl}/auth/start para autorizar.`,
+      `${baseUrl}/auth/start`,
     );
   }
   const oauth2Client = getOAuthClient();
@@ -68,6 +94,12 @@ async function exchangeCodeForTokens(code, envPath) {
   fs.writeFileSync(envPath, envContent, "utf8");
   // Activar en memoria sin reiniciar
   process.env.GOOGLE_REFRESH_TOKEN = tokens.refresh_token;
+  // Log the refresh token so it can be copied to the hosting env (e.g. Render dashboard)
+  // WARNING: this prints a secret to stdout; remove or disable in strict production environments.
+  try {
+    console.log('Google Drive refresh token received. Set env var GOOGLE_REFRESH_TOKEN to:');
+    console.log(tokens.refresh_token);
+  } catch (e) {}
   return tokens;
 }
 
@@ -78,40 +110,55 @@ async function exchangeCodeForTokens(code, envPath) {
  * @param {string} folderId - ID de la carpeta de Drive destino
  */
 async function uploadImageToDrive(filePath, originalName, folderId) {
-  const drive = getDriveClient();
+  let drive;
+  try {
+    drive = getDriveClient();
+  } catch (err) {
+    if (err && err.name === 'DriveAuthError') throw err;
+    throw err;
+  }
 
   const ext = path.extname(originalName).toLowerCase();
   const mimeType = IMAGE_MIME_TYPES[ext] || "image/jpeg";
 
-  const createRes = await drive.files.create({
-    requestBody: {
+  try {
+    const createRes = await drive.files.create({
+      requestBody: {
+        name: originalName,
+        parents: [folderId],
+      },
+      media: {
+        mimeType,
+        body: fs.createReadStream(filePath),
+      },
+      fields: "id,name",
+    });
+
+    const fileId = createRes.data.id;
+
+    try {
+      await drive.permissions.create({
+        fileId,
+        requestBody: {
+          role: "reader",
+          type: "anyone",
+        },
+      });
+    } catch (permErr) {
+      if (isDriveAuthError(permErr)) throw new DriveAuthError('Drive auth error', `${baseUrl}/auth/start`);
+      throw permErr;
+    }
+
+    return {
+      id: fileId,
       name: originalName,
-      parents: [folderId],
-    },
-    media: {
-      mimeType,
-      body: fs.createReadStream(filePath),
-    },
-    fields: "id,name",
-  });
-
-  const fileId = createRes.data.id;
-
-  // Hacer el archivo públicamente legible
-  await drive.permissions.create({
-    fileId,
-    requestBody: {
-      role: "reader",
-      type: "anyone",
-    },
-  });
-
-  return {
-    id: fileId,
-    name: originalName,
-    thumbnailUrl: `${baseUrl}/images/thumb/${fileId}`,
-    url: `https://drive.google.com/thumbnail?id=${fileId}&sz=w2000`,
-  };
+      thumbnailUrl: `${baseUrl}/images/thumb/${fileId}`,
+      url: `https://drive.google.com/thumbnail?id=${fileId}&sz=w2000`,
+    };
+  } catch (err) {
+    if (isDriveAuthError(err)) throw new DriveAuthError('Drive auth error', `${baseUrl}/auth/start`);
+    throw err;
+  }
 }
 
 /**
@@ -119,22 +166,33 @@ async function uploadImageToDrive(filePath, originalName, folderId) {
  * @param {string} folderId
  */
 async function listImagesFromDrive(folderId) {
-  const drive = getDriveClient();
+  let drive;
+  try {
+    drive = getDriveClient();
+  } catch (err) {
+    if (err && err.name === 'DriveAuthError') throw err;
+    throw err;
+  }
 
-  const res = await drive.files.list({
-    q: `'${folderId}' in parents and mimeType contains 'image/' and trashed = false`,
-    fields: "files(id,name,createdTime)",
-    orderBy: "createdTime desc",
-    pageSize: 200,
-  });
+  try {
+    const res = await drive.files.list({
+      q: `'${folderId}' in parents and mimeType contains 'image/' and trashed = false`,
+      fields: "files(id,name,createdTime)",
+      orderBy: "createdTime desc",
+      pageSize: 200,
+    });
 
-  return (res.data.files || []).map((f) => ({
-    id: f.id,
-    name: f.name,
-    thumbnailUrl: `${baseUrl}/images/thumb/${f.id}`,
-    url: `https://drive.google.com/thumbnail?id=${f.id}&sz=w2000`,
-    createdAt: f.createdTime,
-  }));
+    return (res.data.files || []).map((f) => ({
+      id: f.id,
+      name: f.name,
+      thumbnailUrl: `${baseUrl}/images/thumb/${f.id}`,
+      url: `https://drive.google.com/thumbnail?id=${f.id}&sz=w2000`,
+      createdAt: f.createdTime,
+    }));
+  } catch (err) {
+    if (isDriveAuthError(err)) throw new DriveAuthError('Drive auth error', `${baseUrl}/auth/start`);
+    throw err;
+  }
 }
 
 /**
@@ -142,8 +200,20 @@ async function listImagesFromDrive(folderId) {
  * @param {string} fileId
  */
 async function deleteImageFromDrive(fileId) {
-  const drive = getDriveClient();
-  await drive.files.delete({ fileId });
+  let drive;
+  try {
+    drive = getDriveClient();
+  } catch (err) {
+    if (err && err.name === 'DriveAuthError') throw err;
+    throw err;
+  }
+
+  try {
+    await drive.files.delete({ fileId });
+  } catch (err) {
+    if (isDriveAuthError(err)) throw new DriveAuthError('Drive auth error', `${baseUrl}/auth/start`);
+    throw err;
+  }
 }
 
 /**
@@ -151,12 +221,24 @@ async function deleteImageFromDrive(fileId) {
  * @param {string} fileId
  */
 async function getImageStream(fileId) {
-  const drive = getDriveClient();
-  const res = await drive.files.get(
-    { fileId, alt: "media" },
-    { responseType: "stream" },
-  );
-  return { stream: res.data, mimeType: res.headers["content-type"] || "image/jpeg" };
+  let drive;
+  try {
+    drive = getDriveClient();
+  } catch (err) {
+    if (err && err.name === 'DriveAuthError') throw err;
+    throw err;
+  }
+
+  try {
+    const res = await drive.files.get(
+      { fileId, alt: "media" },
+      { responseType: "stream" },
+    );
+    return { stream: res.data, mimeType: res.headers["content-type"] || "image/jpeg" };
+  } catch (err) {
+    if (isDriveAuthError(err)) throw new DriveAuthError('Drive auth error', `${baseUrl}/auth/start`);
+    throw err;
+  }
 }
 
 module.exports = {

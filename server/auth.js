@@ -8,9 +8,14 @@ function getOAuthClient() {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
   // Usar la URL del servidor dinámicamente para desarrollo y producción
-  const baseUrl = process.env.SERVER_URL || (process.env.NODE_ENV === 'production'
+  const rawBaseUrl = process.env.SERVER_URL || (process.env.NODE_ENV === 'production'
     ? (process.env.RENDER_EXTERNAL_URL || process.env.ONRENDER_URL || `https://${process.env.HOST || 'localhost'}:${process.env.PORT || 3000}`)
     : 'http://localhost:3000');
+  let baseUrl = rawBaseUrl || '';
+  if (baseUrl && !baseUrl.startsWith('http')) {
+    baseUrl = `https://${baseUrl}`;
+  }
+  baseUrl = baseUrl.replace(/\/$/, '');
   const redirectUri = `${baseUrl}/auth/callback`;
 
   return new google.auth.OAuth2(clientId, clientSecret, redirectUri);
