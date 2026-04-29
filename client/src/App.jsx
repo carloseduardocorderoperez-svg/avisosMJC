@@ -6,6 +6,8 @@ import Preview from "./pages/Preview"
 import Extra from "./pages/Extra"
 import Dashboard from "./pages/Dashboard"
 import LoginPage from "./pages/LoginPage"
+import PublicAvisos from "./pages/PublicAvisos"
+import PublicAvisoView from "./pages/PublicAvisoView"
 
 import Navbar from "./components/layout/Navbar"
 import { useState, useEffect } from "react"
@@ -71,6 +73,8 @@ export default function App() {
         }
       >
         <Routes>
+          <Route path="/avisos-semanales" element={<PublicAvisos />} />
+          <Route path="/avisos-semanales/:slug" element={<PublicAvisoView />} />
           <Route path="/login" element={<LoginPage />} />
 
           <Route path="/" element={

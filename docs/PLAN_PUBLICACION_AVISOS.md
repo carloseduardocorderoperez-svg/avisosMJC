@@ -143,3 +143,53 @@ Archivo(s) de referencia en el repo:
 ---
 
 Si estás de acuerdo, procedo con el PoC (opción A: JSON → frontend). Indica si quieres cambios en el cronograma o si prefieres la opción B (HTML → iframe) en vez de la opción A.
+
+## Registro de progreso
+
+- 2026-04-28: Documento creado con plan y estimación de PoC.
+- 2026-04-28: Añadidos requisitos de responsividad y criterios de aceptación.
+- 2026-04-28: Implementación inicial PoC - backend:
+  - Agregados endpoints públicos en `server/index.js`:
+    - `GET /public/sets` — lista sets publicados (JSON)
+    - `GET /public/sets/:slug` — devuelve JSON del set; soporta `?format=html` para HTML pre-renderizado
+    - `POST /sets/:id/publish` — endpoint admin para publicar/despublicar sets
+- 2026-04-28: Implementación inicial PoC - frontend:
+  - Añadidas páginas públicas en `client/src/pages`:
+    - `PublicAvisos.jsx` (ruta `/avisos-semanales`) — lista sets publicados
+    - `PublicAvisoView.jsx` (ruta `/avisos-semanales/:slug`) — carga HTML pre-renderizado
+  - Rutas registradas en `client/src/App.jsx`.
+
+Siguientes pasos: implementar toggle UI en dashboard para publicar, validación de `publicSlug` en UI, tests manuales y ajustes de sanitizado/cache.
+
+## Sincronización y manejo de edge-cases
+
+Recomendación general: la publicación debe sincronizarse automáticamente con los cambios. No obligar al admin a "despublicar → editar → publicar" salvo en casos especiales. A continuación se describen patrones de implementación y comportamientos esperados.
+
+- Flujo preferido (sincronización automática):
+  - El frontend sigue trabajando contra los documentos `sets` (privados). Al guardar cambios en un set publicado, el servidor actualiza el documento y automáticamente regenera el HTML público o invalida el cache del endpoint público para que la vista pública muestre la versión más reciente.
+  - Implementación práctica: cuando se ejecuta `PUT /sets/:id` y el set tiene `published=true`, el backend realiza uno de estos pasos:
+    1) Regenerar HTML pre-renderizado y reemplazar el archivo público (o actualizar objeto en Storage/CDN), o
+    2) Invalidate cache y dejar que el endpoint público lea directamente del documento actualizado (live-render desde DB). 
+  - Elegir (1) si quieres mejor latencia y servir HTML estático por CDN; elegir (2) para simplicidad y coherencia inmediata.
+
+- Comportamiento para publicar/despublicar:
+  - `POST /sets/:id/publish` marcará `published=true` y guardará `publishedAt` y `publicSlug`. Si ya había `published=true`, publicar de nuevo solo actualizará `publishedAt` y regenerará/invalidadará (no es necesario despublicar primero).
+  - Si el admin cambia contenido en un set ya publicado y guarda, el backend sincroniza automáticamente (regeneración o live-render). No es necesario despublicar manualmente.
+
+- Manejo de eliminación y edge-cases críticos:
+  - Eliminar un set que esté publicado: mostrar advertencia en dashboard y requerir confirmación explícita (modal) o forzar `unpublish` antes de permitir eliminar. Alternativa segura: soft-delete (marcar `deleted=true`) y mantener una opción para purgar.
+  - Intento de publicar con `publicSlug` duplicado: el backend valida unicidad y devuelve error; la UI mostrará validación inline y sugerirá slugs alternativos (ej: agregar sufijo `-1`).
+  - Concurrent edits: usar `updatedAt` y control optimista (si el cliente envía una versión antigua, rechazar y pedir recarga) o última escritura gana según tolerancia.
+  - Fallos al generar HTML o al subir a Storage: dejar el documento marcado como `published=true` pero registrar `publicStatus: 'failed'` + `publicError` para auditoría y mostrar indicador en dashboard (badge de error). Reintentos automáticos en background o permitir reintento manual.
+  - Imágenes eliminadas/rotas: al publicar, comprobar que todas las URLs de imágenes referenciadas responden; si no, marcar aviso en dashboard y permitir fallback (imagen placeholder) en la vista pública.
+
+- Cache y CDN: siempre invalidar o regenerar al publicar/editar. Para live-render, usar `Cache-Control` corto y considerar ETag para validación.
+
+- Auditoría y reversión: guardar `publishedHistory` (versiones mínimas o snapshot) para poder revertir a la versión anterior si un cambio rompe la vista pública.
+
+UI/UX recomendaciones rápidas:
+- Mostrar badge `Publicado` + enlace público y un pequeño estado `sync` (ok | syncing | error).
+- Al editar un set publicado, mostrar aviso no intrusivo: "Este set está publicado — los cambios se sincronizarán automáticamente." y ofrecer botón "Guardar y publicar ahora" si se desea forzar regeneración inmediata.
+- Antes de eliminar un set publicado, mostrar un modal que explique consecuencias y ofrezca opciones: "Despublicar y eliminar" o "Soft-delete".
+
+Estos detalles están registrados aquí para que el equipo los implemente y pruebe durante el PoC.

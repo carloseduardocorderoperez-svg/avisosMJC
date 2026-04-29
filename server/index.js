@@ -393,6 +393,117 @@ app.post("/sets/:targetSetId/copy-avisos", requireAuth, async (req, res) => {
 });
 
 // ===============================
+// Endpoints públicos para sets (lista y detalle por slug)
+// ===============================
+
+// Lista sets publicados (sin auth)
+app.get("/public/sets", async (req, res) => {
+  try {
+    const { sets } = await loadAllSets();
+    const published = (sets || [])
+      .filter((s) => s && (s.published === true))
+      .map((s) => ({
+        id: s.id,
+        code: s.code,
+        title: s.title,
+        date: s.date,
+        publicSlug: s.publicSlug || (s.code || "").toLowerCase(),
+        publishedAt: s.publishedAt || s.updatedAt,
+        avisosCount: Array.isArray(s.avisos) ? s.avisos.length : 0,
+      }));
+
+    // ordenar por publishedAt desc
+    published.sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
+
+    res.json({ sets: published });
+  } catch (err) {
+    console.error('Error obteniendo sets públicos:', err);
+    res.status(500).json({ error: 'Error obteniendo sets públicos' });
+  }
+});
+
+// Detalle público de un set por slug (sin auth)
+app.get('/public/sets/:slug', async (req, res) => {
+  try {
+    const { slug } = req.params;
+    const { sets } = await loadAllSets();
+
+    const lower = String(slug || '').trim().toLowerCase();
+
+    const found = (sets || []).find((s) => {
+      if (!s) return false;
+      if (s.publicSlug && String(s.publicSlug).toLowerCase() === lower) return true;
+      if (String(s.code || '').toLowerCase() === lower) return true;
+      if (String(s.id || '') === slug) return true;
+      return false;
+    });
+
+    if (!found || !found.published) {
+      return res.status(404).json({ error: 'Set público no encontrado' });
+    }
+
+    // Si el cliente solicita HTML pre-renderizado, generarlo y devolverlo
+    if (String(req.query.format || '').toLowerCase() === 'html') {
+      try {
+        const title = found.title || `AVISOS - ${found.date || ''}`;
+        const html = generateHTML({
+          avisos: Array.isArray(found.avisos) ? found.avisos : [],
+          date: found.date,
+          title,
+          bannerMessage: found.bannerMessage,
+        });
+
+        res.type('text/html').send(html);
+        return;
+      } catch (e) {
+        console.error('Error generando HTML público:', e);
+        // fallback a JSON
+      }
+    }
+
+    // devolver el set completo (metadatos + avisos)
+    res.json({ set: found, avisos: Array.isArray(found.avisos) ? found.avisos : [] });
+  } catch (err) {
+    console.error('Error obteniendo set público:', err);
+    res.status(500).json({ error: 'Error obteniendo set público' });
+  }
+});
+
+// Publicar / despublicar un set (admin)
+app.post('/sets/:id/publish', requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { published, publicSlug } = req.body || {};
+
+    const { sets } = await loadAllSets();
+    const target = sets.find((s) => String(s.id) === String(id));
+    if (!target) return res.status(404).json({ error: 'Set no encontrado' });
+
+    // Si se pide publicar y se proporciona slug, validar unicidad
+    if (published === true && publicSlug) {
+      const slugLower = String(publicSlug).trim().toLowerCase();
+      const clash = (sets || []).some((s) => s && String(s.id) !== String(id) && String(s.publicSlug || '').toLowerCase() === slugLower);
+      if (clash) return res.status(400).json({ error: 'publicSlug ya está en uso' });
+    }
+
+    const updated = await updateSet(id, {
+      published: !!published,
+      publicSlug: publicSlug || (target.code || '').toLowerCase(),
+      publishedAt: published === true ? new Date().toISOString() : null,
+    });
+
+    // Construir publicUrl si aplica
+    const clientBase = (process.env.CLIENT_URL || '').replace(/\/$/, '');
+    const url = updated.published ? `${clientBase}/avisos-semanales/${updated.publicSlug || updated.code}` : null;
+
+    res.json({ ok: true, set: updated, publicUrl: url });
+  } catch (err) {
+    console.error('Error publicando set:', err);
+    res.status(500).json({ error: 'Error publicando set' });
+  }
+});
+
+// ===============================
 // Obtener avisos guardados (compat y por set)
 // ===============================
 
