@@ -348,6 +348,18 @@ app.post("/sets/:id/generar-html", requireAuth, async (req, res) => {
       title,
       bannerMessage: set.bannerMessage,
     });
+    // Si la función devuelve un nombre de archivo, leer su contenido para devolver HTML
+    try {
+      const outputDir = path.join(__dirname, "../output");
+      const possiblePath = path.join(outputDir, String(htmlFile || ""));
+      if (fs.existsSync(possiblePath)) {
+        const contenido = fs.readFileSync(possiblePath, "utf8");
+        res.json({ ok: true, archivo: htmlFile, archivoContenido: contenido, setId: set.id });
+        return;
+      }
+    } catch (e) {
+      console.warn('No se pudo leer archivo generado:', e && e.message ? e.message : e);
+    }
 
     res.json({ ok: true, archivo: htmlFile, setId: set.id });
   } catch (error) {
@@ -446,14 +458,28 @@ app.get('/public/sets/:slug', async (req, res) => {
     if (String(req.query.format || '').toLowerCase() === 'html') {
       try {
         const title = found.title || `AVISOS - ${found.date || ''}`;
-        const html = generateHTML({
+        const htmlOrFile = generateHTML({
           avisos: Array.isArray(found.avisos) ? found.avisos : [],
           date: found.date,
           title,
           bannerMessage: found.bannerMessage,
         });
 
-        res.type('text/html').send(html);
+        // Si la función devolvió un nombre de archivo, leer el HTML guardado en /output
+        try {
+          const outputDir = path.join(__dirname, "../output");
+          const possiblePath = path.join(outputDir, String(htmlOrFile || ""));
+          if (fs.existsSync(possiblePath)) {
+            const contenido = fs.readFileSync(possiblePath, "utf8");
+            res.type('text/html').send(contenido);
+            return;
+          }
+        } catch (e) {
+          console.warn('No se pudo leer archivo generado público:', e && e.message ? e.message : e);
+        }
+
+        // Fallback: si lo que devolvió no es un archivo, enviarlo directamente
+        res.type('text/html').send(String(htmlOrFile || ''));
         return;
       } catch (e) {
         console.error('Error generando HTML público:', e);

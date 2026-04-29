@@ -55,6 +55,7 @@ export default function App() {
   const location = useLocation()
 
   const isLoginRoute = location.pathname === "/login"
+  const isPublicRoute = location.pathname.startsWith("/avisos-semanales")
   const isDesignerRoute =
     location.pathname === "/" ||
     location.pathname.startsWith("/dashboard") ||
@@ -63,14 +64,10 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      {!isLoginRoute && <Navbar />}
+      {!isLoginRoute && !isPublicRoute && <Navbar />}
 
       <div
-        className={
-          isDesignerRoute && !isLoginRoute
-            ? "page-container page-container-fixed"
-            : "page-container"
-        }
+          className={isDesignerRoute && !isLoginRoute ? "page-container page-container-fixed" : "page-container"}
       >
         <Routes>
           <Route path="/avisos-semanales" element={<PublicAvisos />} />

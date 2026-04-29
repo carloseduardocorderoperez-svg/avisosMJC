@@ -234,6 +234,7 @@ export default function Dashboard() {
                 onCopyHtml={() => handleCopiarHtml(set.id)}
                 onDuplicate={() => handleDuplicar(set.id)}
                 onDelete={() => handleEliminar(set.id)}
+                onPublish={(updatedSet) => setSets((prev) => prev.map(s => s.id === updatedSet.id ? ({ ...s, ...updatedSet }) : s))}
               />
             ))}
           </div>

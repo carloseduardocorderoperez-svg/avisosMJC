@@ -161,6 +161,10 @@ Si estás de acuerdo, procedo con el PoC (opción A: JSON → frontend). Indica 
 
 Siguientes pasos: implementar toggle UI en dashboard para publicar, validación de `publicSlug` en UI, tests manuales y ajustes de sanitizado/cache.
 
+- 2026-04-28: Implementación adicional PoC - frontend:
+  - Añadida validación y normalización básica de `publicSlug` en la UI del dashboard para evitar caracteres inválidos y slugs demasiado cortos.
+  - La validación previene envíos obvios; la comprobación final de unicidad la realiza el backend (se muestra error si ya existe).
+
 ## Sincronización y manejo de edge-cases
 
 Recomendación general: la publicación debe sincronizarse automáticamente con los cambios. No obligar al admin a "despublicar → editar → publicar" salvo en casos especiales. A continuación se describen patrones de implementación y comportamientos esperados.

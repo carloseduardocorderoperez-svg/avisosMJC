@@ -289,6 +289,10 @@ function toPlainSet(data, id) {
       restored.bannerMessage ||
       "Gracias por revisar todos los avisos! Reacciona con un 🚬 si llegaste hasta aquí",
     avisos: Array.isArray(restored.avisos) ? restored.avisos : [],
+    // Preserve publication metadata if present
+    published: restored.published === true,
+    publicSlug: restored.publicSlug || null,
+    publishedAt: makeIso(restored.publishedAt) || null,
     createdAt: makeIso(restored.createdAt) || new Date().toISOString(),
     updatedAt: makeIso(restored.updatedAt) || new Date().toISOString(),
   };
