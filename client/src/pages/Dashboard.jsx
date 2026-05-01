@@ -67,7 +67,7 @@ export default function Dashboard() {
       const qParam = query && String(query).trim() ? `&q=${encodeURIComponent(String(query).trim())}` : ""
       const res = await authenticatedRequest(`/sets?page=${p}&pageSize=${pageSize}${qParam}`)
       const data = await res.json()
-      const incoming = (data.sets || []).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+      const incoming = (data.sets || []).sort((a, b) => new Date(b.date) - new Date(a.date))
 
       setSets((prev) => (append ? [...prev, ...incoming] : incoming))
       setHasMore(Boolean(data.hasMore))
@@ -104,7 +104,7 @@ export default function Dashboard() {
       })
 
       const nuevo = await res.json()
-      setSets((prev) => [...prev, { ...nuevo, avisosCount: nuevo.avisos?.length || 0 }].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)))
+      setSets((prev) => [...prev, { ...nuevo, avisosCount: nuevo.avisos?.length || 0 }].sort((a, b) => new Date(b.date) - new Date(a.date)))
       navigate(`/avisos/${nuevo.id}`)
     } catch (err) {
       console.error(err)
@@ -122,7 +122,7 @@ export default function Dashboard() {
         method: "DELETE",
       })
 
-      setSets((prev) => prev.filter((s) => s.id !== id).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)))
+      setSets((prev) => prev.filter((s) => s.id !== id).sort((a, b) => new Date(b.date) - new Date(a.date)))
     } catch (err) {
       console.error(err)
       setError(err.message || "Error eliminando grupo de avisos")
@@ -136,7 +136,7 @@ export default function Dashboard() {
       })
 
       const copia = await res.json()
-      setSets((prev) => [...prev, { ...copia, avisosCount: copia.avisos?.length || 0 }].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)))
+      setSets((prev) => [...prev, { ...copia, avisosCount: copia.avisos?.length || 0 }].sort((a, b) => new Date(b.date) - new Date(a.date)))
     } catch (err) {
       console.error(err)
       setError(err.message || "Error duplicando grupo de avisos")

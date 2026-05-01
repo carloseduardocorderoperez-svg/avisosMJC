@@ -228,7 +228,7 @@ app.get("/sets", requireAuth, async (req, res) => {
     };
   });
 
-  // ordenar por updatedAt descendente (más reciente primero)
+  // ordenar por date descendente (más reciente primero)
   // filtro por query 'q' si provista (search server-side)
   const q = String(req.query.q || "").trim().toLowerCase();
   const filtered = q
@@ -241,7 +241,7 @@ app.get("/sets", requireAuth, async (req, res) => {
       })
     : mapped;
 
-  const ordered = filtered.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+  const ordered = filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
 
   const total = ordered.length;
   const start = (page - 1) * pageSize;
@@ -530,6 +530,36 @@ app.post('/sets/:id/publish', requireAuth, async (req, res) => {
   } catch (err) {
     console.error('Error publicando set:', err);
     res.status(500).json({ error: 'Error publicando set' });
+  }
+});
+
+// Actualizar la fecha de creación del set
+app.patch('/sets/:id/update-date', requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { date } = req.body || {};
+
+    if (!date) {
+      return res.status(400).json({ error: 'Se requiere una fecha válida' });
+    }
+
+    const dateObj = new Date(date);
+    if (isNaN(dateObj.getTime())) {
+      return res.status(400).json({ error: 'Fecha inválida' });
+    }
+
+    const { sets } = await loadAllSets();
+    const target = sets.find((s) => String(s.id) === String(id));
+    if (!target) return res.status(404).json({ error: 'Set no encontrado' });
+
+    const updated = await updateSet(id, {
+      date: dateObj.toISOString(),
+    });
+
+    res.json({ ok: true, set: updated });
+  } catch (err) {
+    console.error('Error actualizando fecha del set:', err);
+    res.status(500).json({ error: 'Error actualizando fecha' });
   }
 });
 

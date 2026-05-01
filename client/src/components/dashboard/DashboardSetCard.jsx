@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react"
 import { Pencil, Eye, Clipboard, Copy, Trash2, MoreVertical, Calendar, FileText } from "lucide-react"
 import { getYear } from "../../utils/dateUtils"
 import { apiUrl } from "../../utils/api"
+import EditDateModal from "../EditDateModal"
 
 export default function DashboardSetCard({
   set,
@@ -71,6 +72,8 @@ export default function DashboardSetCard({
   const [slugValue, setSlugValue] = useState(set?.publicSlug || (set?.code || '').toLowerCase())
   const [syncing, setSyncing] = useState(false)
   const [publishError, setPublishError] = useState("")
+  const [editDateOpen, setEditDateOpen] = useState(false)
+  const [editDateLoading, setEditDateLoading] = useState(false)
 
   useEffect(() => {
     setIsPublished(!!set?.published)
@@ -117,6 +120,33 @@ export default function DashboardSetCard({
     }
   }
 
+  const handleEditDate = async (newDate) => {
+    try {
+      setEditDateLoading(true)
+      const res = await fetch(apiUrl(`/sets/${set.id}/update-date`), {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: newDate }),
+      })
+
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error((data && data.error) || 'Error actualizando fecha')
+      }
+
+      const data = await res.json()
+      setEditDateOpen(false)
+      // Notify parent to refresh
+      if (typeof onPublish === 'function') onPublish(data.set)
+    } catch (err) {
+      console.error('Error updating date', err)
+      alert(err.message || 'Error actualizando fecha')
+    } finally {
+      setEditDateLoading(false)
+    }
+  }
+
   return (
     <article className="dashboard-card" aria-label={`Set ${displayTitle}`} ref={menuRef}>
       <div className="dashboard-card-header">
@@ -146,6 +176,9 @@ export default function DashboardSetCard({
             <div className="dashboard-card-menu" role="menu">
               <button type="button" className="dashboard-card-menu-item" onClick={() => actionAndClose(onPreview)}>
                 <Eye size={14} /> Vista previa
+              </button>
+              <button type="button" className="dashboard-card-menu-item" onClick={() => { setMenuOpen(false); setEditDateOpen(true) }}>
+                <Calendar size={14} /> Editar fecha
               </button>
               <button type="button" className="dashboard-card-menu-item" onClick={() => actionAndClose(onCopyHtml)}>
                 <Clipboard size={14} /> Copiar HTML
@@ -208,6 +241,15 @@ export default function DashboardSetCard({
       </div>
 
       {year && <div className="dashboard-card-year">{year}</div>}
+
+      {editDateOpen && (
+        <EditDateModal
+          set={set}
+          onClose={() => setEditDateOpen(false)}
+          onSave={handleEditDate}
+          loading={editDateLoading}
+        />
+      )}
     </article>
   )
 }
