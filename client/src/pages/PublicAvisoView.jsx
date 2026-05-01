@@ -6,9 +6,11 @@ export default function PublicAvisoView() {
   const { slug } = useParams();
   const navigate = useNavigate();
   const [sets, setSets] = useState([]);
-  const [open, setOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentSlug, setCurrentSlug] = useState(slug || null);
+  const [showControls, setShowControls] = useState(false);
   const iframeRef = useRef(null);
+  const controlsTimeoutRef = useRef(null);
 
   useEffect(() => {
     const loadList = async () => {
@@ -33,42 +35,82 @@ export default function PublicAvisoView() {
     const next = s.publicSlug || s.code || s.id;
     navigate(`/avisos-semanales/${next}`);
     setCurrentSlug(next);
-    setOpen(false);
+    setSidebarOpen(false);
+  };
+
+  const handleMouseMove = () => {
+    setShowControls(true);
+    if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
+    controlsTimeoutRef.current = setTimeout(() => setShowControls(false), 3000);
   };
 
   const iframeSrc = currentSlug ? apiUrl(`/public/sets/${currentSlug}?format=html`) : '';
+  const currentSet = sets.find(s => (s.publicSlug || s.code) === currentSlug) || {};
 
   return (
-    <div className="public-view-shell">
-      <aside className={`public-sidebar ${open ? 'open' : ''}`}>
-        <div className="sidebar-header">
-          <strong>Avisos publicados</strong>
-          <button className="sidebar-close" onClick={() => setOpen(false)}>✕</button>
+    <div className="public-view-fullscreen" onMouseMove={handleMouseMove} onTouchMove={handleMouseMove}>
+      {/* Sidebar desplegable */}
+      <aside className={`public-sidebar-fullscreen ${sidebarOpen ? 'open' : ''}`}>
+        <div className="sidebar-header-fullscreen">
+          <h2>Avisos publicados</h2>
+          <button className="sidebar-close-fullscreen" onClick={() => setSidebarOpen(false)} title="Cerrar">✕</button>
         </div>
-        <div className="sidebar-list">
+        <nav className="sidebar-list-fullscreen">
           {sets.map((s) => (
-            <button key={s.id} className={`sidebar-item ${s.publicSlug === currentSlug ? 'active' : ''}`} onClick={() => handleSelect(s)}>
-              <div className="sidebar-item-title">{s.title}</div>
-              <div className="sidebar-item-meta">{s.date}</div>
+            <button 
+              key={s.id} 
+              className={`sidebar-item-fullscreen ${(s.publicSlug || s.code) === currentSlug ? 'active' : ''}`} 
+              onClick={() => handleSelect(s)}
+            >
+              <div className="sidebar-item-title-fullscreen">{s.title}</div>
+              <div className="sidebar-item-meta-fullscreen">{s.date}</div>
             </button>
           ))}
-        </div>
+        </nav>
       </aside>
 
-      <div className="public-main">
-        <div className="public-topbar">
-          <button className="hamburger" onClick={() => setOpen((v) => !v)}>☰</button>
-          <div className="public-top-title">{(sets.find(s => (s.publicSlug || s.code) === currentSlug) || {}).title || 'Avisos'}</div>
-          <a className="public-back" href="/avisos-semanales">Listado</a>
-        </div>
+      {/* Overlay para cerrar sidebar en mobile */}
+      {sidebarOpen && <div className="sidebar-overlay-fullscreen" onClick={() => setSidebarOpen(false)}></div>}
 
-        <div className="public-iframe-wrap">
-          {currentSlug ? (
-            <iframe ref={iframeRef} title="Aviso público" src={iframeSrc} className="public-iframe" />
-          ) : (
-            <div className="public-empty">Selecciona un aviso para ver su contenido.</div>
-          )}
+      {/* Controles minimalistas - aparecen solo al mover el mouse */}
+      <div className={`public-controls-fullscreen ${showControls ? 'visible' : ''}`}>
+        <button 
+          className="control-btn-fullscreen hamburger-fullscreen" 
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          title="Ver listado"
+        >
+          ☰
+        </button>
+        <div className="control-info-fullscreen">
+          {currentSet.title && <span className="control-title">{currentSet.title}</span>}
         </div>
+        <a 
+          className="control-btn-fullscreen back-btn-fullscreen" 
+          href="/avisos-semanales"
+          title="Volver al listado"
+        >
+          ↩
+        </a>
+      </div>
+
+      {/* Contenedor del iframe - fullscreen */}
+      <div className="public-iframe-fullscreen-wrap">
+        {currentSlug ? (
+          <iframe 
+            ref={iframeRef} 
+            title="Aviso público" 
+            src={iframeSrc} 
+            className="public-iframe-fullscreen"
+            sandbox="allow-same-origin allow-scripts allow-popups allow-popups-to-escape-sandbox"
+          />
+        ) : (
+          <div className="public-empty-fullscreen">
+            <p>Selecciona un aviso para ver su contenido.</p>
+            <button onClick={() => setSidebarOpen(true)} className="btn-open-sidebar">
+              Abrir listado
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
