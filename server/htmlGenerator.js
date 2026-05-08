@@ -123,10 +123,11 @@ ${items.map((i) => `<li>${i}</li>`).join("")}
 
   if (b.tipo === "link" || b.link) {
     const texto = b.texto || b.contenido || b.link || "ABRIR";
-    const url = b.url || "#";
+    const url = String(b.url || "#").trim();
+    const targetAttrs = url && url !== "#" ? " target=\"_blank\" rel=\"noopener noreferrer\"" : "";
 
     return `
-<a href="${url}"${extraClassAttr("canvas-link", b)}>
+<a href="${url}"${targetAttrs}${extraClassAttr("canvas-link", b)}>
   <span class="canvas-link-edge"></span>
   <span class="canvas-link-front">${texto}</span>
 </a>
