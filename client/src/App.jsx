@@ -8,6 +8,7 @@ import Dashboard from "./pages/Dashboard"
 import LoginPage from "./pages/LoginPage"
 import PublicAvisos from "./pages/PublicAvisos"
 import PublicAvisoView from "./pages/PublicAvisoView"
+import Roles from "./pages/Roles"
 
 import Navbar from "./components/layout/Navbar"
 import { useState, useEffect } from "react"
@@ -107,6 +108,12 @@ export default function App() {
           <Route path="/extra" element={
             <ProtectedRoute>
               <Extra />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/roles" element={
+            <ProtectedRoute>
+              <Roles />
             </ProtectedRoute>
           } />
         </Routes>
