@@ -4,7 +4,7 @@ import { Plus } from "lucide-react"
 import { useAvisosStore } from "../store/avisosStore"
 import { authenticatedRequest } from "../utils/api"
 import DashboardSetCard from "../components/dashboard/DashboardSetCard"
-import { formatDayMonth, formatFullDate } from "../utils/dateUtils"
+import { formatFullDate } from "../utils/dateUtils"
 import "../styles/dashboard.css"
 
 export default function Dashboard() {
@@ -20,40 +20,42 @@ export default function Dashboard() {
   const navigate = useNavigate()
   const clearCurrentSet = useAvisosStore((s) => s.clearCurrentSet)
 
-  // Función para formatear fechas de manera relativa
-  const formatRelativeDate = (dateStr) => {
-    if (!dateStr) return ""
-    const date = new Date(dateStr)
-    const now = new Date()
-    const diffMs = now - date
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-
-    if (diffDays === 0) return "Hoy"
-    if (diffDays === 1) return "Ayer"
-    if (diffDays === 2) return "Hace dos días"
-    if (diffDays < 7) return `Hace ${diffDays} días`
-    if (diffDays < 30) {
-      const weeks = Math.floor(diffDays / 7)
-      return weeks === 1 ? "Hace una semana" : `Hace ${weeks} semanas`
-    }
-    const months = Math.floor(diffDays / 30)
-    return months === 1 ? "Hace un mes" : `Hace ${months} meses`
-  }
-
   // Función para parsear string de fecha dd/mm/aa o dd/mm/yyyy
   const parseDateString = (dateStr) => {
-    if (!dateStr) return null
-    const parts = dateStr.split('/')
+    if (!dateStr || typeof dateStr !== "string") return null
+
+    const parts = dateStr.split("/")
+
     if (parts.length === 3) {
-      const day = parseInt(parts[0])
-      const month = parseInt(parts[1]) - 1
-      const year = parts[2].length === 2 ? 2000 + parseInt(parts[2]) : parseInt(parts[2])
+      const day = parseInt(parts[0], 10)
+      const month = parseInt(parts[1], 10) - 1
+      const year =
+        parts[2].length === 2
+          ? 2000 + parseInt(parts[2], 10)
+          : parseInt(parts[2], 10)
+
       return new Date(year, month, day)
     }
+
     return null
   }
 
-  // Al entrar al Dashboard limpiar el set activo para que la navbar no muestre breadcrumb
+  // Obtener fecha válida para ordenar
+  const getSortableDate = (set) => {
+    return (
+      parseDateString(set?.date) ||
+      new Date(set?.createdAt || 0)
+    )
+  }
+
+  // Ordenar sets
+  const sortSetsByDate = (setsArray) => {
+    return [...setsArray].sort(
+      (a, b) => getSortableDate(b) - getSortableDate(a)
+    )
+  }
+
+  // Al entrar al Dashboard limpiar el set activo
   useEffect(() => {
     clearCurrentSet()
   }, [clearCurrentSet])
@@ -62,14 +64,28 @@ export default function Dashboard() {
     try {
       if (append) setLoadingMore(true)
       else setLoading(true)
+
       setError("")
 
-      const qParam = query && String(query).trim() ? `&q=${encodeURIComponent(String(query).trim())}` : ""
-      const res = await authenticatedRequest(`/sets?page=${p}&pageSize=${pageSize}${qParam}`)
-      const data = await res.json()
-      const incoming = (data.sets || []).sort((a, b) => new Date(b.date) - new Date(a.date))
+      const qParam =
+        query && String(query).trim()
+          ? `&q=${encodeURIComponent(String(query).trim())}`
+          : ""
 
-      setSets((prev) => (append ? [...prev, ...incoming] : incoming))
+      const res = await authenticatedRequest(
+        `/sets?page=${p}&pageSize=${pageSize}${qParam}`
+      )
+
+      const data = await res.json()
+
+      const incoming = sortSetsByDate(data.sets || [])
+
+      setSets((prev) =>
+        append
+          ? sortSetsByDate([...prev, ...incoming])
+          : incoming
+      )
+
       setHasMore(Boolean(data.hasMore))
       setPage(p)
     } catch (err) {
@@ -87,7 +103,10 @@ export default function Dashboard() {
 
   // debounce search
   useEffect(() => {
-    const t = setTimeout(() => cargarPagina(1, false), 300)
+    const t = setTimeout(() => {
+      cargarPagina(1, false)
+    }, 300)
+
     return () => clearTimeout(t)
   }, [query])
 
@@ -100,11 +119,26 @@ export default function Dashboard() {
     try {
       const res = await authenticatedRequest("/sets", {
         method: "POST",
-        body: JSON.stringify({ code: "", date: "", title: "AVISOS ZONALES", avisos: [] }),
+        body: JSON.stringify({
+          code: "",
+          date: "",
+          title: "AVISOS ZONALES",
+          avisos: [],
+        }),
       })
 
       const nuevo = await res.json()
-      setSets((prev) => [...prev, { ...nuevo, avisosCount: nuevo.avisos?.length || 0 }].sort((a, b) => new Date(b.date) - new Date(a.date)))
+
+      setSets((prev) =>
+        sortSetsByDate([
+          ...prev,
+          {
+            ...nuevo,
+            avisosCount: nuevo.avisos?.length || 0,
+          },
+        ])
+      )
+
       navigate(`/avisos/${nuevo.id}`)
     } catch (err) {
       console.error(err)
@@ -113,7 +147,11 @@ export default function Dashboard() {
   }
 
   const handleEliminar = async (id) => {
-    if (!window.confirm("¿Eliminar este grupo de avisos? Esta acción no se puede deshacer.")) {
+    if (
+      !window.confirm(
+        "¿Eliminar este grupo de avisos? Esta acción no se puede deshacer."
+      )
+    ) {
       return
     }
 
@@ -122,7 +160,9 @@ export default function Dashboard() {
         method: "DELETE",
       })
 
-      setSets((prev) => prev.filter((s) => s.id !== id).sort((a, b) => new Date(b.date) - new Date(a.date)))
+      setSets((prev) =>
+        sortSetsByDate(prev.filter((s) => s.id !== id))
+      )
     } catch (err) {
       console.error(err)
       setError(err.message || "Error eliminando grupo de avisos")
@@ -136,7 +176,16 @@ export default function Dashboard() {
       })
 
       const copia = await res.json()
-      setSets((prev) => [...prev, { ...copia, avisosCount: copia.avisos?.length || 0 }].sort((a, b) => new Date(b.date) - new Date(a.date)))
+
+      setSets((prev) =>
+        sortSetsByDate([
+          ...prev,
+          {
+            ...copia,
+            avisosCount: copia.avisos?.length || 0,
+          },
+        ])
+      )
     } catch (err) {
       console.error(err)
       setError(err.message || "Error duplicando grupo de avisos")
@@ -158,12 +207,19 @@ export default function Dashboard() {
       })
 
       const data = await res.json()
-      if (!data.archivo) throw new Error("Respuesta inválida del servidor")
 
-      const htmlRes = await authenticatedRequest(`/output/${data.archivo}`)
+      if (!data.archivo) {
+        throw new Error("Respuesta inválida del servidor")
+      }
+
+      const htmlRes = await authenticatedRequest(
+        `/output/${data.archivo}`
+      )
+
       const htmlText = await htmlRes.text()
 
       await navigator.clipboard.writeText(htmlText)
+
       alert("HTML copiado al portapapeles")
     } catch (err) {
       console.error(err)
@@ -174,16 +230,24 @@ export default function Dashboard() {
   const getSetLabel = (set) => {
     if (set?.date) return formatFullDate(set.date)
     if (set?.createdAt) return formatFullDate(set.createdAt)
-    return 'Set sin fecha'
+    return "Set sin fecha"
   }
 
   const setsWithDisplayTitle = (() => {
     const titleCounts = {}
+
     return sets.map((set) => {
       const baseLabel = getSetLabel(set)
+
       const count = titleCounts[baseLabel] || 0
+
       titleCounts[baseLabel] = count + 1
-      const displayTitle = count === 0 ? baseLabel : `${baseLabel} (${count})`
+
+      const displayTitle =
+        count === 0
+          ? baseLabel
+          : `${baseLabel} (${count})`
+
       return {
         ...set,
         displayTitle,
@@ -195,8 +259,11 @@ export default function Dashboard() {
     <div className="page-card designer-page">
       <div className="dashboard-header">
         <div>
-          <h1 className="page-title">Sets de Avisos</h1>
-          <p className="page-subtitle">Gestiona y organiza tus conjuntos de anuncios</p>
+          <h1 className="page-title">Dashboard</h1>
+
+          <p className="page-subtitle">
+            Página de administración de avisos zonales
+          </p>
 
           <div className="dashboard-search-row">
             <input
@@ -209,7 +276,8 @@ export default function Dashboard() {
         </div>
 
         <button className="btn btn-create" onClick={handleCrear}>
-          <Plus size={14} /> Nuevo Set
+          <Plus size={14} />
+          Nuevo Set
         </button>
       </div>
 
@@ -217,7 +285,9 @@ export default function Dashboard() {
 
       <div className="dashboard-grid-wrapper">
         {loading ? (
-          <div className="dashboard-loading">Cargando grupos de avisos…</div>
+          <div className="dashboard-loading">
+            Cargando grupos de avisos…
+          </div>
         ) : sets.length === 0 ? (
           <div className="dashboard-empty">
             Aún no hay grupos de avisos. Crea uno nuevo para empezar.
@@ -234,15 +304,36 @@ export default function Dashboard() {
                 onCopyHtml={() => handleCopiarHtml(set.id)}
                 onDuplicate={() => handleDuplicar(set.id)}
                 onDelete={() => handleEliminar(set.id)}
-                onPublish={(updatedSet) => setSets((prev) => prev.map(s => s.id === updatedSet.id ? ({ ...s, ...updatedSet }) : s))}
+                onPublish={(updatedSet) =>
+                  setSets((prev) =>
+                    sortSetsByDate(
+                      prev.map((s) =>
+                        s.id === updatedSet.id
+                          ? { ...s, ...updatedSet }
+                          : s
+                      )
+                    )
+                  )
+                }
               />
             ))}
           </div>
         )}
       </div>
+
       {hasMore && (
-        <div className="dashboard-load-more" style={{ marginTop: 14, textAlign: 'center' }}>
-          <button className="btn btn-primary" onClick={handleLoadMore} disabled={loadingMore}>
+        <div
+          className="dashboard-load-more"
+          style={{
+            marginTop: 14,
+            textAlign: "center",
+          }}
+        >
+          <button
+            className="btn btn-primary"
+            onClick={handleLoadMore}
+            disabled={loadingMore}
+          >
             {loadingMore ? "Cargando…" : "Cargar más"}
           </button>
         </div>

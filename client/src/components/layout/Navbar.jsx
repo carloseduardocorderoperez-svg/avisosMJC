@@ -248,7 +248,7 @@ export default function Navbar() {
     <>
       <div className="modern-navbar">
         <div className="brand-badge">
-          MJC Avisos IA
+          Avisos Omaha
         </div>
 
         <div className="nav-links">
