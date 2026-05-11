@@ -13,6 +13,7 @@
   --warning: #f0a036;
   --danger: #e5484d;
   --shadow-lg: 0 14px 34px rgba(0, 0, 0, 0.4);
+  --published-green: #007220;
 }
 
 * {

@@ -1,3 +1,4 @@
+
 /* Scoped styles for Dashboard grid and cards */
 .dashboard-grid-wrapper {
   margin-top: 18px;
@@ -70,10 +71,132 @@
   width: 100%;
 }
 
+/* Published state styling */
+.dashboard-card.published {
+  border-color: var(--published-green);
+  box-shadow: 0 10px 30px rgba(41, 179, 106, 0.08);
+}
+
+.published-ribbon {
+  position: absolute;
+  top: 0;
+  right: 0;
+
+  width: 35px;
+  height: 35px;
+
+  background: var(--published-green);
+
+  clip-path: polygon(100% 0, 0 0, 100% 100%);
+
+  border-top-right-radius: 12px;
+
+  pointer-events: none;
+}
+
+.published-ribbon::after {
+  content: "✓";
+
+  position: absolute;
+  top: 2px;
+  right: 8px;
+
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+}
+
+
+.dashboard-card-published-badge {
+  width: fit-content;
+  margin: 5px 0 0 0;
+  padding: 5px 10px 5px 10px;
+  background: var(--ok);
+  color: var(--text-main);
+  border-radius: 999px;
+}
+
+.dashboard-card-published-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--published-green);
+  color: var(--text-main);
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.dashboard-card-subtitle {
+  opacity: 0.95;
+}
+
+.btn-editar-set {
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--primary-blue);
+  color: var(--primary-blue);
+  padding: 6px 10px;
+  border-radius: 5px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.btn-editar-set:hover {
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.dashboard-card-actions-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 6px 0 8px;
+}
+
+/* Hide action buttons by default and reveal on card hover */
+.dashboard-card-actions-row .btn {
+  opacity: 0;
+  transform: translateY(4px);
+  pointer-events: none;
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.dashboard-card:hover .dashboard-card-actions-row .btn {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* Also hide the specific edit button variant and reveal on hover */
+.dashboard-card-actions-row .btn-editar-set {
+  opacity: 0;
+  transform: translateY(4px);
+  pointer-events: none;
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.dashboard-card:hover .dashboard-card-actions-row .btn-editar-set {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
 .dashboard-card:hover {
   transform: translateY(-6px);
   box-shadow: var(--shadow-lg);
   border-color: rgba(148, 163, 184, 0.25);
+  z-index: 1;
+}
+
+/* Keep published green border when hovering the card */
+.dashboard-card.published:hover {
+  /* keep the published color */
+  border-color: rgba(41, 179, 106, 0.95);
+  /* a subtle greenish glow on hover */
+  box-shadow: 0 14px 40px rgba(41, 179, 106, 0.12);
+  transform: translateY(-6px);
+  z-index: 2;
 }
 
 .dashboard-card-header {
@@ -189,6 +312,11 @@
   color: var(--danger);
 }
 
+.dashboard-card-menu-item.ok {
+  color: var(--ok);
+}
+
+
 .dashboard-card-preview {
   display: flex;
   flex-direction: column;
@@ -233,11 +361,7 @@
   font-size: 0.94rem;
 }
 
-.dashboard-card-actions-row {
-  display: flex;
-  justify-content: flex-start;
-  margin: 6px 0 8px;
-}
+
 
 .dashboard-card-stats {
   display: flex;
@@ -278,16 +402,17 @@
 
 /* Create button variant */
 .btn-create {
-  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+  background: linear-gradient(180deg, rgba(81, 255, 0, 0.06), rgba(0, 255, 13, 0.03));
   color: var(--text-main);
   border: 1px solid var(--border-strong);
   border-radius: 999px;
   padding: 8px 12px;
   box-shadow: none;
+  background-color: var(--ok);
 }
 
 .btn-create:hover {
-  background: linear-gradient(120deg, rgba(255,255,255,0.09), rgba(255,255,255,0.04));
+  background: linear-gradient(120deg, rgba(81, 255, 0, 0.377), rgba(0, 255, 13, 0.945));
 }
 
 @media (max-width: 720px) {

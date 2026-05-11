@@ -75,7 +75,7 @@ export function formatDayMonth(value) {
   return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })
 }
 
-export function formatFullDate(value, opts = { capitalizeWeekday: true, useDelYear: true }) {
+export function formatFullDate(value, opts = { capitalizeWeekday: true, includeYear: true, useDelYear: true }) {
   const d = parseFlexibleDate(value)
   if (!d) {
     if (typeof value === 'string') {
@@ -85,7 +85,10 @@ export function formatFullDate(value, opts = { capitalizeWeekday: true, useDelYe
         const day = parseInt(m[1], 10)
         const month = m[2].toLowerCase()
         const year = m[3] ? m[3] : null
-        return year ? `${opts.capitalizeWeekday ? '' : ''}${day} de ${month}${opts.useDelYear && year ? ` del ${year}` : year ? ` ${year}` : ''}` : `${day} de ${month}`
+        if (year && opts.includeYear) {
+          return `${day} de ${month}${opts.useDelYear ? ` del ${year}` : ` ${year}`}`
+        }
+        return `${day} de ${month}`
       }
       return value
     }
@@ -97,7 +100,8 @@ export function formatFullDate(value, opts = { capitalizeWeekday: true, useDelYe
   const day = d.getDate()
   const month = d.toLocaleDateString('es-ES', { month: 'long' })
   const year = d.getFullYear()
-  return `${weekdayStr} ${day} de ${month}${opts.useDelYear ? ` del ${year}` : ` ${year}`}`
+  const yearSuffix = opts.includeYear ? (opts.useDelYear ? ` del ${year}` : ` ${year}`) : ''
+  return `${weekdayStr} ${day} de ${month}${yearSuffix}`
 }
 
 export function getYear(value) {

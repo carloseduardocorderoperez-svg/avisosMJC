@@ -228,8 +228,8 @@ export default function Dashboard() {
   }
 
   const getSetLabel = (set) => {
-    if (set?.date) return formatFullDate(set.date)
-    if (set?.createdAt) return formatFullDate(set.createdAt)
+    if (set?.date) return formatFullDate(set.date, { includeYear: false })
+    if (set?.createdAt) return formatFullDate(set.createdAt, { includeYear: false })
     return "Set sin fecha"
   }
 
@@ -268,7 +268,7 @@ export default function Dashboard() {
           <div className="dashboard-search-row">
             <input
               className="modern-input dashboard-search"
-              placeholder="Buscar sets de avisos..."
+              placeholder="Buscar avisos..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />

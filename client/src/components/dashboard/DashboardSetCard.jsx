@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from "react"
-import { Pencil, Eye, Clipboard, Copy, Trash2, MoreVertical, Calendar, FileText } from "lucide-react"
+import { Pencil, Eye, Clipboard, Copy, Trash2, MoreVertical, Calendar, FileText, Underline, Upload, Check } from "lucide-react"
 import { getYear } from "../../utils/dateUtils"
 import { apiUrl } from "../../utils/api"
 import EditDateModal from "../EditDateModal"
+import EditSlugModal from "../EditSlugModal"
 
 export default function DashboardSetCard({
   set,
@@ -68,10 +69,10 @@ export default function DashboardSetCard({
 
   // Publish state
   const [isPublished, setIsPublished] = useState(!!set?.published)
-  const [slugEditing, setSlugEditing] = useState(false)
   const [slugValue, setSlugValue] = useState(set?.publicSlug || (set?.code || '').toLowerCase())
   const [syncing, setSyncing] = useState(false)
   const [publishError, setPublishError] = useState("")
+  const [editSlugOpen, setEditSlugOpen] = useState(false)
   const [editDateOpen, setEditDateOpen] = useState(false)
   const [editDateLoading, setEditDateLoading] = useState(false)
 
@@ -110,7 +111,7 @@ export default function DashboardSetCard({
 
       setIsPublished(!!data.set?.published)
       setSlugValue(data.set?.publicSlug || slugValue)
-      setSlugEditing(false)
+      setEditSlugOpen(false)
       if (typeof onPublish === 'function') onPublish(data.set)
     } catch (err) {
       console.error('Error publishing set', err)
@@ -148,15 +149,20 @@ export default function DashboardSetCard({
   }
 
   return (
-    <article className="dashboard-card" aria-label={`Set ${displayTitle}`} ref={menuRef}>
+    <article className={`dashboard-card ${isPublished ? 'published' : ''}`} aria-label={`Set ${displayTitle}`} ref={menuRef}>
       <div className="dashboard-card-header">
         <div className="dashboard-card-title-wrap">
           <Calendar size={16} className="dashboard-card-calendar" />
           <div>
-            <div className="dashboard-card-title">{displayTitle}</div>
-            {isPublished && (
-              <div className="dashboard-card-published-badge">Publicado</div>
-            )}
+            <div className="dashboard-card-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {displayTitle}
+              {isPublished && (
+                <div className="dashboard-card-published-inline">
+                  <Check size={12} />
+                  <span>Publicado</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
         <div className="dashboard-card-header-actions">
@@ -174,17 +180,27 @@ export default function DashboardSetCard({
           </button>
           {menuOpen && (
             <div className="dashboard-card-menu" role="menu">
-              <button type="button" className="dashboard-card-menu-item" onClick={() => actionAndClose(onPreview)}>
-                <Eye size={14} /> Vista previa
-              </button>
+              {isPublished?  <a type="button" className="dashboard-card-menu-item" style={{ textDecoration: 'none' }}  onClick={() => actionAndClose(onPreview)} href={`/avisos-semanales/${slugValue}`} target="_blank" rel="noreferrer">
+                <Eye size={14} /> Ver publicación
+              </a> : (
+                <button type="button" className="dashboard-card-menu-item" onClick={() => actionAndClose(onPreview)}>
+                  <Eye size={14} /> Vista previa
+                </button>
+              )}
               <button type="button" className="dashboard-card-menu-item" onClick={() => { setMenuOpen(false); setEditDateOpen(true) }}>
                 <Calendar size={14} /> Editar fecha
+              </button>
+              <button type="button" className="dashboard-card-menu-item" onClick={() => actionAndClose(() => setEditSlugOpen(true))}>
+                <Underline size={14} /> Editar slug
               </button>
               <button type="button" className="dashboard-card-menu-item" onClick={() => actionAndClose(onCopyHtml)}>
                 <Clipboard size={14} /> Copiar HTML
               </button>
               <button type="button" className="dashboard-card-menu-item" onClick={() => actionAndClose(onDuplicate)}>
                 <Copy size={14} /> Duplicar
+              </button>
+              <button disabled={syncing} type="button" className={`dashboard-card-menu-item ${isPublished ? 'danger' : 'ok'}`} onClick={() => actionAndClose(handleTogglePublish)}>
+                  <Upload size={14} /> {syncing ? '...' : isPublished ? 'Despublicar' : 'Publicar'}
               </button>
               <button type="button" className="dashboard-card-menu-item danger" onClick={() => actionAndClose(onDelete)}>
                 <Trash2 size={14} /> Eliminar
@@ -193,6 +209,8 @@ export default function DashboardSetCard({
           )}
         </div>
       </div>
+
+      {isPublished && <div className="published-ribbon" aria-hidden></div>}
 
       <div className="dashboard-card-preview">
         {previewToShow.length > 0 ? (
@@ -213,24 +231,52 @@ export default function DashboardSetCard({
       </div>
 
       <div className="dashboard-card-actions-row">
-        <button className="btn btn-small btn-primary" onClick={onEdit}>
+        <button className="btn-editar-set"  onClick={onEdit}>
           <Pencil size={13} /> Editar
         </button>
-        <button className={`btn btn-small ${isPublished ? 'btn-danger' : 'btn-neutral'}`} onClick={handleTogglePublish} disabled={syncing} style={{ marginLeft: 8 }}>
-          {syncing ? '...' : isPublished ? 'Despublicar' : 'Publicar'}
-        </button>
-        {isPublished && !slugEditing && (
-          <div style={{ marginLeft: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <a className="muted" href={`/avisos-semanales/${slugValue}`} target="_blank" rel="noreferrer">Ver público</a>
-            <button className="btn btn-small btn-neutral" onClick={() => setSlugEditing(true)}>Editar slug</button>
-          </div>
-        )}
-        {slugEditing && (
-          <div style={{ marginLeft: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <input className="modern-input" value={slugValue} onChange={(e) => setSlugValue(e.target.value)} style={{ width: 140 }} />
-            <button className="btn btn-small btn-primary" onClick={handleTogglePublish} disabled={syncing}>Guardar</button>
-            <button className="btn btn-small btn-neutral" onClick={() => { setSlugEditing(false); setSlugValue(set?.publicSlug || (set?.code || '').toLowerCase()) }}>Cancelar</button>
-          </div>
+        
+        {editSlugOpen && (
+          <EditSlugModal
+            set={set}
+            initialValue={slugValue}
+            onClose={() => setEditSlugOpen(false)}
+            onSave={async (newSlug) => {
+              setPublishError("")
+              try {
+                setSyncing(true)
+                const slug = String(newSlug || '').trim().toLowerCase()
+                const normalized = slug.replace(/[^a-z0-9\-_.]+/g, '-').replace(/^-+|-+$/g, '')
+                if (!normalized || normalized.length < 2) {
+                  setPublishError('Slug inválido. Usa letras, números y guiones (mínimo 2 caracteres).')
+                  return
+                }
+                if (normalized !== newSlug) setSlugValue(normalized)
+
+                const res = await fetch(apiUrl(`/sets/${set.id}/publish`), {
+                  method: 'POST',
+                  credentials: 'include',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ published: isPublished, publicSlug: normalized }),
+                })
+
+                const data = await res.json()
+                if (!res.ok) {
+                  throw new Error((data && data.error) || 'Error actualizando slug')
+                }
+
+                setSlugValue(data.set?.publicSlug || normalized)
+                setEditSlugOpen(false)
+                if (typeof onPublish === 'function') onPublish(data.set)
+              } catch (err) {
+                console.error('Error updating slug', err)
+                setPublishError(err.message || 'Error actualizando slug')
+              } finally {
+                setSyncing(false)
+              }
+            }}
+            loading={syncing}
+            error={publishError}
+          />
         )}
       </div>
 
