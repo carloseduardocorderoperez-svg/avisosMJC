@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { apiUrl } from "../utils/api";
+import { formatFullDate } from "../utils/dateUtils";
 
 export default function PublicAvisoView() {
   const { slug } = useParams();
@@ -46,6 +47,8 @@ export default function PublicAvisoView() {
 
   const iframeSrc = currentSlug ? apiUrl(`/public/sets/${currentSlug}?format=html`) : '';
   const currentSet = sets.find(s => (s.publicSlug || s.code) === currentSlug) || {};
+  const headerDate = currentSet?.date || currentSet?.createdAt || null;
+  const headerLabel = headerDate ? formatFullDate(headerDate, { includeYear: false }) : (currentSet?.title || '');
 
   return (
     <div className="public-view-fullscreen" onMouseMove={handleMouseMove} onTouchMove={handleMouseMove}>
@@ -82,15 +85,9 @@ export default function PublicAvisoView() {
           ☰
         </button>
         <div className="control-info-fullscreen">
-          {currentSet.title && <span className="control-title">{currentSet.title}</span>}
+          {headerLabel && <span className="control-title">{headerLabel}</span>}
         </div>
-        <a 
-          className="control-btn-fullscreen back-btn-fullscreen" 
-          href="/avisos-semanales"
-          title="Volver al listado"
-        >
-          ↩
-        </a>
+        {/* back button intentionally removed for public published view */}
       </div>
 
       {/* Contenedor del iframe - fullscreen */}
