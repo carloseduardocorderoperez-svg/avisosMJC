@@ -26,7 +26,7 @@ export default function PublicAvisos() {
 
   return (
     <div className="public-avisos page">
-      <h1>Avisos públicos</h1>
+      <h1>Avisos Semanales Zona Omaha</h1>
 
       {loading && <p>Cargando...</p>}
 
@@ -37,11 +37,10 @@ export default function PublicAvisos() {
           <div key={s.id} className="public-set-card">
             <div className="public-set-head">
               <div>
-                <strong>{s.title}</strong>
-                <div className="muted">{formatFullDate(s.date)}</div>
+                <strong>{formatFullDate(s.date)}</strong>
+                <div className="muted"></div>
               </div>
               <div className="public-set-meta">
-                <span className="badge">Publicado</span>
                 <Link to={`/avisos-semanales/${s.publicSlug || s.code.toLowerCase()}`} className="btn btn-primary small-btn">Ver</Link>
               </div>
             </div>

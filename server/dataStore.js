@@ -203,11 +203,13 @@ function normalizeToMultiSet(raw) {
   }
 
   const now = new Date().toISOString();
+  const nowLocal = new Date();
+  const localDateStr = `${nowLocal.getFullYear()}-${String(nowLocal.getMonth() + 1).padStart(2, '0')}-${String(nowLocal.getDate()).padStart(2, '0')}`;
 
   const defaultSet = {
     id: uuidv4(),
     code: "DEFAULT",
-    date: new Date().toISOString(),
+    date: localDateStr,
     title: "AVISOS ZONALES",
     avisos,
     createdAt: now,
@@ -278,16 +280,18 @@ function toPlainSet(data, id) {
       return String(val);
     }
   };
+  const nowLocal = new Date();
+  const localDateStr = `${nowLocal.getFullYear()}-${String(nowLocal.getMonth() + 1).padStart(2, '0')}-${String(nowLocal.getDate()).padStart(2, '0')}`;
 
   return {
     id,
     code: restored.code || "",
     codeLower: String(restored.code || "").trim().toLowerCase(),
-    date: makeIso(restored.date) || new Date().toISOString(),
+    date: makeIso(restored.date) || localDateStr,
     title: restored.title || "AVISOS ZONALES",
     bannerMessage:
       restored.bannerMessage ||
-      "Gracias por revisar todos los avisos! Reacciona con un 🚬 si llegaste hasta aquí",
+      "Gracias por ver los avisos, mucho éxito en la semana!",
     avisos: Array.isArray(restored.avisos) ? restored.avisos : [],
     // Preserve publication metadata if present
     published: restored.published === true,
@@ -528,12 +532,16 @@ async function createSet({ code, date, title, bannerMessage, avisos, source = "S
 
   const now = new Date().toISOString();
 
+  // default local date string YYYY-MM-DD
+  const nowLocal = new Date();
+  const localDateStr = `${nowLocal.getFullYear()}-${String(nowLocal.getMonth() + 1).padStart(2, '0')}-${String(nowLocal.getDate()).padStart(2, '0')}`;
+
   const newSet = {
     id: uuidv4(),
     code: resolveSetCode(sets, code, source),
-    date: date || new Date().toISOString(),
+    date: date || localDateStr,
     title: title || "AVISOS ZONALES",
-    bannerMessage: bannerMessage || "Gracias por revisar todos los avisos! Reacciona con un 🚬 si llegaste hasta aquí",
+    bannerMessage: bannerMessage || "Gracias por ver los avisos, mucho éxito en la semana!",
     avisos: Array.isArray(avisos) ? avisos : [],
     createdAt: now,
     updatedAt: now,

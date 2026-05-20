@@ -65,8 +65,7 @@ export default function PublicAvisoView() {
               className={`sidebar-item-fullscreen ${(s.publicSlug || s.code) === currentSlug ? 'active' : ''}`} 
               onClick={() => handleSelect(s)}
             >
-              <div className="sidebar-item-title-fullscreen">{s.title}</div>
-              <div className="sidebar-item-meta-fullscreen">{formatFullDate(s.date)}</div>
+              <div className="sidebar-item-title-fullscreen">{formatFullDate(s.date)}</div>
             </button>
           ))}
         </nav>

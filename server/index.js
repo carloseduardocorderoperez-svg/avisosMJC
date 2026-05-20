@@ -339,9 +339,10 @@ app.post("/sets/:id/generar-html", requireAuth, async (req, res) => {
       return res.status(404).json({ error: "Set no encontrado" });
     }
 
-    // Actualizar la fecha del set a la fecha actual
-    const currentDate = new Date().toISOString();
-    set.date = currentDate;
+    // Actualizar la fecha del set a la fecha actual (local YYYY-MM-DD)
+    const nowLocal = new Date();
+    const localDateStr = `${nowLocal.getFullYear()}-${String(nowLocal.getMonth() + 1).padStart(2, '0')}-${String(nowLocal.getDate()).padStart(2, '0')}`;
+    set.date = localDateStr;
     await updateSet(id, set);
 
     const title = set.title || "AVISOS ZONALES";
@@ -563,9 +564,19 @@ app.patch('/sets/:id/update-date', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Se requiere una fecha válida' });
     }
 
-    const dateObj = new Date(date);
-    if (isNaN(dateObj.getTime())) {
-      return res.status(400).json({ error: 'Fecha inválida' });
+    // Normalize incoming date to local YYYY-MM-DD string to avoid timezone shifts
+    let normalizedDate = null;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(String(date))) {
+      normalizedDate = String(date);
+    } else {
+      const parsed = new Date(date);
+      if (isNaN(parsed.getTime())) {
+        return res.status(400).json({ error: 'Fecha inválida' });
+      }
+      const y = parsed.getFullYear();
+      const m = String(parsed.getMonth() + 1).padStart(2, '0');
+      const d = String(parsed.getDate()).padStart(2, '0');
+      normalizedDate = `${y}-${m}-${d}`;
     }
 
     const { sets } = await loadAllSets();
@@ -573,7 +584,7 @@ app.patch('/sets/:id/update-date', requireAuth, async (req, res) => {
     if (!target) return res.status(404).json({ error: 'Set no encontrado' });
 
     const updated = await updateSet(id, {
-      date: dateObj.toISOString(),
+      date: normalizedDate,
     });
 
     res.json({ ok: true, set: updated });
@@ -711,7 +722,9 @@ app.post("/import-html", requireAuth, async (req, res) => {
     const aiResult = await extractFromHtml(html);
 
     const avisos = aiResult.avisos || [];
-    const autoDate = date || aiResult.date || new Date().toISOString();
+    const nowLocal = new Date();
+    const localDateStr = `${nowLocal.getFullYear()}-${String(nowLocal.getMonth() + 1).padStart(2, '0')}-${String(nowLocal.getDate()).padStart(2, '0')}`;
+    const autoDate = date || aiResult.date || localDateStr;
     const autoTitle = aiResult.title || "AVISOS ZONALES";
 
     const nuevoSet = createSet({
@@ -743,9 +756,10 @@ app.post("/analyze-slides", requireAuth, async (req, res) => {
     console.log("AVISOS GENERADOS:", avisos.length, "persist=", persist);
 
     if (persist) {
-      const autoDate = new Date().toISOString();
+      const nowLocal = new Date();
+      const localDateStr = `${nowLocal.getFullYear()}-${String(nowLocal.getMonth() + 1).padStart(2, '0')}-${String(nowLocal.getDate()).padStart(2, '0')}`;
       const nuevoSet = await createSet({
-        date: autoDate,
+        date: localDateStr,
         avisos,
         source: "AI",
       });

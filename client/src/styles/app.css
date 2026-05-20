@@ -74,7 +74,7 @@ textarea {
 .page-container {
   padding: 16px 22px;
   max-width: 100%;
-  margin: 20px;
+  margin: 10px;
   flex: 1;
   min-height: 0;
   overflow: auto;
@@ -1542,7 +1542,7 @@ textarea {
 }
 
 .page-title {
-  margin: 0 0 18px;
+  margin: 0 0 5px;
   font-size: 1.7rem;
   letter-spacing: 0.4px;
 }
@@ -1776,7 +1776,7 @@ textarea {
   padding: 14px;
   background: var(--bg-elevated);
   height: auto;
-  max-height: calc(100vh - 96px);
+  max-height: calc(100vh - 105px);
   position: sticky;
   top: 84px;
   overflow-y: auto;
@@ -2589,8 +2589,8 @@ textarea {
   justify-content: space-between;
   align-items: flex-start;
   gap: 16px;
-  margin-bottom: 24px;
   flex-wrap: wrap;
+  margin-bottom: 10px;
 }
 
 .page-subtitle {

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { NavLink, useLocation } from "react-router-dom"
 import { useAvisosStore } from "../../store/avisosStore"
+import { formatFullDate } from "../../utils/dateUtils"
 import { Sparkles, Trash2, LogIn, LogOut, User } from "lucide-react"
 import AiImportModal from "../AiImportModal"
 import { checkAuthStatus, loginWithGoogle, logout, authenticatedRequest } from "../../utils/api"
@@ -269,8 +270,9 @@ export default function Navbar() {
               
               <span className="nav-breadcrumb-sep">→</span>
               <span className="nav-breadcrumb-set">
-                {currentSet.date || "Set sin fecha"}
-                {currentSet.code ? ` (ID ${currentSet.code})` : ""}
+                {currentSet?.date || currentSet?.createdAt
+                  ? formatFullDate(currentSet?.date || currentSet?.createdAt, { includeYear: false })
+                  : "Set sin fecha"}
               </span>
             </span>
           )}
