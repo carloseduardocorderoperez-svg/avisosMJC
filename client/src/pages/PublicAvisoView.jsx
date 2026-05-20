@@ -92,13 +92,7 @@ export default function PublicAvisoView() {
       {/* Contenedor del iframe - fullscreen */}
       <div className="public-iframe-fullscreen-wrap">
         {currentSlug ? (
-          <iframe 
-            ref={iframeRef} 
-            title="Aviso público" 
-            src={iframeSrc} 
-            className="public-iframe-fullscreen"
-            sandbox="allow-same-origin allow-scripts allow-popups allow-popups-to-escape-sandbox"
-          />
+          <IframeLoader slug={currentSlug} />
         ) : (
           <div className="public-empty-fullscreen">
             <p>Selecciona un aviso para ver su contenido.</p>
@@ -109,5 +103,66 @@ export default function PublicAvisoView() {
         )}
       </div>
     </div>
+  );
+}
+
+function IframeLoader({ slug }) {
+  const [src, setSrc] = useState(null);
+
+  useEffect(() => {
+    let canceled = false;
+
+    const isDevVite = typeof window !== 'undefined' && window.location && (window.location.port === '5173' || window.location.port === '5174');
+
+    const tryStatic = async () => {
+      // In Vite dev server prefer backend endpoint to avoid loading the dev SPA as a static page
+      if (isDevVite) {
+        setSrc(apiUrl(`/public/sets/${slug}?format=html`));
+        return;
+      }
+
+      const candidates = [
+        `/avisos-semanales/${slug}/`,
+        `/dist-public/${slug}/`,
+        `${window.location.protocol}//${window.location.hostname}:5000/${slug}/`,
+      ];
+
+      for (const staticUrl of candidates) {
+        try {
+          const res = await fetch(staticUrl, { method: 'GET' });
+          if (canceled) return;
+          if (res.ok && (res.headers.get('content-type') || '').includes('text/html')) {
+            setSrc(staticUrl);
+            return;
+          }
+        } catch (e) {
+          // network/CORS error — continue to next candidate
+        }
+      }
+
+      // fallback to backend HTML endpoint
+      setSrc(apiUrl(`/public/sets/${slug}?format=html`));
+    };
+
+    tryStatic();
+
+    return () => { canceled = true; };
+  }, [slug]);
+
+  if (!src) {
+    return (
+      <div className="public-iframe-loading">
+        <p>Cargando aviso…</p>
+      </div>
+    );
+  }
+
+  return (
+    <iframe
+      title={`Aviso ${slug}`}
+      src={src}
+      className="public-iframe-fullscreen"
+      sandbox="allow-same-origin allow-scripts allow-popups allow-popups-to-escape-sandbox"
+    />
   );
 }

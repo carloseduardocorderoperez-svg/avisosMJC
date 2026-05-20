@@ -11,6 +11,7 @@ const { convertPdfToImages } = require("./pdfProcessor");
 const { analyzeAllSlides, extractFromHtml } = require("./aiExtractor");
 const { groupSlides } = require("./groupSlides");
 const { generateHTML } = require("./htmlGenerator");
+const { publishAviso, removeStaticAviso } = require("./staticPublisher");
 const {
   uploadImageToDrive,
   listImagesFromDrive,
@@ -518,15 +519,60 @@ app.post('/sets/:id/publish', requireAuth, async (req, res) => {
     }
 
     // Determinar publicSlug por defecto (si no se pasó uno)
-    let desiredSlug = publicSlug && String(publicSlug).trim();
-    if (!desiredSlug) {
-      const datePart = target.date ? (() => {
-        const d = new Date(target.date);
-        return isNaN(d.getTime()) ? null : d.toISOString().split('T')[0];
-      })() : null;
-      const base = (target.code || 'set').toLowerCase();
-      desiredSlug = datePart ? `${base}-${datePart}` : base;
-    }
+      let desiredSlug = publicSlug !== undefined ? String(publicSlug).trim() : undefined;
+
+      // If frontend didn't provide publicSlug, preserve existing one if present
+      if (!desiredSlug && target.publicSlug) {
+        desiredSlug = String(target.publicSlug).trim();
+      }
+
+      // If still not defined, try to derive from visible date (robust parsing)
+      if (!desiredSlug) {
+        const dateStr = target.date || '';
+
+        function normalizeMonthName(s) {
+          if (!s) return s;
+          // remove accents
+          const map = { 'á':'a','é':'e','í':'i','ó':'o','ú':'u','Á':'A','É':'E','Í':'I','Ó':'O','Ú':'U','ñ':'n','Ñ':'N' };
+          return s.replace(/[áéíóúÁÉÍÓÚñÑ]/g, (c)=>map[c] || c).toLowerCase();
+        }
+
+        function dateToSlug(s) {
+          if (!s) return null;
+          const t = String(s).trim();
+          // YYYY-MM-DD or ISO
+          const isoMatch = t.match(/^(\d{4})-(\d{2})-(\d{2})/);
+          if (isoMatch) return `${isoMatch[3]}${normalizeMonthName((new Date(isoMatch[1], parseInt(isoMatch[2],10)-1, isoMatch[3])).toLocaleString('es-ES',{month:'long'}))}${isoMatch[1]}`;
+
+          // DD/MM/YYYY
+          const dm = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+          if (dm) {
+            const day = String(parseInt(dm[1],10));
+            const month = parseInt(dm[2],10) - 1;
+            const year = dm[3].length === 2 ? 2000 + parseInt(dm[3],10) : parseInt(dm[3],10);
+            const monthName = normalizeMonthName(new Date(year, month, 1).toLocaleString('es-ES', { month: 'long' }));
+            return `${day}${monthName}${year}`;
+          }
+
+          // Spanish textual like "19 de mayo de 2026" or "martes 19 de mayo"
+          const textMatch = t.match(/(\d{1,2})\s*(?:de)?\s*([A-Za-záéíóúñÑ]+)\s*(?:de)?\s*(\d{2,4})?/i);
+          if (textMatch) {
+            const day = String(parseInt(textMatch[1],10));
+            const monthName = normalizeMonthName(textMatch[2]);
+            const year = textMatch[3] ? (textMatch[3].length === 2 ? 2000 + parseInt(textMatch[3],10) : parseInt(textMatch[3],10)) : (new Date().getFullYear());
+            return `${day}${monthName}${year}`;
+          }
+
+          return null;
+        }
+
+        const byDate = dateToSlug(dateStr);
+        if (byDate) {
+          desiredSlug = byDate;
+        } else {
+          desiredSlug = (target.code || 'set').toLowerCase();
+        }
+      }
 
     // Normalizar desiredSlug
     desiredSlug = String(desiredSlug || '').trim().toLowerCase().replace(/[^a-z0-9\-_.]+/g, '-').replace(/^-+|-+$/g, '');
@@ -547,7 +593,36 @@ app.post('/sets/:id/publish', requireAuth, async (req, res) => {
     const clientBase = (process.env.CLIENT_URL || '').replace(/\/$/, '');
     const url = updated.published ? `${clientBase}/avisos-semanales/${updated.publicSlug || updated.code}` : null;
 
-    res.json({ ok: true, set: updated, publicUrl: url });
+    // Intentar generar o eliminar HTML estático en dist-public según published
+    let staticResult = null;
+    try {
+      if (updated.published) {
+        // publish new slug
+        staticResult = await publishAviso(updated);
+
+        // If slug changed, remove old static folder to avoid stale copies
+        try {
+          const oldSlug = target && target.publicSlug ? String(target.publicSlug).trim() : null;
+          const newSlug = updated && updated.publicSlug ? String(updated.publicSlug).trim() : null;
+          if (oldSlug && newSlug && oldSlug !== newSlug) {
+            try {
+              await removeStaticAviso(oldSlug);
+            } catch (eOld) {
+              console.warn('No se pudo eliminar carpeta antigua del slug:', oldSlug, eOld && eOld.message ? eOld.message : eOld);
+            }
+          }
+        } catch (e) {
+          /* ignore */
+        }
+      } else {
+        staticResult = await removeStaticAviso(updated);
+      }
+    } catch (err) {
+      console.error('Error gestionando HTML estático:', err && err.message ? err.message : err);
+      staticResult = { ok: false, error: String(err) };
+    }
+
+    res.json({ ok: true, set: updated, publicUrl: url, staticPublish: staticResult });
   } catch (err) {
     console.error('Error publicando set:', err);
     res.status(500).json({ error: 'Error publicando set' });
@@ -690,10 +765,22 @@ app.post("/avisos", requireAuth, async (req, res) => {
       bannerMessage: targetSet.bannerMessage,
     });
 
+    // Si el set está publicado, regenerar también el HTML estático en dist-public
+    let staticPublish = null;
+    if (targetSet.published) {
+      try {
+        staticPublish = await publishAviso(targetSet);
+      } catch (err) {
+        console.error('Error generando HTML estático al guardar:', err && err.message ? err.message : err);
+        staticPublish = { ok: false, error: String(err) };
+      }
+    }
+
     res.json({
       message: "Avisos guardados",
       html: htmlFile,
       set: targetSet,
+      staticPublish,
     });
   } catch (error) {
     console.error(error);

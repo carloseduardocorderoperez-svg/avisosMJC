@@ -410,17 +410,9 @@ function fechaLarga(dateStr) {
 // - avisos: array de avisos a renderizar
 // - date: fecha a mostrar en el HTML
 // - title: título principal del HTML
-function generateHTML(options = {}) {
+function buildHTMLString(options = {}) {
   const templatePath = path.join(__dirname, "../template/avisos_template.html");
   const dataPath = path.join(__dirname, "../data/avisos.json");
-
-  const outputDir = path.join(__dirname, "../output");
-  const outputFile = "avisos_generados.html";
-  const outputPath = path.join(outputDir, outputFile);
-
-  if (!fs.existsSync(outputDir)) {
-    fs.mkdirSync(outputDir);
-  }
 
   const template = fs.readFileSync(templatePath, "utf8");
 
@@ -449,7 +441,6 @@ function generateHTML(options = {}) {
       if (current) {
         avisos = Array.isArray(current.avisos) ? current.avisos : [];
         if (!options.title && current.title) {
-          // Quitar la fecha del título si fue guardada como "TÍTULO - DD/MM/YYYY"
           metaTitle = current.title.replace(/ - \d{2}\/\d{2}\/\d{4}$/, "").trim();
         }
         if (!options.date && current.date) {
@@ -495,7 +486,6 @@ function generateHTML(options = {}) {
     { key: "extras",    navPlaceholder: "{{NAV_EXTRAS}}",    sectionPlaceholder: "{{SECTION_EXTRAS}}",    navLabel: "📌 AVISOS EXTRA" },
   ];
 
-  // La primera sección con contenido recibe la clase "active"
   const firstNonEmpty = SECCIONES_DEF.find((s) => secciones[s.key]) || SECCIONES_DEF[0];
 
   let html = template;
@@ -520,6 +510,20 @@ function generateHTML(options = {}) {
     }
   }
 
+  return html;
+}
+
+function generateHTML(options = {}) {
+  const outputDir = path.join(__dirname, "../output");
+  const outputFile = "avisos_generados.html";
+  const outputPath = path.join(outputDir, outputFile);
+
+  if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir);
+  }
+
+  const html = buildHTMLString(options);
+
   fs.writeFileSync(outputPath, html);
 
   return outputFile;
@@ -527,4 +531,6 @@ function generateHTML(options = {}) {
 
 module.exports = {
   generateHTML,
+  buildHTMLString,
+  renderAviso,
 };
