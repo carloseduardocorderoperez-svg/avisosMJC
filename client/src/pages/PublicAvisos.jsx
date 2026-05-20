@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { apiUrl } from "../utils/api";
+import { formatFullDate } from "../utils/dateUtils";
 import { Link } from "react-router-dom";
 
 export default function PublicAvisos() {
@@ -37,7 +38,7 @@ export default function PublicAvisos() {
             <div className="public-set-head">
               <div>
                 <strong>{s.title}</strong>
-                <div className="muted">{s.date}</div>
+                <div className="muted">{formatFullDate(s.date)}</div>
               </div>
               <div className="public-set-meta">
                 <span className="badge">Publicado</span>

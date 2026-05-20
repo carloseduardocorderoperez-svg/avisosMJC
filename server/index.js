@@ -516,9 +516,29 @@ app.post('/sets/:id/publish', requireAuth, async (req, res) => {
       if (clash) return res.status(400).json({ error: 'publicSlug ya está en uso' });
     }
 
+    // Determinar publicSlug por defecto (si no se pasó uno)
+    let desiredSlug = publicSlug && String(publicSlug).trim();
+    if (!desiredSlug) {
+      const datePart = target.date ? (() => {
+        const d = new Date(target.date);
+        return isNaN(d.getTime()) ? null : d.toISOString().split('T')[0];
+      })() : null;
+      const base = (target.code || 'set').toLowerCase();
+      desiredSlug = datePart ? `${base}-${datePart}` : base;
+    }
+
+    // Normalizar desiredSlug
+    desiredSlug = String(desiredSlug || '').trim().toLowerCase().replace(/[^a-z0-9\-_.]+/g, '-').replace(/^-+|-+$/g, '');
+
+    // Evitar colisiones simples: si existe otro con mismo slug, añadir timestamp corto
+    const clash = (sets || []).some((s) => s && String(s.id) !== String(id) && String(s.publicSlug || '').toLowerCase() === desiredSlug);
+    if (clash) {
+      desiredSlug = `${desiredSlug}-${Date.now().toString().slice(-4)}`;
+    }
+
     const updated = await updateSet(id, {
       published: !!published,
-      publicSlug: publicSlug || (target.code || '').toLowerCase(),
+      publicSlug: desiredSlug,
       publishedAt: published === true ? new Date().toISOString() : null,
     });
 

@@ -1,12 +1,19 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import ReactDOM from "react-dom";
 import { Calendar } from "lucide-react";
 
 export default function EditDateModal({ set, onClose, onSave, loading }) {
-  const [dateInput, setDateInput] = useState(
-    set?.date
-      ? new Date(set.date).toISOString().split("T")[0]
-      : new Date().toISOString().split("T")[0]
-  );
+  const [dateInput, setDateInput] = useState(() => {
+    if (set?.date) {
+      return String(set.date).split("T")[0]
+    }
+    // default to local today
+    const d = new Date()
+    const y = d.getFullYear()
+    const m = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    return `${y}-${m}-${day}`
+  })
 
   const handleSave = async () => {
     if (!dateInput) {
@@ -16,7 +23,23 @@ export default function EditDateModal({ set, onClose, onSave, loading }) {
     await onSave(dateInput);
   };
 
-  return (
+  // Crear contenedor en body para renderizar el modal como portal
+  const [container] = useState(() => {
+    if (typeof document === "undefined") return null;
+    const el = document.createElement("div");
+    el.className = "edit-date-portal";
+    return el;
+  });
+
+  useEffect(() => {
+    if (!container) return;
+    document.body.appendChild(container);
+    return () => {
+      try { document.body.removeChild(container); } catch (e) {}
+    };
+  }, [container]);
+
+  const modal = (
     <div className="ai-modal-backdrop" onClick={onClose}>
       <div className="ai-modal" onClick={(e) => e.stopPropagation()}>
         <div className="ai-modal-header">
@@ -76,4 +99,7 @@ export default function EditDateModal({ set, onClose, onSave, loading }) {
       </div>
     </div>
   );
+
+  if (!container) return null;
+  return ReactDOM.createPortal(modal, container);
 }

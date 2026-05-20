@@ -359,18 +359,40 @@ function fechaLarga(dateStr) {
     "enero", "febrero", "marzo", "abril", "mayo", "junio",
     "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
   ];
-
+  // Parsear tomando SOLO la porción fecha (año-mes-día) para evitar shifts por zona horaria
   let fecha;
   if (dateStr) {
-    // Soporta DD/MM/YYYY
-    const parts = dateStr.split("/");
-    if (parts.length === 3) {
-      fecha = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+    if (dateStr instanceof Date) {
+      fecha = dateStr;
+    } else if (typeof dateStr === 'string') {
+      const s = dateStr.trim();
+
+      // dd/mm/yyyy
+      const dm = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+      if (dm) {
+        const day = parseInt(dm[1], 10);
+        const month = parseInt(dm[2], 10) - 1;
+        const year = dm[3].length === 2 ? 2000 + parseInt(dm[3], 10) : parseInt(dm[3], 10);
+        fecha = new Date(year, month, day);
+      } else {
+        // ISO-like (YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS...)
+        const isoMatch = s.match(/^(\d{4}-\d{2}-\d{2})/);
+        if (isoMatch) {
+          const parts = isoMatch[1].split('-');
+          const year = parseInt(parts[0], 10);
+          const month = parseInt(parts[1], 10) - 1;
+          const day = parseInt(parts[2], 10);
+          fecha = new Date(year, month, day);
+        } else {
+          // Fallback: dejar que Date intente parsear (último recurso)
+          const parsed = new Date(s);
+          if (!isNaN(parsed.getTime())) fecha = parsed;
+        }
+      }
     }
   }
-  if (!fecha || isNaN(fecha)) {
-    fecha = new Date();
-  }
+
+  if (!fecha || isNaN(fecha)) fecha = new Date();
 
   const diaSemana = diasSemana[fecha.getDay()];
   const dia = fecha.getDate();

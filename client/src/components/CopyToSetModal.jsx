@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { X, ArrowRight } from "lucide-react"
 import apiUrl from "../utils/api"
+import { formatFullDate } from "../utils/dateUtils"
 
 export default function CopyToSetModal({ isOpen, onClose, aviso, currentSetId }) {
   const [sets, setSets]             = useState([])
@@ -104,7 +105,7 @@ export default function CopyToSetModal({ isOpen, onClose, aviso, currentSetId })
                       onClick={() => setSelectedId(s.id)}
                     >
                       <span className="copy-set-code">{s.code}</span>
-                      {s.date && <span className="copy-set-date">{s.date}</span>}
+                      {s.date && <span className="copy-set-date">{formatFullDate(s.date)}</span>}
                       <span className="copy-set-count">{s.avisosCount ?? 0} avisos</span>
                     </button>
                   ))}

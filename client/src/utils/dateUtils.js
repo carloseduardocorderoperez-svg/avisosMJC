@@ -30,6 +30,17 @@ export function parseFlexibleDate(value) {
   if (typeof value === 'string') {
     const s = value.trim()
 
+    // ISO date-only (YYYY-MM-DD) or ISO starting with date part: treat as local date
+    const isoDateMatch = s.match(/^\d{4}-\d{2}-\d{2}(?:$|T)/)
+    if (isoDateMatch) {
+      const parts = s.split('T')[0].split('-')
+      const year = parseInt(parts[0], 10)
+      const month = parseInt(parts[1], 10) - 1
+      const day = parseInt(parts[2], 10)
+      const d = new Date(year, month, day)
+      if (!isNaN(d.getTime())) return d
+    }
+
     // dd/mm/yyyy or dd/mm/yy
     const dm = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/)
     if (dm) {
