@@ -25,78 +25,15 @@ async function generateStaticAviso(set) {
 
   await ensureDir(targetDir);
 
-  // Build the full HTML from generator (contains full document)
-  const fullHtml = buildHTMLString({
+  const html = buildHTMLString({
     avisos: Array.isArray(set.avisos) ? set.avisos : [],
     date: set.date,
     title: set.title || `AVISOS - ${set.date || ''}`,
     bannerMessage: set.bannerMessage,
   });
 
-  // Prefer using the client build index (copied into dist-public) as base so styles/assets match exactly
-  let baseIndexPath = path.join(__dirname, '../dist-public/index.html');
-  if (!fsSync.existsSync(baseIndexPath)) {
-    // fallback to original client/dist if not copied
-    baseIndexPath = path.join(__dirname, '../client/dist/index.html');
-  }
-
-  let baseIndex = '';
-  try {
-    baseIndex = fsSync.readFileSync(baseIndexPath, 'utf8');
-  } catch (err) {
-    // last resort: use a minimal HTML shell
-    baseIndex = `<!doctype html><html><head><meta charset="utf-8"></head><body><div id="root"></div></body></html>`;
-  }
-
-  // Extract <style> tags from the generated fullHtml head to inject into the baseIndex head
-  const headMatch = fullHtml.match(/<head[^>]*>([\s\S]*?)<\/head>/i);
-  const styles = [];
-  if (headMatch && headMatch[1]) {
-    const headInner = headMatch[1];
-    const styleRegex = /<style[\s\S]*?<\/style>/gi;
-    let m;
-    while ((m = styleRegex.exec(headInner))) {
-      styles.push(m[0]);
-    }
-  }
-
-  // Extract container content (the main app DOM) from generated HTML
-  let containerContent = '';
-  const containerStart = fullHtml.indexOf('<div class="container">');
-  if (containerStart !== -1) {
-    // find the next <script tag after the container start to mark end of content
-    const scriptIndex = fullHtml.indexOf('<script', containerStart);
-    if (scriptIndex !== -1) {
-      containerContent = fullHtml.slice(containerStart, scriptIndex);
-    } else {
-      // fallback to extracting until closing body
-      const bodyClose = fullHtml.indexOf('</body>', containerStart);
-      containerContent = bodyClose !== -1 ? fullHtml.slice(containerStart, bodyClose) : fullHtml.slice(containerStart);
-    }
-  } else {
-    // if not available, fallback to whole body inner
-    const bodyMatch = fullHtml.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
-    containerContent = bodyMatch && bodyMatch[1] ? bodyMatch[1] : fullHtml;
-  }
-
-  // Inject styles into baseIndex head (before </head>) and replace root with container content
-  let outHtml = baseIndex;
-  // insert styles before closing head
-  outHtml = outHtml.replace(/<\/head>/i, (m) => `${styles.join('\n')}\n${m}`);
-
-  // replace root placeholder
-  if (outHtml.includes('<div id="root"></div>')) {
-    outHtml = outHtml.replace('<div id="root"></div>', `<div id="root">${containerContent}</div>`);
-  } else if (outHtml.includes('<div id="root">')) {
-    // already has content — attempt simple replace
-    outHtml = outHtml.replace(/<div id="root">[\s\S]*?<\/div>/i, `<div id="root">${containerContent}</div>`);
-  } else {
-    // place container at end of body
-    outHtml = outHtml.replace(/<\/body>/i, `${containerContent}\n</body>`);
-  }
-
   const targetFile = path.join(targetDir, 'index.html');
-  await fs.writeFile(targetFile, outHtml, 'utf8');
+  await fs.writeFile(targetFile, html, 'utf8');
 
   return { ok: true, slug, path: targetFile };
 }
