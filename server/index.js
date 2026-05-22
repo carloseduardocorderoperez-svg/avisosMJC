@@ -12,7 +12,7 @@ const { analyzeAllSlides, extractFromHtml } = require("./aiExtractor");
 const { groupSlides } = require("./groupSlides");
 const { generateHTML } = require("./htmlGenerator");
 const { publishAviso, removeStaticAviso } = require("./staticPublisher");
-const { exec } = require('child_process');
+const { exec, spawn } = require('child_process');
 const {
   uploadImageToDrive,
   listImagesFromDrive,
@@ -599,6 +599,7 @@ app.post('/sets/:id/publish', requireAuth, async (req, res) => {
     try {
       if (updated.published) {
         // publish new slug
+        console.log('Generating static HTML...');
         staticResult = await publishAviso(updated);
 
         // If slug changed, remove old static folder to avoid stale copies
@@ -623,23 +624,22 @@ app.post('/sets/:id/publish', requireAuth, async (req, res) => {
       staticResult = { ok: false, error: String(err) };
     }
 
-    // If configured, automatically queue a git commit + push so GitHub Actions handles deploy
-    // Requires AUTO_PUSH_ON_PUBLISH=true (or '1'). Render should NOT store FIREBASE_TOKEN.
+    // If configured, automatically run git-auto-push synchronously in the publish flow
     let autoPushQueued = false;
     try {
       const autoFlag = String(process.env.AUTO_PUSH_ON_PUBLISH || '').toLowerCase();
       if (updated.published && (autoFlag === 'true' || autoFlag === '1')) {
-        // Run git-auto-push in background; do not block the response
         const slugArg = String(updated.publicSlug || updated.code || updated.id || '').replace(/"/g, '');
         const cmd = `node scripts/git-auto-push.js "${slugArg}"`;
-        console.log('Auto-push: queuing git-auto-push for slug', slugArg);
+        console.log('Running auto git push...');
         exec(cmd, { cwd: path.join(__dirname, '..') }, (error, stdout, stderr) => {
           if (error) {
-            console.error('Auto-push failed:', error && error.message ? error.message : error);
-            if (stderr) console.error('Auto-push stderr:', stderr.toString().slice(0, 2000));
+            console.error('Git push failed:', error && error.message ? error.message : error);
+            if (stderr) console.error('git-auto-push stderr:', stderr.toString().slice(0, 2000));
             return;
           }
-          console.log('Auto-push completed. Output:', stdout ? stdout.toString().slice(0, 2000) : '');
+          console.log('Git push completed');
+          if (stdout) console.log(stdout.toString().slice(0, 2000));
         });
         autoPushQueued = true;
       }
@@ -1157,3 +1157,27 @@ app.get("/healthz", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
+
+// If AUTO_PUSH_ON_PUBLISH is enabled, start a watcher that runs git-auto-push on dist-public changes
+try {
+  const autoFlag = String(process.env.AUTO_PUSH_ON_PUBLISH || '').toLowerCase();
+  if (autoFlag === 'true' || autoFlag === '1') {
+    const repoRoot = path.join(__dirname, '..');
+    const watchScript = path.join(repoRoot, 'scripts', 'watch-and-push.js');
+    if (fs.existsSync(watchScript)) {
+      try {
+        const child = spawn(process.execPath, [watchScript], {
+          cwd: repoRoot,
+          detached: true,
+          stdio: 'ignore'
+        });
+        child.unref();
+        console.log('Auto watcher started: watch-and-push.js');
+      } catch (e) {
+        console.warn('Could not start watch-and-push:', e && e.message ? e.message : e);
+      }
+    } else {
+      console.warn('watch-and-push script not found; skipping auto-watcher start');
+    }
+  }
+} catch (e) {}

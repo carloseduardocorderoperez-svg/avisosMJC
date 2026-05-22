@@ -3,6 +3,16 @@ const { execSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
+// Ensure .env is loaded when this script runs standalone or from other processes
+try {
+  const dotenvPath = path.resolve(__dirname, '..', '.env');
+  if (fs.existsSync(dotenvPath)) {
+    require('dotenv').config({ path: dotenvPath });
+  }
+} catch (e) {
+  // ignore dotenv load failures
+}
+
 const slug = process.argv[2] || process.env.SLUG || '';
 const repoRoot = path.resolve(__dirname, '..');
 
