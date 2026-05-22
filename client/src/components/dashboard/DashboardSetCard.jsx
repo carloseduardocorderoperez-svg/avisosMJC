@@ -180,7 +180,7 @@ export default function DashboardSetCard({
           </button>
           {menuOpen && (
             <div className="dashboard-card-menu" role="menu">
-              {isPublished?  <a type="button" className="dashboard-card-menu-item" style={{ textDecoration: 'none' }}  onClick={() => actionAndClose(onPreview)} href={`/avisos-semanales/${slugValue}`} target="_blank" rel="noreferrer">
+              {isPublished?  <a type="button" className="dashboard-card-menu-item" style={{ textDecoration: 'none' }}  onClick={() => actionAndClose(onPreview)} href={`https://zonaomaha-8a35a.web.app/${slugValue}`} target="_blank" rel="noreferrer noopener">
                 <Eye size={14} /> Ver publicación
               </a> : (
                 <button type="button" className="dashboard-card-menu-item" onClick={() => actionAndClose(onPreview)}>

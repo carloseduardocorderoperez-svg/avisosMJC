@@ -629,21 +629,22 @@ app.post('/sets/:id/publish', requireAuth, async (req, res) => {
     try {
       const autoFlag = String(process.env.AUTO_PUSH_ON_PUBLISH || '').toLowerCase();
       console.log('AUTO FLAG VALUE:', autoFlag);
-      if (updated.published && (autoFlag === 'true' || autoFlag === '1')) {
-        const slugArg = String(updated.publicSlug || updated.code || updated.id || '').replace(/"/g, '');
-        const cmd = `node scripts/git-auto-push.js "${slugArg}"`;
-        console.log('Running auto git push...');
-        try {
-          const { execSync } = require('child_process');
-          const out = execSync(cmd, { cwd: path.join(__dirname, '..'), encoding: 'utf8', stdio: 'pipe' });
-          console.log('Git push completed');
-          if (out) console.log(String(out).slice(0, 2000));
-        } catch (e) {
-          console.error('Git push failed:', e && e.message ? e.message : e);
-          if (e && e.stdout) console.error(String(e.stdout).slice(0, 2000));
+      if (autoFlag === 'true' || autoFlag === '1') {
+          // Always attempt an auto push after static changes (publish or unpublish).
+          const slugArg = String(updated.publicSlug || updated.code || updated.id || '').replace(/"/g, '');
+          const cmd = `node scripts/git-auto-push.js "${slugArg}"`;
+          console.log('Running auto git push after static changes...');
+          try {
+            const { execSync } = require('child_process');
+            const out = execSync(cmd, { cwd: path.join(__dirname, '..'), encoding: 'utf8', stdio: 'pipe' });
+            console.log('Git push completed');
+            if (out) console.log(String(out).slice(0, 2000));
+          } catch (e) {
+            console.error('Git push failed:', e && e.message ? e.message : e);
+            if (e && e.stdout) console.error(String(e.stdout).slice(0, 2000));
+          }
+          autoPushQueued = true;
         }
-        autoPushQueued = true;
-      }
     } catch (e) {
       console.warn('Error intentando auto-push:', e && e.message ? e.message : e);
     }
