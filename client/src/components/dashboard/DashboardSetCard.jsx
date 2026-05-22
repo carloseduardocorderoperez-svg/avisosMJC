@@ -4,6 +4,7 @@ import { getYear } from "../../utils/dateUtils"
 import { apiUrl } from "../../utils/api"
 import EditDateModal from "../EditDateModal"
 import EditSlugModal from "../EditSlugModal"
+import { useAvisosStore } from "../../store/avisosStore"
 
 export default function DashboardSetCard({
   set,
@@ -75,6 +76,10 @@ export default function DashboardSetCard({
   const [editSlugOpen, setEditSlugOpen] = useState(false)
   const [editDateOpen, setEditDateOpen] = useState(false)
   const [editDateLoading, setEditDateLoading] = useState(false)
+  const [notification, setNotification] = useState(null)
+
+  const isPublishing = useAvisosStore((s) => s.isPublishing)
+  const setPublishing = useAvisosStore((s) => s.setPublishing)
 
   useEffect(() => {
     setIsPublished(!!set?.published)
@@ -83,8 +88,13 @@ export default function DashboardSetCard({
 
   const handleTogglePublish = async () => {
     setPublishError("")
-    // If currently published, unpublish immediately
     const targetPublished = !isPublished
+
+    if (isPublishing) {
+      setPublishError('Otra publicación está en curso. Espera a que termine.')
+      return
+    }
+
     // Validate slug when publishing
     if (targetPublished) {
       const slug = String(slugValue || '').trim().toLowerCase()
@@ -96,8 +106,13 @@ export default function DashboardSetCard({
       }
       if (normalized !== slugValue) setSlugValue(normalized)
     }
+
     try {
+      setPublishing(true)
       setSyncing(true)
+      const dateLabel = formatDate(set?.date) || (set?.title || '')
+      setNotification({ type: 'info', text: `${targetPublished ? 'Publicando' : 'Despublicando'} avisos del ${dateLabel}...` })
+
       const res = await fetch(apiUrl(`/sets/${set.id}/publish`), {
         method: 'POST',
         credentials: 'include',
@@ -113,11 +128,18 @@ export default function DashboardSetCard({
       setSlugValue(data.set?.publicSlug || slugValue)
       setEditSlugOpen(false)
       if (typeof onPublish === 'function') onPublish(data.set)
+
+      const successLabel = formatDate(data.set?.date) || (data.set?.title || '')
+      setNotification({ type: 'success', text: `${data.set?.published ? 'Publicado' : 'Despublicado'} avisos del ${successLabel}` })
+      setTimeout(() => setNotification(null), 4000)
     } catch (err) {
       console.error('Error publishing set', err)
       setPublishError(err.message || 'Error publicando')
+      setNotification({ type: 'error', text: `Error publicando avisos: ${err.message || ''}` })
+      setTimeout(() => setNotification(null), 6000)
     } finally {
       setSyncing(false)
+      setPublishing(false)
     }
   }
 
@@ -199,7 +221,7 @@ export default function DashboardSetCard({
               <button type="button" className="dashboard-card-menu-item" onClick={() => actionAndClose(onDuplicate)}>
                 <Copy size={14} /> Duplicar
               </button>
-              <button disabled={syncing} type="button" className={`dashboard-card-menu-item ${isPublished ? 'danger' : 'ok'}`} onClick={() => actionAndClose(handleTogglePublish)}>
+                <button disabled={syncing || isPublishing} type="button" className={`dashboard-card-menu-item ${isPublished ? 'danger' : 'ok'}`} onClick={() => actionAndClose(handleTogglePublish)}>
                   <Upload size={14} /> {syncing ? '...' : isPublished ? 'Despublicar' : 'Publicar'}
               </button>
               <button type="button" className="dashboard-card-menu-item danger" onClick={() => actionAndClose(onDelete)}>
@@ -209,6 +231,22 @@ export default function DashboardSetCard({
           )}
         </div>
       </div>
+
+      {notification && (
+        <div
+          className={`publish-notification ${notification.type}`}
+          style={{
+            margin: '8px 12px',
+            padding: '8px 12px',
+            borderRadius: 6,
+            fontSize: 13,
+            color: notification.type === 'error' ? '#3b0b0b' : '#042b14',
+            background: notification.type === 'error' ? '#f8d7da' : (notification.type === 'success' ? '#d4edda' : '#e2f0ff'),
+          }}
+        >
+          {notification.text}
+        </div>
+      )}
 
       {isPublished && <div className="published-ribbon" aria-hidden></div>}
 
@@ -242,7 +280,12 @@ export default function DashboardSetCard({
             onClose={() => setEditSlugOpen(false)}
             onSave={async (newSlug) => {
               setPublishError("")
+              if (isPublishing) {
+                setPublishError('Otra publicación está en curso. Espera a que termine.')
+                return
+              }
               try {
+                setPublishing(true)
                 setSyncing(true)
                 const slug = String(newSlug || '').trim().toLowerCase()
                 const normalized = slug.replace(/[^a-z0-9\-_.]+/g, '-').replace(/^-+|-+$/g, '')
@@ -251,6 +294,9 @@ export default function DashboardSetCard({
                   return
                 }
                 if (normalized !== newSlug) setSlugValue(normalized)
+
+                const dateLabel = formatDate(set?.date) || (set?.title || '')
+                setNotification({ type: 'info', text: `Actualizando slug para avisos del ${dateLabel}...` })
 
                 const res = await fetch(apiUrl(`/sets/${set.id}/publish`), {
                   method: 'POST',
@@ -267,11 +313,17 @@ export default function DashboardSetCard({
                 setSlugValue(data.set?.publicSlug || normalized)
                 setEditSlugOpen(false)
                 if (typeof onPublish === 'function') onPublish(data.set)
+
+                setNotification({ type: 'success', text: `Slug actualizado para avisos del ${dateLabel}` })
+                setTimeout(() => setNotification(null), 3000)
               } catch (err) {
                 console.error('Error updating slug', err)
                 setPublishError(err.message || 'Error actualizando slug')
+                setNotification({ type: 'error', text: `Error actualizando slug: ${err.message || ''}` })
+                setTimeout(() => setNotification(null), 6000)
               } finally {
                 setSyncing(false)
+                setPublishing(false)
               }
             }}
             loading={syncing}

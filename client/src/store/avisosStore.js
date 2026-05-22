@@ -10,6 +10,8 @@ export const useAvisosStore = create((set, get) => ({
   selectedAvisoId: null,
   dirty: false,
   isSaving: false,
+  // Global flag to avoid concurrent publish processes across UI
+  isPublishing: false,
 
   // Carga inicial desde el backend (modo legacy: sólo array de avisos)
   initializeAvisos: (data) =>
@@ -79,5 +81,6 @@ export const useAvisosStore = create((set, get) => ({
   markClean: () => set({ dirty: false }),
 
   setSaving: (isSaving) => set({ isSaving }),
+  setPublishing: (isPublishing) => set({ isPublishing }),
 
 }))
