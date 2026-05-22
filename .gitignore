@@ -67,3 +67,7 @@ coverage/
 # Firebase logs
 firebase-debug.log
 firestore-debug.log
+
+# Allow dist-public to be committed (contains generated static site for hosting)
+!dist-public/
+!dist-public/**
