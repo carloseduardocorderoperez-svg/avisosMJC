@@ -106,38 +106,76 @@ export default function DashboardSetCard({
       if (normalized !== slugValue) setSlugValue(normalized)
     }
 
-    try {
-      setPublishing(true)
-      setSyncing(true)
-      const dateLabel = formatDate(set?.date) || (set?.title || '')
-      addNotification({ type: 'info', text: `${targetPublished ? 'Publicando' : 'Despublicando'} avisos del ${dateLabel}...`, timeout: 6000 })
+    const dateLabel = formatDate(set?.date) || (set?.title || '')
 
-      const res = await fetch(apiUrl(`/sets/${set.id}/publish`), {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ published: targetPublished, publicSlug: slugValue }),
-      })
-      const data = await res.json()
-      if (!res.ok) {
-        throw new Error((data && data.error) || 'Error actualizando estado público')
+    // For unpublish, show confirmation first
+    if (!targetPublished) {
+      const doUnpublish = async () => {
+        // hide confirm modal then show progress
+        useAvisosStore.getState().hideModal()
+        useAvisosStore.getState().showModal({ type: 'publish-progress', props: { dateLabel } })
+        try {
+          setPublishing(true)
+          setSyncing(true)
+          const res = await fetch(apiUrl(`/sets/${set.id}/publish`), {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ published: false, publicSlug: slugValue }),
+          })
+          const data = await res.json()
+          if (!res.ok) throw new Error((data && data.error) || 'Error actualizando estado público')
+          setIsPublished(!!data.set?.published)
+          setSlugValue(data.set?.publicSlug || slugValue)
+          if (typeof onPublish === 'function') onPublish(data.set)
+          addNotification({ type: 'info', text: `Despublicación en curso. Puede tardar hasta 3 minutos.`, timeout: 4000 })
+        } catch (err) {
+          console.error('Error unpublishing set', err)
+          setPublishError(err.message || 'Error despublicando')
+          addNotification({ type: 'error', text: `Error despublicando avisos: ${err.message || ''}`, timeout: 8000 })
+        } finally {
+          setSyncing(false)
+          setPublishing(false)
+          useAvisosStore.getState().hideModal()
+        }
       }
 
-      setIsPublished(!!data.set?.published)
-      setSlugValue(data.set?.publicSlug || slugValue)
-      setEditSlugOpen(false)
-      if (typeof onPublish === 'function') onPublish(data.set)
-
-      const successLabel = formatDate(data.set?.date) || (data.set?.title || '')
-      addNotification({ type: 'success', text: `${data.set?.published ? 'Publicado' : 'Despublicado'} avisos del ${successLabel}`, timeout: 4000 })
-    } catch (err) {
-      console.error('Error publishing set', err)
-      setPublishError(err.message || 'Error publicando')
-      addNotification({ type: 'error', text: `Error publicando avisos: ${err.message || ''}`, timeout: 8000 })
-    } finally {
-      setSyncing(false)
-      setPublishing(false)
+      useAvisosStore.getState().showModal({ type: 'confirm-unpublish', props: { dateLabel, onConfirm: doUnpublish } })
+      return
     }
+
+    // For publish: show confirmation modal first
+    const doPublish = async () => {
+      useAvisosStore.getState().hideModal()
+      useAvisosStore.getState().showModal({ type: 'publish-progress', props: { dateLabel } })
+      try {
+        setPublishing(true)
+        setSyncing(true)
+        const res = await fetch(apiUrl(`/sets/${set.id}/publish`), {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ published: true, publicSlug: slugValue }),
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error((data && data.error) || 'Error actualizando estado público')
+        setIsPublished(!!data.set?.published)
+        setSlugValue(data.set?.publicSlug || slugValue)
+        setEditSlugOpen(false)
+        if (typeof onPublish === 'function') onPublish(data.set)
+        addNotification({ type: 'info', text: `Publicación en curso. Puede tardar hasta 3 minutos.`, timeout: 4000 })
+      } catch (err) {
+        console.error('Error publishing set', err)
+        setPublishError(err.message || 'Error publicando')
+        addNotification({ type: 'error', text: `Error publicando avisos: ${err.message || ''}`, timeout: 8000 })
+      } finally {
+        setSyncing(false)
+        setPublishing(false)
+        useAvisosStore.getState().hideModal()
+      }
+    }
+
+    useAvisosStore.getState().showModal({ type: 'confirm-publish', props: { dateLabel, onConfirm: doPublish } })
   }
 
   const handleEditDate = async (newDate) => {

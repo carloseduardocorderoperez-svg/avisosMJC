@@ -14,6 +14,7 @@ import Navbar from "./components/layout/Navbar"
 import { useState, useEffect } from "react"
 import { checkAuthStatus } from "./utils/api"
 import NotificationCenter from "./components/layout/NotificationCenter"
+import ModalHost from "./components/layout/ModalHost"
 
 // Componente para proteger rutas
 function ProtectedRoute({ children }) {
@@ -67,6 +68,7 @@ export default function App() {
   return (
     <div className="app-shell">
       <NotificationCenter />
+      <ModalHost />
       {!isLoginRoute && !isPublicRoute && <Navbar />}
 
       <div

@@ -96,5 +96,9 @@ export const useAvisosStore = create((set, get) => ({
     return id
   },
   removeNotification: (id) => set((state) => ({ notifications: state.notifications.filter((x) => x.id !== id) })),
+  // Global modal (simple single modal host)
+  modal: null,
+  showModal: (modal) => set({ modal }),
+  hideModal: () => set({ modal: null }),
 
 }))
