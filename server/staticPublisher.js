@@ -25,12 +25,15 @@ async function generateStaticAviso(set) {
 
   await ensureDir(targetDir);
 
+  console.log('staticPublisher: building HTML string for', slug);
   const html = buildHTMLString({
     avisos: Array.isArray(set.avisos) ? set.avisos : [],
     date: set.date,
     title: set.title || `AVISOS - ${set.date || ''}`,
     bannerMessage: set.bannerMessage,
   });
+
+  console.log('staticPublisher: HTML built, writing to file for', slug);
 
   const targetFile = path.join(targetDir, 'index.html');
   await fs.writeFile(targetFile, html, 'utf8');

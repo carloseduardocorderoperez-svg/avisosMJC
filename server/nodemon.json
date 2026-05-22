@@ -1,0 +1,12 @@
+{
+  "ignore": [
+    "dist-public/**",
+    "../dist-public/**",
+    "output/**",
+    "../output/**",
+    "uploads/**",
+    "../uploads/**",
+    "images/**",
+    "../images/**"
+  ]
+}

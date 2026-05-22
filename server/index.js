@@ -628,19 +628,20 @@ app.post('/sets/:id/publish', requireAuth, async (req, res) => {
     let autoPushQueued = false;
     try {
       const autoFlag = String(process.env.AUTO_PUSH_ON_PUBLISH || '').toLowerCase();
+      console.log('AUTO FLAG VALUE:', autoFlag);
       if (updated.published && (autoFlag === 'true' || autoFlag === '1')) {
         const slugArg = String(updated.publicSlug || updated.code || updated.id || '').replace(/"/g, '');
         const cmd = `node scripts/git-auto-push.js "${slugArg}"`;
         console.log('Running auto git push...');
-        exec(cmd, { cwd: path.join(__dirname, '..') }, (error, stdout, stderr) => {
-          if (error) {
-            console.error('Git push failed:', error && error.message ? error.message : error);
-            if (stderr) console.error('git-auto-push stderr:', stderr.toString().slice(0, 2000));
-            return;
-          }
+        try {
+          const { execSync } = require('child_process');
+          const out = execSync(cmd, { cwd: path.join(__dirname, '..'), encoding: 'utf8', stdio: 'pipe' });
           console.log('Git push completed');
-          if (stdout) console.log(stdout.toString().slice(0, 2000));
-        });
+          if (out) console.log(String(out).slice(0, 2000));
+        } catch (e) {
+          console.error('Git push failed:', e && e.message ? e.message : e);
+          if (e && e.stdout) console.error(String(e.stdout).slice(0, 2000));
+        }
         autoPushQueued = true;
       }
     } catch (e) {
@@ -1157,27 +1158,3 @@ app.get("/healthz", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
-
-// If AUTO_PUSH_ON_PUBLISH is enabled, start a watcher that runs git-auto-push on dist-public changes
-try {
-  const autoFlag = String(process.env.AUTO_PUSH_ON_PUBLISH || '').toLowerCase();
-  if (autoFlag === 'true' || autoFlag === '1') {
-    const repoRoot = path.join(__dirname, '..');
-    const watchScript = path.join(repoRoot, 'scripts', 'watch-and-push.js');
-    if (fs.existsSync(watchScript)) {
-      try {
-        const child = spawn(process.execPath, [watchScript], {
-          cwd: repoRoot,
-          detached: true,
-          stdio: 'ignore'
-        });
-        child.unref();
-        console.log('Auto watcher started: watch-and-push.js');
-      } catch (e) {
-        console.warn('Could not start watch-and-push:', e && e.message ? e.message : e);
-      }
-    } else {
-      console.warn('watch-and-push script not found; skipping auto-watcher start');
-    }
-  }
-} catch (e) {}
