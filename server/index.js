@@ -12,6 +12,7 @@ const { analyzeAllSlides, extractFromHtml } = require("./aiExtractor");
 const { groupSlides } = require("./groupSlides");
 const { generateHTML } = require("./htmlGenerator");
 const { publishAviso, removeStaticAviso } = require("./staticPublisher");
+const { exec } = require('child_process');
 const {
   uploadImageToDrive,
   listImagesFromDrive,
@@ -622,7 +623,31 @@ app.post('/sets/:id/publish', requireAuth, async (req, res) => {
       staticResult = { ok: false, error: String(err) };
     }
 
-    res.json({ ok: true, set: updated, publicUrl: url, staticPublish: staticResult });
+    // If configured, automatically queue a git commit + push so GitHub Actions handles deploy
+    // Requires AUTO_PUSH_ON_PUBLISH=true (or '1'). Render should NOT store FIREBASE_TOKEN.
+    let autoPushQueued = false;
+    try {
+      const autoFlag = String(process.env.AUTO_PUSH_ON_PUBLISH || '').toLowerCase();
+      if (updated.published && (autoFlag === 'true' || autoFlag === '1')) {
+        // Run git-auto-push in background; do not block the response
+        const slugArg = String(updated.publicSlug || updated.code || updated.id || '').replace(/"/g, '');
+        const cmd = `node scripts/git-auto-push.js "${slugArg}"`;
+        console.log('Auto-push: queuing git-auto-push for slug', slugArg);
+        exec(cmd, { cwd: path.join(__dirname, '..') }, (error, stdout, stderr) => {
+          if (error) {
+            console.error('Auto-push failed:', error && error.message ? error.message : error);
+            if (stderr) console.error('Auto-push stderr:', stderr.toString().slice(0, 2000));
+            return;
+          }
+          console.log('Auto-push completed. Output:', stdout ? stdout.toString().slice(0, 2000) : '');
+        });
+        autoPushQueued = true;
+      }
+    } catch (e) {
+      console.warn('Error intentando auto-push:', e && e.message ? e.message : e);
+    }
+
+    res.json({ ok: true, set: updated, publicUrl: url, staticPublish: staticResult, autoPushQueued });
   } catch (err) {
     console.error('Error publicando set:', err);
     res.status(500).json({ error: 'Error publicando set' });
