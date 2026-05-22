@@ -82,5 +82,19 @@ export const useAvisosStore = create((set, get) => ({
 
   setSaving: (isSaving) => set({ isSaving }),
   setPublishing: (isPublishing) => set({ isPublishing }),
+  // Global notifications (simple queue)
+  notifications: [],
+  addNotification: (note) => {
+    const id = Date.now().toString(36) + Math.random().toString(36).slice(2,8)
+    const n = { id, type: note.type || 'info', text: note.text || '', timeout: note.timeout || 4000 }
+    set((state) => ({ notifications: [...state.notifications, n] }))
+    if (n.timeout && n.timeout > 0) {
+      setTimeout(() => {
+        set((state) => ({ notifications: state.notifications.filter((x) => x.id !== id) }))
+      }, n.timeout)
+    }
+    return id
+  },
+  removeNotification: (id) => set((state) => ({ notifications: state.notifications.filter((x) => x.id !== id) })),
 
 }))

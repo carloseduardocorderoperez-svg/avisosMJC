@@ -76,10 +76,9 @@ export default function DashboardSetCard({
   const [editSlugOpen, setEditSlugOpen] = useState(false)
   const [editDateOpen, setEditDateOpen] = useState(false)
   const [editDateLoading, setEditDateLoading] = useState(false)
-  const [notification, setNotification] = useState(null)
-
   const isPublishing = useAvisosStore((s) => s.isPublishing)
   const setPublishing = useAvisosStore((s) => s.setPublishing)
+  const addNotification = useAvisosStore((s) => s.addNotification)
 
   useEffect(() => {
     setIsPublished(!!set?.published)
@@ -111,7 +110,7 @@ export default function DashboardSetCard({
       setPublishing(true)
       setSyncing(true)
       const dateLabel = formatDate(set?.date) || (set?.title || '')
-      setNotification({ type: 'info', text: `${targetPublished ? 'Publicando' : 'Despublicando'} avisos del ${dateLabel}...` })
+      addNotification({ type: 'info', text: `${targetPublished ? 'Publicando' : 'Despublicando'} avisos del ${dateLabel}...`, timeout: 6000 })
 
       const res = await fetch(apiUrl(`/sets/${set.id}/publish`), {
         method: 'POST',
@@ -130,13 +129,11 @@ export default function DashboardSetCard({
       if (typeof onPublish === 'function') onPublish(data.set)
 
       const successLabel = formatDate(data.set?.date) || (data.set?.title || '')
-      setNotification({ type: 'success', text: `${data.set?.published ? 'Publicado' : 'Despublicado'} avisos del ${successLabel}` })
-      setTimeout(() => setNotification(null), 4000)
+      addNotification({ type: 'success', text: `${data.set?.published ? 'Publicado' : 'Despublicado'} avisos del ${successLabel}`, timeout: 4000 })
     } catch (err) {
       console.error('Error publishing set', err)
       setPublishError(err.message || 'Error publicando')
-      setNotification({ type: 'error', text: `Error publicando avisos: ${err.message || ''}` })
-      setTimeout(() => setNotification(null), 6000)
+      addNotification({ type: 'error', text: `Error publicando avisos: ${err.message || ''}`, timeout: 8000 })
     } finally {
       setSyncing(false)
       setPublishing(false)
@@ -232,21 +229,7 @@ export default function DashboardSetCard({
         </div>
       </div>
 
-      {notification && (
-        <div
-          className={`publish-notification ${notification.type}`}
-          style={{
-            margin: '8px 12px',
-            padding: '8px 12px',
-            borderRadius: 6,
-            fontSize: 13,
-            color: notification.type === 'error' ? '#3b0b0b' : '#042b14',
-            background: notification.type === 'error' ? '#f8d7da' : (notification.type === 'success' ? '#d4edda' : '#e2f0ff'),
-          }}
-        >
-          {notification.text}
-        </div>
-      )}
+      
 
       {isPublished && <div className="published-ribbon" aria-hidden></div>}
 
@@ -296,7 +279,7 @@ export default function DashboardSetCard({
                 if (normalized !== newSlug) setSlugValue(normalized)
 
                 const dateLabel = formatDate(set?.date) || (set?.title || '')
-                setNotification({ type: 'info', text: `Actualizando slug para avisos del ${dateLabel}...` })
+                addNotification({ type: 'info', text: `Actualizando slug para avisos del ${dateLabel}...`, timeout: 5000 })
 
                 const res = await fetch(apiUrl(`/sets/${set.id}/publish`), {
                   method: 'POST',
@@ -314,13 +297,11 @@ export default function DashboardSetCard({
                 setEditSlugOpen(false)
                 if (typeof onPublish === 'function') onPublish(data.set)
 
-                setNotification({ type: 'success', text: `Slug actualizado para avisos del ${dateLabel}` })
-                setTimeout(() => setNotification(null), 3000)
+                addNotification({ type: 'success', text: `Slug actualizado para avisos del ${dateLabel}`, timeout: 3000 })
               } catch (err) {
                 console.error('Error updating slug', err)
                 setPublishError(err.message || 'Error actualizando slug')
-                setNotification({ type: 'error', text: `Error actualizando slug: ${err.message || ''}` })
-                setTimeout(() => setNotification(null), 6000)
+                addNotification({ type: 'error', text: `Error actualizando slug: ${err.message || ''}`, timeout: 6000 })
               } finally {
                 setSyncing(false)
                 setPublishing(false)
