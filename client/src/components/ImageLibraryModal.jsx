@@ -1,7 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import apiUrl from "../utils/api";
 
-export default function ImageLibraryModal({ isOpen, onClose, onSelect }) {
+export default function ImageLibraryModal({
+  isOpen,
+  onClose,
+  onSelect,
+}) {
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -9,17 +13,22 @@ export default function ImageLibraryModal({ isOpen, onClose, onSelect }) {
   const [selected, setSelected] = useState(null);
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState(null);
-  const [authorized, setAuthorized] = useState(null); // null=checking, true, false
+  const [authorized, setAuthorized] = useState(null);
   const [waitingAuth, setWaitingAuth] = useState(false);
+
   const fileInputRef = useRef(null);
   const pollRef = useRef(null);
-  const reauthTriggeredRef = useRef(false);
 
   const checkAuth = useCallback(async () => {
     try {
-      const res = await fetch(apiUrl("/auth/status"), { credentials: 'include' });
+      const res = await fetch(apiUrl("/auth/status"), {
+        credentials: "include",
+      });
+
       if (!res.ok) return false;
+
       const data = await res.json();
+
       return data.authorized === true;
     } catch {
       return false;
@@ -29,21 +38,27 @@ export default function ImageLibraryModal({ isOpen, onClose, onSelect }) {
   const fetchImages = useCallback(async () => {
     setLoading(true);
     setError(null);
+
     try {
-      const res = await fetch(apiUrl("/images"), { credentials: 'include' });
+      const res = await fetch(apiUrl("/images"), {
+        credentials: "include",
+      });
+
       const data = await res.json();
+
       if (!res.ok) {
-        if (res.status === 401 && data?.error === 'drive_token_revoked') {
+        if (res.status === 401 && data?.error === "drive_token_revoked") {
           setAuthorized(false);
-          setError(data.message || 'Necesita reautorizar Google Drive');
-          if (!reauthTriggeredRef.current) {
-            reauthTriggeredRef.current = true;
-            handleConnectDrive();
-          }
+          setWaitingAuth(false);
+          setError(
+            data.message || "Necesita reautorizar Google Drive",
+          );
           return;
         }
+
         throw new Error(data.error || "Error al cargar imágenes");
       }
+
       setImages(data.images || []);
     } catch (err) {
       setError(err.message);
@@ -58,69 +73,106 @@ export default function ImageLibraryModal({ isOpen, onClose, onSelect }) {
       setWaitingAuth(false);
       return;
     }
+
     setSelected(null);
     setError(null);
     setImages([]);
 
     (async () => {
       const ok = await checkAuth();
+
       setAuthorized(ok);
-      reauthTriggeredRef.current = false;
-      if (ok) fetchImages();
+
+      if (ok) {
+        fetchImages();
+      }
     })();
   }, [isOpen, checkAuth, fetchImages]);
 
-  // Cuando el usuario abrió la ventana de auth, sondear hasta que autorice
   useEffect(() => {
     if (!waitingAuth) return;
+
     pollRef.current = setInterval(async () => {
       const ok = await checkAuth();
+
       if (ok) {
         clearInterval(pollRef.current);
+
         setWaitingAuth(false);
         setAuthorized(true);
+
         fetchImages();
       }
     }, 2000);
+
     return () => clearInterval(pollRef.current);
   }, [waitingAuth, checkAuth, fetchImages]);
 
   const handleConnectDrive = () => {
-    const popup = window.open(apiUrl("/auth/start"), "_blank", "width=500,height=640");
+    setError(null);
+
+    const popup = window.open(
+      apiUrl("/auth/start"),
+      "googleDriveAuth",
+      "width=500,height=640,resizable=yes,scrollbars=yes",
+    );
+
+    if (!popup || popup.closed || typeof popup.closed === "undefined") {
+      setError("El navegador bloqueó el popup de autenticación.");
+      return;
+    }
+
     setWaitingAuth(true);
 
-    // Fallback: si el popup está en el mismo origen y puede comunicarse, espera mensaje
-    // También escuchamos postMessage globalmente (hook abajo) para detectar success.
     try {
-      if (popup && popup.focus) popup.focus();
-    } catch (e) {}
+      popup.focus();
+    } catch (_) {}
   };
 
   const handleFiles = async (files) => {
-    const imageFiles = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    const imageFiles = Array.from(files).filter((f) =>
+      f.type.startsWith("image/"),
+    );
+
     if (!imageFiles.length) return;
+
     setUploading(true);
     setError(null);
+
     try {
       for (let i = 0; i < imageFiles.length; i++) {
-        setUploadProgress(`Subiendo imagen ${i + 1} de ${imageFiles.length}...`);
+        setUploadProgress(
+          `Subiendo imagen ${i + 1} de ${imageFiles.length}...`,
+        );
+
         const formData = new FormData();
+
         formData.append("image", imageFiles[i]);
-        const res = await fetch(apiUrl("/images/upload"), { method: "POST", body: formData, credentials: 'include' });
+
+        const res = await fetch(apiUrl("/images/upload"), {
+          method: "POST",
+          body: formData,
+          credentials: "include",
+        });
+
         const data = await res.json();
+
         if (!res.ok) {
-          if (res.status === 401 && data?.error === 'drive_token_revoked') {
+          if (res.status === 401 && data?.error === "drive_token_revoked") {
             setAuthorized(false);
-            setError(data.message || 'Necesita reautorizar Google Drive');
-            if (!reauthTriggeredRef.current) {
-              reauthTriggeredRef.current = true;
-              handleConnectDrive();
-            }
+            setWaitingAuth(false);
+
+            setError(
+              data.message || "Necesita reautorizar Google Drive",
+            );
+
             return;
           }
+
           throw new Error(data.error || "Error al subir imagen");
         }
       }
+
       await fetchImages();
     } catch (err) {
       setError(err.message);
@@ -132,147 +184,273 @@ export default function ImageLibraryModal({ isOpen, onClose, onSelect }) {
 
   const handleDelete = async (e, img) => {
     e.stopPropagation();
-    if (!window.confirm(`¿Eliminar "${img.name}" de Drive?`)) return;
+
+    if (!window.confirm(`¿Eliminar "${img.name}" de Drive?`)) {
+      return;
+    }
+
     setError(null);
+
     try {
-      const res = await fetch(apiUrl(`/images/${img.id}`), { method: "DELETE", credentials: 'include' });
+      const res = await fetch(apiUrl(`/images/${img.id}`), {
+        method: "DELETE",
+        credentials: "include",
+      });
+
       const data = await res.json();
+
       if (!res.ok) {
-        if (res.status === 401 && data?.error === 'drive_token_revoked') {
+        if (res.status === 401 && data?.error === "drive_token_revoked") {
           setAuthorized(false);
-          setError(data.message || 'Necesita reautorizar Google Drive');
-          if (!reauthTriggeredRef.current) {
-            reauthTriggeredRef.current = true;
-            handleConnectDrive();
-          }
+          setWaitingAuth(false);
+
+          setError(
+            data.message || "Necesita reautorizar Google Drive",
+          );
+
           return;
         }
+
         throw new Error(data.error || "Error al eliminar");
       }
+
       setImages((prev) => prev.filter((i) => i.id !== img.id));
-      if (selected?.id === img.id) setSelected(null);
+
+      if (selected?.id === img.id) {
+        setSelected(null);
+      }
     } catch (err) {
       setError(err.message);
     }
   };
 
-  // Escuchar mensajes desde el popup de autorización para manejar cierre inmediato
   useEffect(() => {
     function onMessage(e) {
-      try {
-        if (e.data && e.data.type === 'drive-auth-success') {
-          setWaitingAuth(false);
-          setAuthorized(true);
-          reauthTriggeredRef.current = false;
-          fetchImages();
-        }
-      } catch (err) {}
+      const allowedOrigin = new URL(apiUrl("")).origin;
+
+      if (e.origin !== allowedOrigin) return;
+
+      if (e.data?.type === "drive-auth-success") {
+        setWaitingAuth(false);
+        setAuthorized(true);
+
+        fetchImages();
+      }
+
+      if (e.data?.type === "drive-auth-error") {
+        setWaitingAuth(false);
+
+        setError("No se pudo autenticar con Google Drive.");
+      }
     }
 
-    window.addEventListener('message', onMessage);
-    return () => window.removeEventListener('message', onMessage);
+    window.addEventListener("message", onMessage);
+
+    return () => {
+      window.removeEventListener("message", onMessage);
+    };
   }, [fetchImages]);
 
   const handleInsert = () => {
     if (!selected) return;
+
     onSelect(selected.url);
+
     onClose();
   };
 
-  const handleDrop = (e) => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); };
-  const handleDragOver = (e) => { e.preventDefault(); setDragOver(true); };
-  const handleDragLeave = (e) => { if (!e.currentTarget.contains(e.relatedTarget)) setDragOver(false); };
+  const handleDrop = (e) => {
+    e.preventDefault();
+
+    setDragOver(false);
+
+    handleFiles(e.dataTransfer.files);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+
+    setDragOver(true);
+  };
+
+  const handleDragLeave = (e) => {
+    if (!e.currentTarget.contains(e.relatedTarget)) {
+      setDragOver(false);
+    }
+  };
 
   if (!isOpen) return null;
 
   return (
-    <div className="ai-modal-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div
+      className="ai-modal-backdrop"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+    >
       <div className="ai-modal img-library-modal">
-        {/* Header */}
         <div className="ai-modal-header">
-          <div className="ai-modal-title">🖼️ Galería de Imágenes</div>
-          <button className="ai-modal-close" onClick={onClose} title="Cerrar">✕</button>
+          <div className="ai-modal-title">
+            🖼️ Galería de Imágenes
+          </div>
+
+          <button
+            className="ai-modal-close"
+            onClick={onClose}
+            title="Cerrar"
+          >
+            ✕
+          </button>
         </div>
 
-        {/* Estado: verificando auth */}
         {authorized === null && (
           <div className="img-library-grid">
             <div className="img-library-status">
-              <span className="img-library-spinner" /> Verificando conexión con Drive...
+              <span className="img-library-spinner" />
+              Verificando conexión con Drive...
             </div>
           </div>
         )}
 
-        {/* Estado: no autorizado */}
         {authorized === false && (
           <div className="img-library-auth-screen">
             <div className="img-library-auth-icon">☁️</div>
-            <p className="img-library-auth-title">Conecta tu Google Drive</p>
-            <p className="img-library-auth-desc">
-              Autoriza el acceso una sola vez para subir y gestionar imágenes directamente desde la app.
+
+            <p className="img-library-auth-title">
+              Conecta tu Google Drive
             </p>
+
+            <p className="img-library-auth-desc">
+              Autoriza el acceso una sola vez para subir y gestionar
+              imágenes directamente desde la app.
+            </p>
+
+            {error && (
+              <div className="img-library-error">
+                <strong>Error:</strong> {error}
+              </div>
+            )}
+
             {waitingAuth ? (
               <div className="img-library-auth-waiting">
                 <span className="img-library-spinner" />
-                Esperando autorización... (completa el proceso en la ventana que se abrió)
+                Esperando autorización...
               </div>
             ) : (
-              <button className="btn btn-primary img-library-auth-btn" onClick={handleConnectDrive}>
+              <button
+                className="btn btn-primary img-library-auth-btn"
+                onClick={handleConnectDrive}
+              >
                 Conectar con Google Drive
               </button>
             )}
           </div>
         )}
 
-        {/* Galería (solo cuando está autorizado) */}
         {authorized === true && (
           <>
-            {/* Zona de subida */}
             <div
-              className={`img-library-upload-zone ${dragOver ? "drag-over" : ""} ${uploading ? "uploading" : ""}`}
+              className={`img-library-upload-zone ${
+                dragOver ? "drag-over" : ""
+              } ${uploading ? "uploading" : ""}`}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
-              onClick={() => !uploading && fileInputRef.current?.click()}
+              onClick={() =>
+                !uploading && fileInputRef.current?.click()
+              }
             >
-              <input type="file" ref={fileInputRef} accept="image/*" multiple style={{ display: "none" }} onChange={(e) => handleFiles(e.target.files)} />
+              <input
+                type="file"
+                ref={fileInputRef}
+                accept="image/*"
+                multiple
+                style={{ display: "none" }}
+                onChange={(e) => handleFiles(e.target.files)}
+              />
+
               {uploading ? (
-                <><span className="img-library-spinner" /><span>{uploadProgress || "Subiendo a Drive..."}</span></>
+                <>
+                  <span className="img-library-spinner" />
+
+                  <span>
+                    {uploadProgress || "Subiendo a Drive..."}
+                  </span>
+                </>
               ) : (
-                <><span className="img-library-upload-icon">🖼️</span><span>Clic aquí o arrastra imágenes para subir a Drive</span></>
+                <>
+                  <span className="img-library-upload-icon">
+                    🖼️
+                  </span>
+
+                  <span>
+                    Clic aquí o arrastra imágenes para subir a
+                    Drive
+                  </span>
+                </>
               )}
             </div>
 
-            {error && <div className="img-library-error"><strong>Error:</strong> {error}</div>}
+            {error && (
+              <div className="img-library-error">
+                <strong>Error:</strong> {error}
+              </div>
+            )}
 
             <div className="img-library-grid">
               {loading ? (
-                <div className="img-library-status"><span className="img-library-spinner" /> Cargando imágenes...</div>
+                <div className="img-library-status">
+                  <span className="img-library-spinner" />
+                  Cargando imágenes...
+                </div>
               ) : images.length === 0 ? (
                 <div className="img-library-status img-library-empty">
-                  No hay imágenes en la carpeta de Drive.<br />
-                  <small>Sube tu primera imagen usando el área de arriba.</small>
+                  No hay imágenes en la carpeta de Drive.
+                  <br />
+                  <small>
+                    Sube tu primera imagen usando el área de arriba.
+                  </small>
                 </div>
               ) : (
                 images.map((img) => (
-                  <div key={img.id} className={`img-library-item ${selected?.id === img.id ? "selected" : ""}`} onClick={() => setSelected(img)} title={img.name}>
+                  <div
+                    key={img.id}
+                    className={`img-library-item ${
+                      selected?.id === img.id ? "selected" : ""
+                    }`}
+                    onClick={() => setSelected(img)}
+                    title={img.name}
+                  >
                     <img
                       src={img.thumbnailUrl}
                       alt={img.name}
                       loading="lazy"
                       draggable={false}
                       onError={() => {
-                        if (!waitingAuth && !reauthTriggeredRef.current) {
-                          reauthTriggeredRef.current = true;
-                          handleConnectDrive();
-                        }
+                        setAuthorized(false);
+                        setWaitingAuth(false);
                       }}
                     />
+
                     <div className="img-library-item-overlay">
-                      <span className="img-library-item-name">{img.name}</span>
-                      <button className="img-library-delete-btn" onClick={(e) => handleDelete(e, img)} title="Eliminar de Drive">🗑</button>
+                      <span className="img-library-item-name">
+                        {img.name}
+                      </span>
+
+                      <button
+                        className="img-library-delete-btn"
+                        onClick={(e) => handleDelete(e, img)}
+                        title="Eliminar de Drive"
+                      >
+                        🗑
+                      </button>
                     </div>
-                    {selected?.id === img.id && <div className="img-library-check">✓</div>}
+
+                    {selected?.id === img.id && (
+                      <div className="img-library-check">✓</div>
+                    )}
                   </div>
                 ))
               )}
@@ -280,15 +458,29 @@ export default function ImageLibraryModal({ isOpen, onClose, onSelect }) {
           </>
         )}
 
-        {/* Footer */}
         <div className="img-library-footer">
           <span className="img-library-count">
-            {authorized === true ? `${images.length} imagen${images.length !== 1 ? "es" : ""}` : ""}
+            {authorized === true
+              ? `${images.length} imagen${
+                  images.length !== 1 ? "es" : ""
+                }`
+              : ""}
           </span>
+
           <div className="img-library-footer-actions">
-            <button className="btn btn-neutral" onClick={onClose}>Cancelar</button>
+            <button
+              className="btn btn-neutral"
+              onClick={onClose}
+            >
+              Cancelar
+            </button>
+
             {authorized === true && (
-              <button className="btn btn-primary" onClick={handleInsert} disabled={!selected}>
+              <button
+                className="btn btn-primary"
+                onClick={handleInsert}
+                disabled={!selected}
+              >
                 Insertar imagen
               </button>
             )}
@@ -298,4 +490,3 @@ export default function ImageLibraryModal({ isOpen, onClose, onSelect }) {
     </div>
   );
 }
-
