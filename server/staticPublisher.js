@@ -56,7 +56,13 @@ async function generateIndex() {
       sets = [];
     }
   }
-  const published = (sets || []).filter((s) => s && s.published).sort((a, b) => new Date(b.publishedAt || b.date || 0) - new Date(a.publishedAt || a.date || 0));
+  const allSets = Array.isArray(sets) ? sets : [];
+  let published = allSets.filter((s) => s && (s.published || s.publishedAt));
+  if (!published || published.length === 0) {
+    // Fallback: if nothing is explicitly published, include all sets
+    published = allSets.slice();
+  }
+  published = published.sort((a, b) => new Date(b.publishedAt || b.date || b.createdAt || 0) - new Date(a.publishedAt || a.date || a.createdAt || 0));
 
   // Minimal data we need on the client side
   const minimal = published.map((s) => ({
@@ -96,13 +102,17 @@ async function generateIndex() {
 
     .year-block{background:linear-gradient(180deg,var(--glass),transparent);border:1px solid rgba(255,255,255,0.03);border-radius:var(--radius);margin-bottom:12px;overflow:hidden}
     .year-toggle{display:flex;align-items:center;justify-content:space-between;width:100%;padding:14px 16px;border:0;background:transparent;color:var(--text);cursor:pointer;font-weight:700}
-    .year-toggle:focus{outline:2px solid rgba(255,255,255,0.06);outline-offset:2px}
-    .months{padding:8px 16px 16px;border-top:1px solid rgba(255,255,255,0.02)}
+    .year-toggle{display:flex;align-items:center;justify-content:space-between;width:100%;padding:16px 18px;border:0;background:transparent;color:var(--text);cursor:pointer;font-weight:800}
+    .year-toggle:focus{outline:2px solid rgba(255,255,255,0.08);outline-offset:2px}
+    .year-label{font-size:15px}
+    .months{padding:8px 16px 16px;border-top:1px solid rgba(255,255,255,0.02);margin-left:6px;padding-left:18px;border-left:2px solid rgba(255,255,255,0.02);}
     .month-block{margin-bottom:8px}
-    .month-toggle{display:flex;align-items:center;justify-content:space-between;width:100%;padding:10px 0;border:0;background:transparent;color:var(--text);cursor:pointer;font-weight:600}
+    .month-toggle{display:flex;align-items:center;justify-content:space-between;width:100%;padding:10px 0;border:0;background:transparent;color:var(--text);cursor:pointer;font-weight:700}
+    .month-label{font-size:13px;color:var(--muted);font-weight:700}
+    .month-block{background:linear-gradient(180deg, rgba(255,255,255,0.005), transparent);padding:8px;border-radius:8px}
     .items{list-style:none;padding-left:0;margin:8px 0 0}
     .items li{margin:6px 0}
-    .items li a{display:block;padding:10px 12px;border-radius:8px;text-decoration:none;color:var(--text);background:transparent;transition:background .12s,transform .12s}
+    .items li a{display:block;padding:10px 12px;border-radius:8px;text-decoration:none;color:var(--text);background:transparent;transition:background .12s,transform .12s;margin-left:8px}
     .items li a:hover{background:rgba(255,255,255,0.02);transform:translateY(-2px)}
     .meta{color:var(--muted);font-weight:500;font-size:13px;display:flex;gap:10px;align-items:center}
     .count{background:rgba(255,255,255,0.03);padding:4px 8px;border-radius:999px;font-weight:600}
@@ -138,9 +148,9 @@ async function generateIndex() {
       function parseDate(s){
         if(!s) return new Date();
         const str = String(s).trim();
-        const iso = str.match(/^(\d{4}-\d{2}-\d{2})/);
+        const iso = str.match(/^(\\d{4}-\\d{2}-\\d{2})/);
         if(iso){const p = iso[1].split('-');return new Date(parseInt(p[0],10), parseInt(p[1],10)-1, parseInt(p[2],10));}
-        const dm = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+        const dm = str.match(/^(\\d{1,2})\\/(\\d{1,2})\\/(\\d{2,4})$/);
         if(dm){const day = parseInt(dm[1],10);const month = parseInt(dm[2],10)-1;const year = dm[3].length===2?2000+parseInt(dm[3],10):parseInt(dm[3],10);return new Date(year,month,day);} 
         const d = new Date(str); if(!isNaN(d.getTime())) return d; return new Date();
       }
@@ -194,7 +204,7 @@ async function generateIndex() {
           const monthToggle = document.createElement('button');
           monthToggle.className = 'month-toggle';
           monthToggle.setAttribute('aria-expanded', String(year === expandYear && monthIdx === expandMonth));
-          monthToggle.innerHTML = '<span>'+monthName+'</span><span class="meta"><span class="count">'+items.length+'</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg></span>';
+          monthToggle.innerHTML = '<span class="month-label">'+monthName+'</span><span class="meta"><span class="count">'+items.length+'</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg></span>';
 
           const itemsList = document.createElement('ul'); itemsList.className = 'items';
           if(!(year === expandYear && monthIdx === expandMonth)) itemsList.setAttribute('hidden','');
