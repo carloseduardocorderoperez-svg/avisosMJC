@@ -13,27 +13,17 @@ export default function ImageLibraryModal({
   const [selected, setSelected] = useState(null);
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState(null);
-  const [authorized, setAuthorized] = useState(null);
+
+  const [driveAuthorized, setDriveAuthorized] = useState(true);
   const [waitingAuth, setWaitingAuth] = useState(false);
 
   const fileInputRef = useRef(null);
-  const pollRef = useRef(null);
+  const popupRef = useRef(null);
+  const authTriggeredRef = useRef(false);
 
-  const checkAuth = useCallback(async () => {
-    try {
-      const res = await fetch(apiUrl("/auth/status"), {
-        credentials: "include",
-      });
-
-      if (!res.ok) return false;
-
-      const data = await res.json();
-
-      return data.authorized === true;
-    } catch {
-      return false;
-    }
-  }, []);
+  // ===============================
+  // Cargar imágenes
+  // ===============================
 
   const fetchImages = useCallback(async () => {
     setLoading(true);
@@ -47,18 +37,24 @@ export default function ImageLibraryModal({
       const data = await res.json();
 
       if (!res.ok) {
-        if (res.status === 401 && data?.error === "drive_token_revoked") {
-          setAuthorized(false);
-          setWaitingAuth(false);
-          setError(
-            data.message || "Necesita reautorizar Google Drive",
-          );
+        if (
+          res.status === 401 &&
+          data?.error === "drive_token_revoked"
+        ) {
+          setDriveAuthorized(false);
+
+          if (!authTriggeredRef.current) {
+            authTriggeredRef.current = true;
+            handleConnectDrive();
+          }
+
           return;
         }
 
-        throw new Error(data.error || "Error al cargar imágenes");
+        throw new Error(data.error || "Error cargando imágenes");
       }
 
+      setDriveAuthorized(true);
       setImages(data.images || []);
     } catch (err) {
       setError(err.message);
@@ -67,67 +63,91 @@ export default function ImageLibraryModal({
     }
   }, []);
 
+  // ===============================
+  // Abrir modal
+  // ===============================
+
   useEffect(() => {
-    if (!isOpen) {
-      clearInterval(pollRef.current);
-      setWaitingAuth(false);
-      return;
-    }
+    if (!isOpen) return;
 
     setSelected(null);
     setError(null);
     setImages([]);
+    authTriggeredRef.current = false;
 
-    (async () => {
-      const ok = await checkAuth();
+    fetchImages();
+  }, [isOpen, fetchImages]);
 
-      setAuthorized(ok);
-
-      if (ok) {
-        fetchImages();
-      }
-    })();
-  }, [isOpen, checkAuth, fetchImages]);
-
-  useEffect(() => {
-    if (!waitingAuth) return;
-
-    pollRef.current = setInterval(async () => {
-      const ok = await checkAuth();
-
-      if (ok) {
-        clearInterval(pollRef.current);
-
-        setWaitingAuth(false);
-        setAuthorized(true);
-
-        fetchImages();
-      }
-    }, 2000);
-
-    return () => clearInterval(pollRef.current);
-  }, [waitingAuth, checkAuth, fetchImages]);
+  // ===============================
+  // OAuth popup
+  // ===============================
 
   const handleConnectDrive = () => {
-    setError(null);
+    setWaitingAuth(true);
+
+    // IMPORTANTE:
+    // nombre único evita reutilizar tabs/popup viejos
+    const popupName = `driveAuth_${Date.now()}`;
 
     const popup = window.open(
       apiUrl("/auth/start"),
-      "googleDriveAuth",
-      "width=500,height=640,resizable=yes,scrollbars=yes",
+      popupName,
+      "width=520,height=720,resizable=yes,scrollbars=yes",
     );
 
-    if (!popup || popup.closed || typeof popup.closed === "undefined") {
-      setError("El navegador bloqueó el popup de autenticación.");
+    popupRef.current = popup;
+
+    if (!popup) {
+      setWaitingAuth(false);
+      setError("El navegador bloqueó el popup.");
       return;
     }
 
-    setWaitingAuth(true);
-
-    try {
-      popup.focus();
-    } catch (_) {}
+    popup.focus();
   };
+
+  // ===============================
+  // Escuchar callback OAuth
+  // ===============================
+
+  useEffect(() => {
+    const onMessage = async (e) => {
+      try {
+        const allowedOrigin = new URL(apiUrl("")).origin;
+
+        if (e.origin !== allowedOrigin) return;
+
+        if (e.data?.type === "drive-auth-success") {
+          setWaitingAuth(false);
+          setDriveAuthorized(true);
+          authTriggeredRef.current = false;
+
+          try {
+            popupRef.current?.close();
+          } catch {}
+
+          await fetchImages();
+        }
+
+        if (e.data?.type === "drive-auth-error") {
+          setWaitingAuth(false);
+          setError("No se pudo conectar Google Drive.");
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    window.addEventListener("message", onMessage);
+
+    return () => {
+      window.removeEventListener("message", onMessage);
+    };
+  }, [fetchImages]);
+
+  // ===============================
+  // Upload
+  // ===============================
 
   const handleFiles = async (files) => {
     const imageFiles = Array.from(files).filter((f) =>
@@ -142,11 +162,10 @@ export default function ImageLibraryModal({
     try {
       for (let i = 0; i < imageFiles.length; i++) {
         setUploadProgress(
-          `Subiendo imagen ${i + 1} de ${imageFiles.length}...`,
+          `Subiendo ${i + 1} de ${imageFiles.length}`,
         );
 
         const formData = new FormData();
-
         formData.append("image", imageFiles[i]);
 
         const res = await fetch(apiUrl("/images/upload"), {
@@ -158,18 +177,21 @@ export default function ImageLibraryModal({
         const data = await res.json();
 
         if (!res.ok) {
-          if (res.status === 401 && data?.error === "drive_token_revoked") {
-            setAuthorized(false);
-            setWaitingAuth(false);
+          if (
+            res.status === 401 &&
+            data?.error === "drive_token_revoked"
+          ) {
+            setDriveAuthorized(false);
 
-            setError(
-              data.message || "Necesita reautorizar Google Drive",
-            );
+            if (!authTriggeredRef.current) {
+              authTriggeredRef.current = true;
+              handleConnectDrive();
+            }
 
             return;
           }
 
-          throw new Error(data.error || "Error al subir imagen");
+          throw new Error(data.error || "Error subiendo imagen");
         }
       }
 
@@ -182,14 +204,14 @@ export default function ImageLibraryModal({
     }
   };
 
+  // ===============================
+  // Delete
+  // ===============================
+
   const handleDelete = async (e, img) => {
     e.stopPropagation();
 
-    if (!window.confirm(`¿Eliminar "${img.name}" de Drive?`)) {
-      return;
-    }
-
-    setError(null);
+    if (!window.confirm(`¿Eliminar "${img.name}"?`)) return;
 
     try {
       const res = await fetch(apiUrl(`/images/${img.id}`), {
@@ -200,21 +222,12 @@ export default function ImageLibraryModal({
       const data = await res.json();
 
       if (!res.ok) {
-        if (res.status === 401 && data?.error === "drive_token_revoked") {
-          setAuthorized(false);
-          setWaitingAuth(false);
-
-          setError(
-            data.message || "Necesita reautorizar Google Drive",
-          );
-
-          return;
-        }
-
-        throw new Error(data.error || "Error al eliminar");
+        throw new Error(data.error || "Error eliminando");
       }
 
-      setImages((prev) => prev.filter((i) => i.id !== img.id));
+      setImages((prev) =>
+        prev.filter((i) => i.id !== img.id),
+      );
 
       if (selected?.id === img.id) {
         setSelected(null);
@@ -224,52 +237,18 @@ export default function ImageLibraryModal({
     }
   };
 
-  useEffect(() => {
-    function onMessage(e) {
-      const allowedOrigin = new URL(apiUrl("")).origin;
-
-      if (e.origin !== allowedOrigin) return;
-
-      if (e.data?.type === "drive-auth-success") {
-        setWaitingAuth(false);
-        setAuthorized(true);
-
-        fetchImages();
-      }
-
-      if (e.data?.type === "drive-auth-error") {
-        setWaitingAuth(false);
-
-        setError("No se pudo autenticar con Google Drive.");
-      }
-    }
-
-    window.addEventListener("message", onMessage);
-
-    return () => {
-      window.removeEventListener("message", onMessage);
-    };
-  }, [fetchImages]);
-
-  const handleInsert = () => {
-    if (!selected) return;
-
-    onSelect(selected.url);
-
-    onClose();
-  };
+  // ===============================
+  // Drag & drop
+  // ===============================
 
   const handleDrop = (e) => {
     e.preventDefault();
-
     setDragOver(false);
-
     handleFiles(e.dataTransfer.files);
   };
 
   const handleDragOver = (e) => {
     e.preventDefault();
-
     setDragOver(true);
   };
 
@@ -277,6 +256,17 @@ export default function ImageLibraryModal({
     if (!e.currentTarget.contains(e.relatedTarget)) {
       setDragOver(false);
     }
+  };
+
+  // ===============================
+  // Insertar
+  // ===============================
+
+  const handleInsert = () => {
+    if (!selected) return;
+
+    onSelect(selected.url);
+    onClose();
   };
 
   if (!isOpen) return null;
@@ -291,6 +281,9 @@ export default function ImageLibraryModal({
       }}
     >
       <div className="ai-modal img-library-modal">
+
+        {/* HEADER */}
+
         <div className="ai-modal-header">
           <div className="ai-modal-title">
             🖼️ Galería de Imágenes
@@ -299,39 +292,27 @@ export default function ImageLibraryModal({
           <button
             className="ai-modal-close"
             onClick={onClose}
-            title="Cerrar"
           >
             ✕
           </button>
         </div>
 
-        {authorized === null && (
-          <div className="img-library-grid">
-            <div className="img-library-status">
-              <span className="img-library-spinner" />
-              Verificando conexión con Drive...
-            </div>
-          </div>
-        )}
+        {/* AUTH SCREEN */}
 
-        {authorized === false && (
+        {!driveAuthorized && (
           <div className="img-library-auth-screen">
-            <div className="img-library-auth-icon">☁️</div>
+
+            <div className="img-library-auth-icon">
+              ☁️
+            </div>
 
             <p className="img-library-auth-title">
-              Conecta tu Google Drive
+              Conecta Google Drive
             </p>
 
             <p className="img-library-auth-desc">
-              Autoriza el acceso una sola vez para subir y gestionar
-              imágenes directamente desde la app.
+              Autoriza acceso para administrar imágenes.
             </p>
-
-            {error && (
-              <div className="img-library-error">
-                <strong>Error:</strong> {error}
-              </div>
-            )}
 
             {waitingAuth ? (
               <div className="img-library-auth-waiting">
@@ -340,44 +321,46 @@ export default function ImageLibraryModal({
               </div>
             ) : (
               <button
-                className="btn btn-primary img-library-auth-btn"
+                className="btn btn-primary"
                 onClick={handleConnectDrive}
               >
-                Conectar con Google Drive
+                Conectar Drive
               </button>
             )}
           </div>
         )}
 
-        {authorized === true && (
+        {/* GALERÍA */}
+
+        {driveAuthorized && (
           <>
             <div
               className={`img-library-upload-zone ${
                 dragOver ? "drag-over" : ""
-              } ${uploading ? "uploading" : ""}`}
+              }`}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
               onClick={() =>
-                !uploading && fileInputRef.current?.click()
+                !uploading &&
+                fileInputRef.current?.click()
               }
             >
               <input
-                type="file"
                 ref={fileInputRef}
+                type="file"
                 accept="image/*"
                 multiple
                 style={{ display: "none" }}
-                onChange={(e) => handleFiles(e.target.files)}
+                onChange={(e) =>
+                  handleFiles(e.target.files)
+                }
               />
 
               {uploading ? (
                 <>
                   <span className="img-library-spinner" />
-
-                  <span>
-                    {uploadProgress || "Subiendo a Drive..."}
-                  </span>
+                  <span>{uploadProgress}</span>
                 </>
               ) : (
                 <>
@@ -386,8 +369,7 @@ export default function ImageLibraryModal({
                   </span>
 
                   <span>
-                    Clic aquí o arrastra imágenes para subir a
-                    Drive
+                    Haz clic o arrastra imágenes
                   </span>
                 </>
               )}
@@ -395,43 +377,37 @@ export default function ImageLibraryModal({
 
             {error && (
               <div className="img-library-error">
-                <strong>Error:</strong> {error}
+                {error}
               </div>
             )}
 
             <div className="img-library-grid">
+
               {loading ? (
                 <div className="img-library-status">
                   <span className="img-library-spinner" />
                   Cargando imágenes...
                 </div>
               ) : images.length === 0 ? (
-                <div className="img-library-status img-library-empty">
-                  No hay imágenes en la carpeta de Drive.
-                  <br />
-                  <small>
-                    Sube tu primera imagen usando el área de arriba.
-                  </small>
+                <div className="img-library-status">
+                  No hay imágenes.
                 </div>
               ) : (
                 images.map((img) => (
                   <div
                     key={img.id}
                     className={`img-library-item ${
-                      selected?.id === img.id ? "selected" : ""
+                      selected?.id === img.id
+                        ? "selected"
+                        : ""
                     }`}
                     onClick={() => setSelected(img)}
-                    title={img.name}
                   >
                     <img
                       src={img.thumbnailUrl}
                       alt={img.name}
                       loading="lazy"
                       draggable={false}
-                      onError={() => {
-                        setAuthorized(false);
-                        setWaitingAuth(false);
-                      }}
                     />
 
                     <div className="img-library-item-overlay">
@@ -441,15 +417,18 @@ export default function ImageLibraryModal({
 
                       <button
                         className="img-library-delete-btn"
-                        onClick={(e) => handleDelete(e, img)}
-                        title="Eliminar de Drive"
+                        onClick={(e) =>
+                          handleDelete(e, img)
+                        }
                       >
                         🗑
                       </button>
                     </div>
 
                     {selected?.id === img.id && (
-                      <div className="img-library-check">✓</div>
+                      <div className="img-library-check">
+                        ✓
+                      </div>
                     )}
                   </div>
                 ))
@@ -458,16 +437,17 @@ export default function ImageLibraryModal({
           </>
         )}
 
+        {/* FOOTER */}
+
         <div className="img-library-footer">
+
           <span className="img-library-count">
-            {authorized === true
-              ? `${images.length} imagen${
-                  images.length !== 1 ? "es" : ""
-                }`
-              : ""}
+            {images.length} imagen
+            {images.length !== 1 ? "es" : ""}
           </span>
 
           <div className="img-library-footer-actions">
+
             <button
               className="btn btn-neutral"
               onClick={onClose}
@@ -475,15 +455,13 @@ export default function ImageLibraryModal({
               Cancelar
             </button>
 
-            {authorized === true && (
-              <button
-                className="btn btn-primary"
-                onClick={handleInsert}
-                disabled={!selected}
-              >
-                Insertar imagen
-              </button>
-            )}
+            <button
+              className="btn btn-primary"
+              disabled={!selected}
+              onClick={handleInsert}
+            >
+              Insertar imagen
+            </button>
           </div>
         </div>
       </div>
