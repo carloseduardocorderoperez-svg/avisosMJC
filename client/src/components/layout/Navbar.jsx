@@ -318,6 +318,17 @@ export default function Navbar() {
               Extra
             </NavLink>
           )}
+          {!isSetContext && (
+                        <NavLink
+              to="/monitoring"
+              onClick={guardNavTo("/monitoring")}
+              className={({ isActive }) =>
+                isActive ? "nav-link active" : "nav-link"
+              }
+            >
+              Configuración
+            </NavLink>
+          )}
         </div>
 
         {pageTitle && (

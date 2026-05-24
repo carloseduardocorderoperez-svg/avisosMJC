@@ -4,6 +4,7 @@ import Avisos from "./pages/Avisos"
 import Editor from "./pages/Editor"
 import Preview from "./pages/Preview"
 import Extra from "./pages/Extra"
+import Monitoring from "./pages/Monitoring"
 import Dashboard from "./pages/Dashboard"
 import LoginPage from "./pages/LoginPage"
 import PublicAvisos from "./pages/PublicAvisos"
@@ -63,7 +64,8 @@ export default function App() {
     location.pathname === "/" ||
     location.pathname.startsWith("/dashboard") ||
     location.pathname.startsWith("/avisos/") ||
-    location.pathname.startsWith("/extra")
+    location.pathname.startsWith("/extra") ||
+    location.pathname.startsWith("/monitoring")
 
   return (
     <div className="app-shell">
@@ -112,6 +114,12 @@ export default function App() {
           <Route path="/extra" element={
             <ProtectedRoute>
               <Extra />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/monitoring" element={
+            <ProtectedRoute>
+              <Monitoring />
             </ProtectedRoute>
           } />
 
