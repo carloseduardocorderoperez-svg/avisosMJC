@@ -12,7 +12,7 @@ const { analyzeAllSlides, extractFromHtml } = require("./aiExtractor");
 const { groupSlides } = require("./groupSlides");
 const { generateHTML } = require("./htmlGenerator");
 const { publishAviso, removeStaticAviso } = require("./staticPublisher");
-const { exec, spawn } = require('child_process');
+const { exec, spawn } = require("child_process");
 const {
   uploadImageToDrive,
   listImagesFromDrive,
@@ -54,10 +54,12 @@ function clearFolder(folderPath) {
 // Middlewares
 // ===============================
 
-app.use(cors({
-  origin: true,
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+  }),
+);
 app.use(express.json());
 app.use(cookieParser());
 // app.use(session({
@@ -200,7 +202,10 @@ app.post(
 // Listar sets (solo metadatos básicos)
 app.get("/sets", requireAuth, async (req, res) => {
   const page = Math.max(1, parseInt(req.query.page || "1", 10) || 1);
-  const pageSize = Math.max(1, Math.min(200, parseInt(req.query.pageSize || "18", 10) || 18));
+  const pageSize = Math.max(
+    1,
+    Math.min(200, parseInt(req.query.pageSize || "18", 10) || 18),
+  );
 
   const { sets } = await loadAllSets();
 
@@ -232,13 +237,21 @@ app.get("/sets", requireAuth, async (req, res) => {
 
   // ordenar por date descendente (más reciente primero)
   // filtro por query 'q' si provista (search server-side)
-  const q = String(req.query.q || "").trim().toLowerCase();
+  const q = String(req.query.q || "")
+    .trim()
+    .toLowerCase();
   const filtered = q
     ? mapped.filter((s) => {
         if ((s.title || "").toLowerCase().includes(q)) return true;
         if ((s.code || "").toLowerCase().includes(q)) return true;
         if ((s.date || "").toLowerCase().includes(q)) return true;
-        if (Array.isArray(s.previewAvisos) && s.previewAvisos.some((p) => (p.titulo || "").toLowerCase().includes(q))) return true;
+        if (
+          Array.isArray(s.previewAvisos) &&
+          s.previewAvisos.some((p) =>
+            (p.titulo || "").toLowerCase().includes(q),
+          )
+        )
+          return true;
         return false;
       })
     : mapped;
@@ -343,7 +356,7 @@ app.post("/sets/:id/generar-html", requireAuth, async (req, res) => {
 
     // Actualizar la fecha del set a la fecha actual (local YYYY-MM-DD)
     const nowLocal = new Date();
-    const localDateStr = `${nowLocal.getFullYear()}-${String(nowLocal.getMonth() + 1).padStart(2, '0')}-${String(nowLocal.getDate()).padStart(2, '0')}`;
+    const localDateStr = `${nowLocal.getFullYear()}-${String(nowLocal.getMonth() + 1).padStart(2, "0")}-${String(nowLocal.getDate()).padStart(2, "0")}`;
     set.date = localDateStr;
     await updateSet(id, set);
 
@@ -361,11 +374,19 @@ app.post("/sets/:id/generar-html", requireAuth, async (req, res) => {
       const possiblePath = path.join(outputDir, String(htmlFile || ""));
       if (fs.existsSync(possiblePath)) {
         const contenido = fs.readFileSync(possiblePath, "utf8");
-        res.json({ ok: true, archivo: htmlFile, archivoContenido: contenido, setId: set.id });
+        res.json({
+          ok: true,
+          archivo: htmlFile,
+          archivoContenido: contenido,
+          setId: set.id,
+        });
         return;
       }
     } catch (e) {
-      console.warn('No se pudo leer archivo generado:', e && e.message ? e.message : e);
+      console.warn(
+        "No se pudo leer archivo generado:",
+        e && e.message ? e.message : e,
+      );
     }
 
     res.json({ ok: true, archivo: htmlFile, setId: set.id });
@@ -382,7 +403,9 @@ app.post("/sets/:targetSetId/copy-avisos", requireAuth, async (req, res) => {
     const { avisos } = req.body || {};
 
     if (!Array.isArray(avisos) || avisos.length === 0) {
-      return res.status(400).json({ error: "Se requiere un array 'avisos' no vacío" });
+      return res
+        .status(400)
+        .json({ error: "Se requiere un array 'avisos' no vacío" });
     }
 
     const { set: targetSet } = await findSetById(targetSetId);
@@ -391,8 +414,13 @@ app.post("/sets/:targetSetId/copy-avisos", requireAuth, async (req, res) => {
       return res.status(404).json({ error: "Set destino no encontrado" });
     }
 
-    const existingAvisos = Array.isArray(targetSet.avisos) ? targetSet.avisos : [];
-    const nextOrden = existingAvisos.reduce((max, a) => Math.max(max, a.orden || 0), 0);
+    const existingAvisos = Array.isArray(targetSet.avisos)
+      ? targetSet.avisos
+      : [];
+    const nextOrden = existingAvisos.reduce(
+      (max, a) => Math.max(max, a.orden || 0),
+      0,
+    );
 
     const newAvisos = avisos.map((aviso, index) => ({
       ...aviso,
@@ -420,7 +448,7 @@ app.get("/public/sets", async (req, res) => {
   try {
     const { sets } = await loadAllSets();
     const published = (sets || [])
-      .filter((s) => s && (s.published === true))
+      .filter((s) => s && s.published === true)
       .map((s) => ({
         id: s.id,
         code: s.code,
@@ -436,35 +464,38 @@ app.get("/public/sets", async (req, res) => {
 
     res.json({ sets: published });
   } catch (err) {
-    console.error('Error obteniendo sets públicos:', err);
-    res.status(500).json({ error: 'Error obteniendo sets públicos' });
+    console.error("Error obteniendo sets públicos:", err);
+    res.status(500).json({ error: "Error obteniendo sets públicos" });
   }
 });
 
 // Detalle público de un set por slug (sin auth)
-app.get('/public/sets/:slug', async (req, res) => {
+app.get("/public/sets/:slug", async (req, res) => {
   try {
     const { slug } = req.params;
     const { sets } = await loadAllSets();
 
-    const lower = String(slug || '').trim().toLowerCase();
+    const lower = String(slug || "")
+      .trim()
+      .toLowerCase();
 
     const found = (sets || []).find((s) => {
       if (!s) return false;
-      if (s.publicSlug && String(s.publicSlug).toLowerCase() === lower) return true;
-      if (String(s.code || '').toLowerCase() === lower) return true;
-      if (String(s.id || '') === slug) return true;
+      if (s.publicSlug && String(s.publicSlug).toLowerCase() === lower)
+        return true;
+      if (String(s.code || "").toLowerCase() === lower) return true;
+      if (String(s.id || "") === slug) return true;
       return false;
     });
 
     if (!found || !found.published) {
-      return res.status(404).json({ error: 'Set público no encontrado' });
+      return res.status(404).json({ error: "Set público no encontrado" });
     }
 
     // Si el cliente solicita HTML pre-renderizado, generarlo y devolverlo
-    if (String(req.query.format || '').toLowerCase() === 'html') {
+    if (String(req.query.format || "").toLowerCase() === "html") {
       try {
-        const title = found.title || `AVISOS - ${found.date || ''}`;
+        const title = found.title || `AVISOS - ${found.date || ""}`;
         const htmlOrFile = generateHTML({
           avisos: Array.isArray(found.avisos) ? found.avisos : [],
           date: found.date,
@@ -478,108 +509,155 @@ app.get('/public/sets/:slug', async (req, res) => {
           const possiblePath = path.join(outputDir, String(htmlOrFile || ""));
           if (fs.existsSync(possiblePath)) {
             const contenido = fs.readFileSync(possiblePath, "utf8");
-            res.type('text/html').send(contenido);
+            res.type("text/html").send(contenido);
             return;
           }
         } catch (e) {
-          console.warn('No se pudo leer archivo generado público:', e && e.message ? e.message : e);
+          console.warn(
+            "No se pudo leer archivo generado público:",
+            e && e.message ? e.message : e,
+          );
         }
 
         // Fallback: si lo que devolvió no es un archivo, enviarlo directamente
-        res.type('text/html').send(String(htmlOrFile || ''));
+        res.type("text/html").send(String(htmlOrFile || ""));
         return;
       } catch (e) {
-        console.error('Error generando HTML público:', e);
+        console.error("Error generando HTML público:", e);
         // fallback a JSON
       }
     }
 
     // devolver el set completo (metadatos + avisos)
-    res.json({ set: found, avisos: Array.isArray(found.avisos) ? found.avisos : [] });
+    res.json({
+      set: found,
+      avisos: Array.isArray(found.avisos) ? found.avisos : [],
+    });
   } catch (err) {
-    console.error('Error obteniendo set público:', err);
-    res.status(500).json({ error: 'Error obteniendo set público' });
+    console.error("Error obteniendo set público:", err);
+    res.status(500).json({ error: "Error obteniendo set público" });
   }
 });
 
 // Publicar / despublicar un set (admin)
-app.post('/sets/:id/publish', requireAuth, async (req, res) => {
+app.post("/sets/:id/publish", requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { published, publicSlug } = req.body || {};
 
     const { sets } = await loadAllSets();
     const target = sets.find((s) => String(s.id) === String(id));
-    if (!target) return res.status(404).json({ error: 'Set no encontrado' });
+    if (!target) return res.status(404).json({ error: "Set no encontrado" });
 
     // Si se pide publicar y se proporciona slug, validar unicidad
     if (published === true && publicSlug) {
       const slugLower = String(publicSlug).trim().toLowerCase();
-      const clash = (sets || []).some((s) => s && String(s.id) !== String(id) && String(s.publicSlug || '').toLowerCase() === slugLower);
-      if (clash) return res.status(400).json({ error: 'publicSlug ya está en uso' });
+      const clash = (sets || []).some(
+        (s) =>
+          s &&
+          String(s.id) !== String(id) &&
+          String(s.publicSlug || "").toLowerCase() === slugLower,
+      );
+      if (clash)
+        return res.status(400).json({ error: "publicSlug ya está en uso" });
     }
 
     // Determinar publicSlug por defecto (si no se pasó uno)
-      let desiredSlug = publicSlug !== undefined ? String(publicSlug).trim() : undefined;
+    let desiredSlug =
+      publicSlug !== undefined ? String(publicSlug).trim() : undefined;
 
-      // If frontend didn't provide publicSlug, preserve existing one if present
-      if (!desiredSlug && target.publicSlug) {
-        desiredSlug = String(target.publicSlug).trim();
+    // If frontend didn't provide publicSlug, preserve existing one if present
+    if (!desiredSlug && target.publicSlug) {
+      desiredSlug = String(target.publicSlug).trim();
+    }
+
+    // If still not defined, try to derive from visible date (robust parsing)
+    if (!desiredSlug) {
+      const dateStr = target.date || "";
+
+      function normalizeMonthName(s) {
+        if (!s) return s;
+        // remove accents
+        const map = {
+          á: "a",
+          é: "e",
+          í: "i",
+          ó: "o",
+          ú: "u",
+          Á: "A",
+          É: "E",
+          Í: "I",
+          Ó: "O",
+          Ú: "U",
+          ñ: "n",
+          Ñ: "N",
+        };
+        return s.replace(/[áéíóúÁÉÍÓÚñÑ]/g, (c) => map[c] || c).toLowerCase();
       }
 
-      // If still not defined, try to derive from visible date (robust parsing)
-      if (!desiredSlug) {
-        const dateStr = target.date || '';
+      function dateToSlug(s) {
+        if (!s) return null;
+        const t = String(s).trim();
+        // YYYY-MM-DD or ISO
+        const isoMatch = t.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (isoMatch)
+          return `${isoMatch[3]}${normalizeMonthName(new Date(isoMatch[1], parseInt(isoMatch[2], 10) - 1, isoMatch[3]).toLocaleString("es-ES", { month: "long" }))}${isoMatch[1]}`;
 
-        function normalizeMonthName(s) {
-          if (!s) return s;
-          // remove accents
-          const map = { 'á':'a','é':'e','í':'i','ó':'o','ú':'u','Á':'A','É':'E','Í':'I','Ó':'O','Ú':'U','ñ':'n','Ñ':'N' };
-          return s.replace(/[áéíóúÁÉÍÓÚñÑ]/g, (c)=>map[c] || c).toLowerCase();
+        // DD/MM/YYYY
+        const dm = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+        if (dm) {
+          const day = String(parseInt(dm[1], 10));
+          const month = parseInt(dm[2], 10) - 1;
+          const year =
+            dm[3].length === 2
+              ? 2000 + parseInt(dm[3], 10)
+              : parseInt(dm[3], 10);
+          const monthName = normalizeMonthName(
+            new Date(year, month, 1).toLocaleString("es-ES", { month: "long" }),
+          );
+          return `${day}${monthName}${year}`;
         }
 
-        function dateToSlug(s) {
-          if (!s) return null;
-          const t = String(s).trim();
-          // YYYY-MM-DD or ISO
-          const isoMatch = t.match(/^(\d{4})-(\d{2})-(\d{2})/);
-          if (isoMatch) return `${isoMatch[3]}${normalizeMonthName((new Date(isoMatch[1], parseInt(isoMatch[2],10)-1, isoMatch[3])).toLocaleString('es-ES',{month:'long'}))}${isoMatch[1]}`;
-
-          // DD/MM/YYYY
-          const dm = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
-          if (dm) {
-            const day = String(parseInt(dm[1],10));
-            const month = parseInt(dm[2],10) - 1;
-            const year = dm[3].length === 2 ? 2000 + parseInt(dm[3],10) : parseInt(dm[3],10);
-            const monthName = normalizeMonthName(new Date(year, month, 1).toLocaleString('es-ES', { month: 'long' }));
-            return `${day}${monthName}${year}`;
-          }
-
-          // Spanish textual like "19 de mayo de 2026" or "martes 19 de mayo"
-          const textMatch = t.match(/(\d{1,2})\s*(?:de)?\s*([A-Za-záéíóúñÑ]+)\s*(?:de)?\s*(\d{2,4})?/i);
-          if (textMatch) {
-            const day = String(parseInt(textMatch[1],10));
-            const monthName = normalizeMonthName(textMatch[2]);
-            const year = textMatch[3] ? (textMatch[3].length === 2 ? 2000 + parseInt(textMatch[3],10) : parseInt(textMatch[3],10)) : (new Date().getFullYear());
-            return `${day}${monthName}${year}`;
-          }
-
-          return null;
+        // Spanish textual like "19 de mayo de 2026" or "martes 19 de mayo"
+        const textMatch = t.match(
+          /(\d{1,2})\s*(?:de)?\s*([A-Za-záéíóúñÑ]+)\s*(?:de)?\s*(\d{2,4})?/i,
+        );
+        if (textMatch) {
+          const day = String(parseInt(textMatch[1], 10));
+          const monthName = normalizeMonthName(textMatch[2]);
+          const year = textMatch[3]
+            ? textMatch[3].length === 2
+              ? 2000 + parseInt(textMatch[3], 10)
+              : parseInt(textMatch[3], 10)
+            : new Date().getFullYear();
+          return `${day}${monthName}${year}`;
         }
 
-        const byDate = dateToSlug(dateStr);
-        if (byDate) {
-          desiredSlug = byDate;
-        } else {
-          desiredSlug = (target.code || 'set').toLowerCase();
-        }
+        return null;
       }
+
+      const byDate = dateToSlug(dateStr);
+      if (byDate) {
+        desiredSlug = byDate;
+      } else {
+        desiredSlug = (target.code || "set").toLowerCase();
+      }
+    }
 
     // Normalizar desiredSlug
-    desiredSlug = String(desiredSlug || '').trim().toLowerCase().replace(/[^a-z0-9\-_.]+/g, '-').replace(/^-+|-+$/g, '');
+    desiredSlug = String(desiredSlug || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9\-_.]+/g, "-")
+      .replace(/^-+|-+$/g, "");
 
     // Evitar colisiones simples: si existe otro con mismo slug, añadir timestamp corto
-    const clash = (sets || []).some((s) => s && String(s.id) !== String(id) && String(s.publicSlug || '').toLowerCase() === desiredSlug);
+    const clash = (sets || []).some(
+      (s) =>
+        s &&
+        String(s.id) !== String(id) &&
+        String(s.publicSlug || "").toLowerCase() === desiredSlug,
+    );
     if (clash) {
       desiredSlug = `${desiredSlug}-${Date.now().toString().slice(-4)}`;
     }
@@ -591,26 +669,38 @@ app.post('/sets/:id/publish', requireAuth, async (req, res) => {
     });
 
     // Construir publicUrl si aplica
-    const clientBase = (process.env.CLIENT_URL || '').replace(/\/$/, '');
-    const url = updated.published ? `${clientBase}/avisos-semanales/${updated.publicSlug || updated.code}` : null;
+    const clientBase = (process.env.CLIENT_URL || "").replace(/\/$/, "");
+    const url = updated.published
+      ? `${clientBase}/avisos-semanales/${updated.publicSlug || updated.code}`
+      : null;
 
     // Intentar generar o eliminar HTML estático en dist-public según published
     let staticResult = null;
     try {
       if (updated.published) {
         // publish new slug
-        console.log('Generating static HTML...');
+        console.log("Generating static HTML...");
         staticResult = await publishAviso(updated);
 
         // If slug changed, remove old static folder to avoid stale copies
         try {
-          const oldSlug = target && target.publicSlug ? String(target.publicSlug).trim() : null;
-          const newSlug = updated && updated.publicSlug ? String(updated.publicSlug).trim() : null;
+          const oldSlug =
+            target && target.publicSlug
+              ? String(target.publicSlug).trim()
+              : null;
+          const newSlug =
+            updated && updated.publicSlug
+              ? String(updated.publicSlug).trim()
+              : null;
           if (oldSlug && newSlug && oldSlug !== newSlug) {
             try {
               await removeStaticAviso(oldSlug);
             } catch (eOld) {
-              console.warn('No se pudo eliminar carpeta antigua del slug:', oldSlug, eOld && eOld.message ? eOld.message : eOld);
+              console.warn(
+                "No se pudo eliminar carpeta antigua del slug:",
+                oldSlug,
+                eOld && eOld.message ? eOld.message : eOld,
+              );
             }
           }
         } catch (e) {
@@ -620,50 +710,70 @@ app.post('/sets/:id/publish', requireAuth, async (req, res) => {
         staticResult = await removeStaticAviso(updated);
       }
     } catch (err) {
-      console.error('Error gestionando HTML estático:', err && err.message ? err.message : err);
+      console.error(
+        "Error gestionando HTML estático:",
+        err && err.message ? err.message : err,
+      );
       staticResult = { ok: false, error: String(err) };
     }
 
     // If configured, automatically run git-auto-push synchronously in the publish flow
     let autoPushQueued = false;
     try {
-      const autoFlag = String(process.env.AUTO_PUSH_ON_PUBLISH || '').toLowerCase();
-      console.log('AUTO FLAG VALUE:', autoFlag);
-      if (autoFlag === 'true' || autoFlag === '1') {
-          // Always attempt an auto push after static changes (publish or unpublish).
-          const slugArg = String(updated.publicSlug || updated.code || updated.id || '').replace(/"/g, '');
-          const cmd = `node scripts/git-auto-push.js "${slugArg}"`;
-          console.log('Running auto git push after static changes...');
-          try {
-            const { execSync } = require('child_process');
-            const out = execSync(cmd, { cwd: path.join(__dirname, '..'), encoding: 'utf8', stdio: 'pipe' });
-            console.log('Git push completed');
-            if (out) console.log(String(out).slice(0, 2000));
-          } catch (e) {
-            console.error('Git push failed:', e && e.message ? e.message : e);
-            if (e && e.stdout) console.error(String(e.stdout).slice(0, 2000));
-          }
-          autoPushQueued = true;
+      const autoFlag = String(
+        process.env.AUTO_PUSH_ON_PUBLISH || "",
+      ).toLowerCase();
+      console.log("AUTO FLAG VALUE:", autoFlag);
+      if (autoFlag === "true" || autoFlag === "1") {
+        // Always attempt an auto push after static changes (publish or unpublish).
+        const slugArg = String(
+          updated.publicSlug || updated.code || updated.id || "",
+        ).replace(/"/g, "");
+        const cmd = `node scripts/git-auto-push.js "${slugArg}"`;
+        console.log("Running auto git push after static changes...");
+        try {
+          const { execSync } = require("child_process");
+          const out = execSync(cmd, {
+            cwd: path.join(__dirname, ".."),
+            encoding: "utf8",
+            stdio: "pipe",
+          });
+          console.log("Git push completed");
+          if (out) console.log(String(out).slice(0, 2000));
+        } catch (e) {
+          console.error("Git push failed:", e && e.message ? e.message : e);
+          if (e && e.stdout) console.error(String(e.stdout).slice(0, 2000));
         }
+        autoPushQueued = true;
+      }
     } catch (e) {
-      console.warn('Error intentando auto-push:', e && e.message ? e.message : e);
+      console.warn(
+        "Error intentando auto-push:",
+        e && e.message ? e.message : e,
+      );
     }
 
-    res.json({ ok: true, set: updated, publicUrl: url, staticPublish: staticResult, autoPushQueued });
+    res.json({
+      ok: true,
+      set: updated,
+      publicUrl: url,
+      staticPublish: staticResult,
+      autoPushQueued,
+    });
   } catch (err) {
-    console.error('Error publicando set:', err);
-    res.status(500).json({ error: 'Error publicando set' });
+    console.error("Error publicando set:", err);
+    res.status(500).json({ error: "Error publicando set" });
   }
 });
 
 // Actualizar la fecha de creación del set
-app.patch('/sets/:id/update-date', requireAuth, async (req, res) => {
+app.patch("/sets/:id/update-date", requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { date } = req.body || {};
 
     if (!date) {
-      return res.status(400).json({ error: 'Se requiere una fecha válida' });
+      return res.status(400).json({ error: "Se requiere una fecha válida" });
     }
 
     // Normalize incoming date to local YYYY-MM-DD string to avoid timezone shifts
@@ -673,17 +783,17 @@ app.patch('/sets/:id/update-date', requireAuth, async (req, res) => {
     } else {
       const parsed = new Date(date);
       if (isNaN(parsed.getTime())) {
-        return res.status(400).json({ error: 'Fecha inválida' });
+        return res.status(400).json({ error: "Fecha inválida" });
       }
       const y = parsed.getFullYear();
-      const m = String(parsed.getMonth() + 1).padStart(2, '0');
-      const d = String(parsed.getDate()).padStart(2, '0');
+      const m = String(parsed.getMonth() + 1).padStart(2, "0");
+      const d = String(parsed.getDate()).padStart(2, "0");
       normalizedDate = `${y}-${m}-${d}`;
     }
 
     const { sets } = await loadAllSets();
     const target = sets.find((s) => String(s.id) === String(id));
-    if (!target) return res.status(404).json({ error: 'Set no encontrado' });
+    if (!target) return res.status(404).json({ error: "Set no encontrado" });
 
     const updated = await updateSet(id, {
       date: normalizedDate,
@@ -691,8 +801,8 @@ app.patch('/sets/:id/update-date', requireAuth, async (req, res) => {
 
     res.json({ ok: true, set: updated });
   } catch (err) {
-    console.error('Error actualizando fecha del set:', err);
-    res.status(500).json({ error: 'Error actualizando fecha' });
+    console.error("Error actualizando fecha del set:", err);
+    res.status(500).json({ error: "Error actualizando fecha" });
   }
 });
 
@@ -798,7 +908,10 @@ app.post("/avisos", requireAuth, async (req, res) => {
       try {
         staticPublish = await publishAviso(targetSet);
       } catch (err) {
-        console.error('Error generando HTML estático al guardar:', err && err.message ? err.message : err);
+        console.error(
+          "Error generando HTML estático al guardar:",
+          err && err.message ? err.message : err,
+        );
         staticPublish = { ok: false, error: String(err) };
       }
     }
@@ -830,14 +943,16 @@ app.post("/import-html", requireAuth, async (req, res) => {
     const { html, code, date } = req.body || {};
 
     if (!html || typeof html !== "string" || html.trim().length < 50) {
-      return res.status(400).json({ error: "Se requiere un HTML válido en el campo 'html'" });
+      return res
+        .status(400)
+        .json({ error: "Se requiere un HTML válido en el campo 'html'" });
     }
 
     const aiResult = await extractFromHtml(html);
 
     const avisos = aiResult.avisos || [];
     const nowLocal = new Date();
-    const localDateStr = `${nowLocal.getFullYear()}-${String(nowLocal.getMonth() + 1).padStart(2, '0')}-${String(nowLocal.getDate()).padStart(2, '0')}`;
+    const localDateStr = `${nowLocal.getFullYear()}-${String(nowLocal.getMonth() + 1).padStart(2, "0")}-${String(nowLocal.getDate()).padStart(2, "0")}`;
     const autoDate = date || aiResult.date || localDateStr;
     const autoTitle = aiResult.title || "AVISOS ZONALES";
 
@@ -865,13 +980,14 @@ app.post("/analyze-slides", requireAuth, async (req, res) => {
   try {
     const aiResult = await analyzeAllSlides();
     const avisos = Array.isArray(aiResult.avisos) ? aiResult.avisos : [];
-    const persist = String(req.query.persist || "true").toLowerCase() !== "false";
+    const persist =
+      String(req.query.persist || "true").toLowerCase() !== "false";
 
     console.log("AVISOS GENERADOS:", avisos.length, "persist=", persist);
 
     if (persist) {
       const nowLocal = new Date();
-      const localDateStr = `${nowLocal.getFullYear()}-${String(nowLocal.getMonth() + 1).padStart(2, '0')}-${String(nowLocal.getDate()).padStart(2, '0')}`;
+      const localDateStr = `${nowLocal.getFullYear()}-${String(nowLocal.getMonth() + 1).padStart(2, "0")}-${String(nowLocal.getDate()).padStart(2, "0")}`;
       const nuevoSet = await createSet({
         date: localDateStr,
         avisos,
@@ -899,7 +1015,9 @@ app.post("/generar-html", requireAuth, async (req, res) => {
     const set = sets[0];
 
     if (!set) {
-      return res.status(404).json({ error: "No hay sets disponibles para generar HTML" });
+      return res
+        .status(404)
+        .json({ error: "No hay sets disponibles para generar HTML" });
     }
 
     const htmlFile = generateHTML({
@@ -929,9 +1047,10 @@ app.post("/generar-html", requireAuth, async (req, res) => {
 app.get("/auth/status", (req, res) => {
   // Verificar si hay token JWT en headers o cookies
   const authHeader = req.headers.authorization;
-  const token = authHeader && authHeader.startsWith('Bearer ')
-    ? authHeader.substring(7)
-    : req.cookies?.['auth_token'];
+  const token =
+    authHeader && authHeader.startsWith("Bearer ")
+      ? authHeader.substring(7)
+      : req.cookies?.["auth_token"];
 
   if (!token) {
     return res.json({ authorized: false });
@@ -944,7 +1063,7 @@ app.get("/auth/status", (req, res) => {
 
   const allowedEmail = process.env.ALLOWED_GOOGLE_EMAIL;
   if (allowedEmail && user.email !== allowedEmail) {
-    return res.json({ authorized: false, error: 'Email no autorizado' });
+    return res.json({ authorized: false, error: "Email no autorizado" });
   }
 
   res.json({
@@ -967,12 +1086,12 @@ app.get("/auth/login", (req, res) => {
 });
 
 // Iniciar autorización para Google Drive (ventana popup desde cliente)
-app.get('/auth/start', (req, res) => {
+app.get("/auth/start", (req, res) => {
   try {
     const url = getDriveAuthUrl();
     return res.redirect(url);
   } catch (err) {
-    console.error('Error iniciando Drive auth:', err);
+    console.error("Error iniciando Drive auth:", err);
     return res.status(500).send(`Error iniciando autorización: ${err.message}`);
   }
 });
@@ -1003,37 +1122,42 @@ app.get("/auth/callback", async (req, res) => {
 
     // Generar JWT y guardarlo en cookie
     const jwtToken = generateToken(userInfo);
-    res.cookie('auth_token', jwtToken, {
+    res.cookie("auth_token", jwtToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 24 * 60 * 60 * 1000, // 24 horas
     });
 
     // Redirigir de vuelta a la aplicación (al dashboard)
-    const clientBase = (process.env.CLIENT_URL || 'http://localhost:5173').replace(/\/$/, '');
-    const redirectUrl = process.env.CLIENT_USE_HASH === 'true'
-      ? `${clientBase}/#/dashboard`
-      : `${clientBase}/dashboard`;
+    const clientBase = (
+      process.env.CLIENT_URL || "http://localhost:5173"
+    ).replace(/\/$/, "");
+    const redirectUrl =
+      process.env.CLIENT_USE_HASH === "true"
+        ? `${clientBase}/#/dashboard`
+        : `${clientBase}/dashboard`;
     res.redirect(redirectUrl);
   } catch (err) {
-    console.error('Error en callback:', err);
+    console.error("Error en callback:", err);
     res.status(500).send(`Error: ${err.message}`);
   }
 });
 
 // Callback específico para la autorización de Google Drive
-app.get('/auth/drive/callback', async (req, res) => {
+app.get("/auth/drive/callback", async (req, res) => {
   const code = req.query.code;
   if (!code) {
-    return res.status(400).send('Falta el código de autorización.');
+    return res.status(400).send("Falta el código de autorización.");
   }
 
   try {
-    const envPath = path.join(__dirname, '..', '.env');
+    const envPath = path.join(__dirname, "..", ".env");
     // Asegurar que exista .env para poder escribir (si no existe, crear vacío)
     if (!fs.existsSync(envPath)) {
-      try { fs.writeFileSync(envPath, '', 'utf8'); } catch (_) {}
+      try {
+        fs.writeFileSync(envPath, "", "utf8");
+      } catch (_) {}
     }
 
     await exchangeCodeForTokens(code, envPath);
@@ -1056,13 +1180,13 @@ app.get('/auth/drive/callback', async (req, res) => {
       </html>
     `);
   } catch (err) {
-    console.error('Error en Drive callback:', err);
+    console.error("Error en Drive callback:", err);
     return res.status(500).send(`Error autorizando Drive: ${err.message}`);
   }
 });
 
 app.post("/auth/logout", (req, res) => {
-  res.clearCookie('auth_token');
+  res.clearCookie("auth_token");
   res.json({ success: true });
 });
 
@@ -1074,58 +1198,91 @@ app.get("/images", requireAuth, async (req, res) => {
   try {
     const folderId = process.env.DRIVE_IMAGES_FOLDER_ID;
     if (!folderId) {
-      return res.status(500).json({ error: "DRIVE_IMAGES_FOLDER_ID no configurado en .env" });
+      return res
+        .status(500)
+        .json({ error: "DRIVE_IMAGES_FOLDER_ID no configurado en .env" });
     }
     const images = await listImagesFromDrive(folderId);
     res.json({ images });
   } catch (err) {
-    console.error("Error listando imágenes de Drive:", err && err.message ? err.message : err);
-    if (err && (err.name === 'DriveAuthError' || err.reauthUrl)) {
-      return res.status(401).json({ error: 'drive_token_revoked', reauthUrl: err.reauthUrl || '/auth/start', message: err.message });
-    }
-    res.status(500).json({ error: err.message || String(err) });
-  }
-});
-
-app.post("/images/upload", requireAuth, imageUpload.single("image"), async (req, res) => {
-  try {
-    const folderId = process.env.DRIVE_IMAGES_FOLDER_ID;
-    if (!folderId) {
-      return res.status(500).json({ error: "DRIVE_IMAGES_FOLDER_ID no configurado en .env" });
-    }
-    if (!req.file) {
-      return res.status(400).json({ error: "No se recibió ningún archivo" });
-    }
-
-    const result = await uploadImageToDrive(
-      req.file.path,
-      req.file.originalname,
-      folderId,
+    console.error(
+      "Error listando imágenes de Drive:",
+      err && err.message ? err.message : err,
     );
-
-    try {
-      fs.unlinkSync(req.file.path);
-    } catch (_) {}
-
-    res.json(result);
-  } catch (err) {
-    console.error("Error subiendo imagen a Drive:", err && err.message ? err.message : err);
-    if (req.file) try { fs.unlinkSync(req.file.path); } catch (_) {}
-    if (err && (err.name === 'DriveAuthError' || err.reauthUrl)) {
-      return res.status(401).json({ error: 'drive_token_revoked', reauthUrl: err.reauthUrl || '/auth/start', message: err.message });
+    if (err && (err.name === "DriveAuthError" || err.reauthUrl)) {
+      return res.status(401).json({
+        error: "drive_token_revoked",
+        reauthUrl: err.reauthUrl || "/auth/start",
+        message: err.message,
+      });
     }
     res.status(500).json({ error: err.message || String(err) });
   }
 });
+
+app.post(
+  "/images/upload",
+  requireAuth,
+  imageUpload.single("image"),
+  async (req, res) => {
+    try {
+      const folderId = process.env.DRIVE_IMAGES_FOLDER_ID;
+      if (!folderId) {
+        return res
+          .status(500)
+          .json({ error: "DRIVE_IMAGES_FOLDER_ID no configurado en .env" });
+      }
+      if (!req.file) {
+        return res.status(400).json({ error: "No se recibió ningún archivo" });
+      }
+
+      const result = await uploadImageToDrive(
+        req.file.path,
+        req.file.originalname,
+        folderId,
+      );
+
+      try {
+        fs.unlinkSync(req.file.path);
+      } catch (_) {}
+
+      res.json(result);
+    } catch (err) {
+      console.error(
+        "Error subiendo imagen a Drive:",
+        err && err.message ? err.message : err,
+      );
+      if (req.file)
+        try {
+          fs.unlinkSync(req.file.path);
+        } catch (_) {}
+      if (err && (err.name === "DriveAuthError" || err.reauthUrl)) {
+        return res.status(401).json({
+          error: "drive_token_revoked",
+          reauthUrl: err.reauthUrl || "/auth/start",
+          message: err.message,
+        });
+      }
+      res.status(500).json({ error: err.message || String(err) });
+    }
+  },
+);
 
 app.delete("/images/:id", requireAuth, async (req, res) => {
   try {
     await deleteImageFromDrive(req.params.id);
     res.json({ ok: true });
   } catch (err) {
-    console.error("Error eliminando imagen de Drive:", err && err.message ? err.message : err);
-    if (err && (err.name === 'DriveAuthError' || err.reauthUrl)) {
-      return res.status(401).json({ error: 'drive_token_revoked', reauthUrl: err.reauthUrl || '/auth/start', message: err.message });
+    console.error(
+      "Error eliminando imagen de Drive:",
+      err && err.message ? err.message : err,
+    );
+    if (err && (err.name === "DriveAuthError" || err.reauthUrl)) {
+      return res.status(401).json({
+        error: "drive_token_revoked",
+        reauthUrl: err.reauthUrl || "/auth/start",
+        message: err.message,
+      });
     }
     res.status(500).json({ error: err.message || String(err) });
   }
@@ -1139,10 +1296,16 @@ app.get("/images/thumb/:id", async (req, res) => {
     res.setHeader("Cache-Control", "public, max-age=86400");
     stream.pipe(res);
   } catch (err) {
-    console.error("Error sirviendo thumbnail:", err && err.message ? err.message : err);
-    if (err && (err.name === 'DriveAuthError' || err.reauthUrl)) {
+    console.error(
+      "Error sirviendo thumbnail:",
+      err && err.message ? err.message : err,
+    );
+    if (err && (err.name === "DriveAuthError" || err.reauthUrl)) {
       // Respond with 401 and json so clients know they must reauthorize.
-      return res.status(401).json({ error: 'drive_token_revoked', reauthUrl: err.reauthUrl || '/auth/start' });
+      return res.status(401).json({
+        error: "drive_token_revoked",
+        reauthUrl: err.reauthUrl || "/auth/start",
+      });
     }
     res.status(500).end();
   }
@@ -1150,6 +1313,127 @@ app.get("/images/thumb/:id", async (req, res) => {
 
 app.get("/healthz", (req, res) => {
   res.status(200).json({ status: "ok" });
+});
+
+// ===============================
+// MONITORING OPENAI
+// ===============================
+
+app.get("/monitoring/openai", async (req, res) => {
+  try {
+    const now = new Date();
+
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const start_time = Math.floor(monthStart.getTime() / 1000);
+    const end_time = Math.floor(now.getTime() / 1000);
+
+    // ===============================
+    // COSTS API
+    // ===============================
+
+    const costsResponse = await fetch(
+      `https://api.openai.com/v1/organization/costs?start_time=${start_time}&end_time=${end_time}`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        },
+      },
+    );
+
+    const costsText = await costsResponse.text();
+
+    let costsData;
+
+    try {
+      costsData = JSON.parse(costsText);
+    } catch {
+      console.error("COSTS RAW RESPONSE:", costsText);
+
+      return res.status(500).json({
+        error: "La API de costs no devolvió JSON",
+        raw: costsText,
+      });
+    }
+
+    // ===============================
+    // USAGE API
+    // ===============================
+
+    const usageResponse = await fetch(
+      `https://api.openai.com/v1/organization/usage/completions?start_time=${start_time}&end_time=${end_time}`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        },
+      },
+    );
+
+    const usageText = await usageResponse.text();
+
+    let usageData;
+
+    try {
+      usageData = JSON.parse(usageText);
+    } catch {
+      console.error("USAGE RAW RESPONSE:", usageText);
+
+      return res.status(500).json({
+        error: "La API de usage no devolvió JSON",
+        raw: usageText,
+      });
+    }
+
+    // ===============================
+    // TOKENS
+    // ===============================
+
+    let inputTokens = 0;
+    let outputTokens = 0;
+    let totalRequests = 0;
+    let totalCost = 0;
+
+    if (Array.isArray(costsData?.data)) {
+      totalCost = costsData.data.reduce((sum, item) => {
+        return sum + (item.amount?.value || 0);
+      }, 0);
+    }
+
+    // ===============================
+    // RESPONSE
+    // ===============================
+    console.log("COSTS:", costsData);
+    console.log("USAGE:", usageData);
+
+    res.json({
+      success: true,
+
+      period: {
+        start: monthStart.toISOString(),
+        end: now.toISOString(),
+      },
+
+      summary: {
+        totalCostUsd: Number(totalCost.toFixed(4)),
+        inputTokens,
+        outputTokens,
+        totalTokens: inputTokens + outputTokens,
+        totalRequests,
+      },
+
+      raw: {
+        costs: costsData,
+        usage: usageData,
+      },
+    });
+  } catch (error) {
+    console.error("Error obteniendo monitoring OpenAI:", error);
+
+    res.status(500).json({
+      error: "Error obteniendo datos de OpenAI",
+      details: error.message,
+    });
+  }
 });
 
 // ===============================

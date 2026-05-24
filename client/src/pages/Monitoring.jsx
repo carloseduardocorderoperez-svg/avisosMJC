@@ -6,7 +6,6 @@ import {
   FileText,
   RefreshCw,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
 import apiUrl from "../utils/api";
 
@@ -15,37 +14,50 @@ export default function Monitoring() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [data, setData] = useState(null);
-  const navigate = useNavigate()
+
 
   async function loadData(showRefresh = false) {
-    try {
-      setError("");
+  try {
+    setError("");
 
-      if (showRefresh) {
-        setRefreshing(true);
-      } else {
-        setLoading(true);
-      }
-
-      const response = await fetch(`${apiUrl}/monitoring/openai`, {
-        credentials: "include",
-      });
-
-      const json = await response.json();
-
-      if (!response.ok) {
-        throw new Error(json.error || "Error obteniendo monitoring");
-      }
-
-      setData(json);
-    } catch (err) {
-      console.error(err);
-      setError(err.message || "Error cargando monitoring");
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
+    if (showRefresh) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
     }
+
+    const response = await fetch(apiUrl("/monitoring/openai"), {
+  credentials: "include",
+});
+
+    const text = await response.text();
+
+    console.log("RAW RESPONSE:");
+    console.log(text);
+
+    let json;
+
+    try {
+      json = JSON.parse(text);
+    } catch {
+      throw new Error(
+        "El backend no devolvió JSON. Revisa consola del servidor."
+      );
+    }
+
+    if (!response.ok) {
+      throw new Error(json.error || "Error obteniendo monitoring");
+    }
+
+    setData(json);
+  } catch (err) {
+    console.error(err);
+    setError(err.message || "Error cargando monitoring");
+  } finally {
+    setLoading(false);
+    setRefreshing(false);
   }
+}
 
   useEffect(() => {
     loadData();
