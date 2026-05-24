@@ -289,7 +289,7 @@ export default function Navbar() {
                     : "nav-link"
                 }
               >
-                Avisos
+                Editor
               </NavLink>
 
               <NavLink
@@ -306,16 +306,18 @@ export default function Navbar() {
             </>
           )}
 
-          {/* Extra siempre disponible al final */}
-          <NavLink
-            to="/extra"
-            onClick={guardNavTo("/extra")}
-            className={({ isActive }) =>
-              isActive ? "nav-link active" : "nav-link"
-            }
-          >
-            Extra
-          </NavLink>
+          {/* Solo disponible si no se esta en una ruta de un set */}
+          {!isSetContext && (
+            <NavLink
+              to="/extra"
+              onClick={guardNavTo("/extra")}
+              className={({ isActive }) =>
+                isActive ? "nav-link active" : "nav-link"
+              }
+            >
+              Extra
+            </NavLink>
+          )}
         </div>
 
         {pageTitle && (
