@@ -307,7 +307,7 @@ export default function Navbar() {
           )}
 
           {/* Solo disponible si no se esta en una ruta de un set */}
-          {!isSetContext && (
+          {/* {!isSetContext && (
             <NavLink
               to="/extra"
               onClick={guardNavTo("/extra")}
@@ -317,7 +317,7 @@ export default function Navbar() {
             >
               Extra
             </NavLink>
-          )}
+          )} */}
           {/* {!isSetContext && (
                         <NavLink
               to="/monitoring"
