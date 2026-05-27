@@ -17,18 +17,24 @@ export default function installFetchWrapper() {
         body = null;
       }
 
-      // Si el backend indica que el token de Drive fue revocado, no forzar redirect
-      if (body && body.error === 'drive_token_revoked') {
-        return res;
-      }
+        // Si el backend indica que el token de Drive fue revocado, no forzar redirect
+        if (body && body.error === 'drive_token_revoked') {
+          return res;
+        }
 
-      try {
-        const current = window.location.pathname + window.location.search;
-        sessionStorage.setItem('redirectAfterLogin', current);
-      } catch (e) {}
+        try {
+          const current = window.location.pathname + window.location.search;
 
-      // redirect to login page
-      window.location.href = '/login';
+          // Evitar loop de recarga: si ya estamos en la página de login, no redirigir
+          if (!current.startsWith('/login')) {
+            try {
+              sessionStorage.setItem('redirectAfterLogin', current);
+            } catch (e) {}
+
+            // redirect to login page
+            window.location.href = '/login';
+          }
+        } catch (e) {}
     }
 
     return res;
