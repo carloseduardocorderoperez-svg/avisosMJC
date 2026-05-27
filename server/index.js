@@ -1076,6 +1076,31 @@ app.get("/auth/status", (req, res) => {
   });
 });
 
+// Endpoint temporal de depuración: verifica si el token en cookie/Authorization es decodificable
+// No está protegido intencionalmente; eliminar o restringir después de depuración en producción.
+app.get('/auth/check', (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.startsWith('Bearer ')
+      ? authHeader.substring(7)
+      : req.cookies?.['auth_token'];
+
+    if (!token) {
+      return res.json({ ok: false, tokenPresent: false });
+    }
+
+    const user = verifyToken(token);
+    if (!user) {
+      return res.json({ ok: false, tokenPresent: true, valid: false, error: 'invalid_or_expired_token' });
+    }
+
+    return res.json({ ok: true, tokenPresent: true, valid: true, user });
+  } catch (err) {
+    console.error('Error in /auth/check:', err && err.message ? err.message : err);
+    return res.status(500).json({ ok: false, error: String(err) });
+  }
+});
+
 app.get("/auth/login", (req, res) => {
   try {
     const url = getAuthUrl();
