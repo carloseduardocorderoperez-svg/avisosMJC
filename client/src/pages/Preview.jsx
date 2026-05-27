@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react"
 import { useParams } from "react-router-dom"
-import apiUrl from "../utils/api"
+import apiUrl, { apiRequest } from "../utils/api"
 
 export default function Preview() {
 
@@ -19,7 +19,7 @@ export default function Preview() {
 
       setLoading(true)
 
-      const res = await fetch(apiUrl(`/sets/${setId}/generar-html`), {
+      const res = await apiRequest(`/sets/${setId}/generar-html`, {
         method: "POST"
       })
 
