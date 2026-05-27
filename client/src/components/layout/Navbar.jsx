@@ -318,7 +318,7 @@ export default function Navbar() {
               Extra
             </NavLink>
           )}
-          {!isSetContext && (
+          {/* {!isSetContext && (
                         <NavLink
               to="/monitoring"
               onClick={guardNavTo("/monitoring")}
@@ -328,7 +328,7 @@ export default function Navbar() {
             >
               Configuración
             </NavLink>
-          )}
+          )} */}
         </div>
 
         {pageTitle && (

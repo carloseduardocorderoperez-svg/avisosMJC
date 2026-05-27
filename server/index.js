@@ -1316,109 +1316,315 @@ app.get("/healthz", (req, res) => {
 });
 
 // ===============================
-// MONITORING OPENAI
+// OPENAI MONITORING
 // ===============================
-
 app.get("/monitoring/openai", async (req, res) => {
   try {
     const now = new Date();
 
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    // ===============================
+    // CONFIG
+    // ===============================
 
-    const start_time = Math.floor(monthStart.getTime() / 1000);
-    const end_time = Math.floor(now.getTime() / 1000);
+    const INITIAL_CREDITS = 10;
+
+    // Últimos 30 días
+
+    const startDate = new Date(
+      Date.now() - 30 * 24 * 60 * 60 * 1000,
+    );
+
+    const start_time = Math.floor(
+      startDate.getTime() / 1000,
+    );
+
+    const end_time = Math.floor(
+      Date.now() / 1000,
+    );
+
+    console.log("NOW:", now.toISOString());
+
+    console.log("START:", startDate.toISOString());
+
+    console.log({
+      start_time,
+      end_time,
+    });
 
     // ===============================
-    // COSTS API
+    // API KEY
     // ===============================
+
+    const apiKey =
+      process.env.OPENAI_API_KEY_ADMIN;
+
+    if (!apiKey) {
+      throw new Error(
+        "OPENAI_API_KEY_ADMIN no existe",
+      );
+    }
+
+    // ===============================
+    // COSTS
+    // ===============================
+
+    const costsUrl =
+      `https://api.openai.com/v1/organization/costs` +
+      `?start_time=${start_time}` +
+      `&end_time=${end_time}` +
+      `&bucket_width=1d`;
+
+    console.log("FETCHING:", costsUrl);
 
     const costsResponse = await fetch(
-      `https://api.openai.com/v1/organization/costs?start_time=${start_time}&end_time=${end_time}`,
+      costsUrl,
       {
         headers: {
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+          Authorization: `Bearer ${apiKey}`,
         },
       },
     );
 
-    const costsText = await costsResponse.text();
+    const costsData =
+      await costsResponse.json();
 
-    let costsData;
+    if (!costsResponse.ok) {
+      console.error(
+        "OPENAI COSTS ERROR:",
+        JSON.stringify(costsData, null, 2),
+      );
 
-    try {
-      costsData = JSON.parse(costsText);
-    } catch {
-      console.error("COSTS RAW RESPONSE:", costsText);
-
-      return res.status(500).json({
-        error: "La API de costs no devolvió JSON",
-        raw: costsText,
-      });
+      throw new Error(
+        costsData?.error?.message ||
+          "Error consultando Costs API",
+      );
     }
 
     // ===============================
-    // USAGE API
+    // USAGE
     // ===============================
+
+    const usageUrl =
+      `https://api.openai.com/v1/organization/usage/completions` +
+      `?start_time=${start_time}` +
+      `&end_time=${end_time}` +
+      `&bucket_width=1d`;
+
+    console.log("FETCHING:", usageUrl);
 
     const usageResponse = await fetch(
-      `https://api.openai.com/v1/organization/usage/completions?start_time=${start_time}&end_time=${end_time}`,
+      usageUrl,
       {
         headers: {
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+          Authorization: `Bearer ${apiKey}`,
         },
       },
     );
 
-    const usageText = await usageResponse.text();
+    const usageData =
+      await usageResponse.json();
 
-    let usageData;
+    if (!usageResponse.ok) {
+      console.error(
+        "OPENAI USAGE ERROR:",
+        JSON.stringify(usageData, null, 2),
+      );
 
-    try {
-      usageData = JSON.parse(usageText);
-    } catch {
-      console.error("USAGE RAW RESPONSE:", usageText);
+      throw new Error(
+        usageData?.error?.message ||
+          "Error consultando Usage API",
+      );
+    }
 
-      return res.status(500).json({
-        error: "La API de usage no devolvió JSON",
-        raw: usageText,
+    // ===============================
+    // TOTALS
+    // ===============================
+
+    let totalCost = 0;
+
+    let inputTokens = 0;
+
+    let outputTokens = 0;
+
+    let totalRequests = 0;
+
+    // ===============================
+    // DAILY MAP
+    // ===============================
+
+    const dailyMap = {};
+
+    // ===============================
+    // PROCESS COSTS
+    // ===============================
+
+    if (Array.isArray(costsData.data)) {
+      costsData.data.forEach((bucket) => {
+        const date =
+          bucket.start_time_iso?.split("T")[0];
+
+        if (!dailyMap[date]) {
+          dailyMap[date] = {
+            date,
+            cost: 0,
+            inputTokens: 0,
+            outputTokens: 0,
+            requests: 0,
+          };
+        }
+
+        if (Array.isArray(bucket.results)) {
+          bucket.results.forEach((result) => {
+            const amount = Number(
+              result.amount?.value || 0,
+            );
+
+            totalCost += amount;
+
+            dailyMap[date].cost += amount;
+          });
+        }
       });
     }
 
     // ===============================
-    // TOKENS
+    // PROCESS USAGE
     // ===============================
 
-    let inputTokens = 0;
-    let outputTokens = 0;
-    let totalRequests = 0;
-    let totalCost = 0;
+    if (Array.isArray(usageData.data)) {
+      usageData.data.forEach((bucket) => {
+        const date =
+          bucket.start_time_iso?.split("T")[0];
 
-    if (Array.isArray(costsData?.data)) {
-      totalCost = costsData.data.reduce((sum, item) => {
-        return sum + (item.amount?.value || 0);
-      }, 0);
+        if (!dailyMap[date]) {
+          dailyMap[date] = {
+            date,
+            cost: 0,
+            inputTokens: 0,
+            outputTokens: 0,
+            requests: 0,
+          };
+        }
+
+        if (Array.isArray(bucket.results)) {
+          bucket.results.forEach((result) => {
+            const inTokens = Number(
+              result.input_tokens || 0,
+            );
+
+            const outTokens = Number(
+              result.output_tokens || 0,
+            );
+
+            const requests = Number(
+              result.num_model_requests || 0,
+            );
+
+            inputTokens += inTokens;
+
+            outputTokens += outTokens;
+
+            totalRequests += requests;
+
+            dailyMap[date].inputTokens +=
+              inTokens;
+
+            dailyMap[date].outputTokens +=
+              outTokens;
+
+            dailyMap[date].requests +=
+              requests;
+          });
+        }
+      });
     }
+
+    // ===============================
+    // DAILY ARRAY
+    // ===============================
+
+    const daily = Object.values(dailyMap)
+      .sort((a, b) =>
+        a.date.localeCompare(b.date),
+      )
+      .map((day) => ({
+        ...day,
+        cost: Number(day.cost.toFixed(4)),
+      }));
+
+    // ===============================
+    // METRICS
+    // ===============================
+
+    const totalTokens =
+      inputTokens + outputTokens;
+
+    const averageCostPerRequest =
+      totalRequests > 0
+        ? totalCost / totalRequests
+        : 0;
+
+    const averageTokensPerRequest =
+      totalRequests > 0
+        ? totalTokens / totalRequests
+        : 0;
+
+    const remainingCredits =
+      INITIAL_CREDITS - totalCost;
+
+    // Aproximación MUY básica
+
+    const estimatedRemainingRequests =
+      averageCostPerRequest > 0
+        ? Math.floor(
+            remainingCredits /
+              averageCostPerRequest,
+          )
+        : 0;
 
     // ===============================
     // RESPONSE
     // ===============================
-    console.log("COSTS:", costsData);
-    console.log("USAGE:", usageData);
 
     res.json({
       success: true,
 
       period: {
-        start: monthStart.toISOString(),
+        start: startDate.toISOString(),
         end: now.toISOString(),
       },
 
       summary: {
-        totalCostUsd: Number(totalCost.toFixed(4)),
+        totalCostUsd: Number(
+          totalCost.toFixed(4),
+        ),
+
+        remainingCredits: Number(
+          remainingCredits.toFixed(2),
+        ),
+
+        estimatedRemainingRequests,
+
         inputTokens,
+
         outputTokens,
-        totalTokens: inputTokens + outputTokens,
+
+        totalTokens,
+
         totalRequests,
+
+        averageCostPerRequest: Number(
+          averageCostPerRequest.toFixed(6),
+        ),
+
+        averageTokensPerRequest:
+          Math.round(
+            averageTokensPerRequest,
+          ),
+      },
+
+      charts: {
+        daily,
       },
 
       raw: {
@@ -1427,10 +1633,15 @@ app.get("/monitoring/openai", async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error obteniendo monitoring OpenAI:", error);
+    console.error(
+      "Error obteniendo monitoring OpenAI:",
+      error,
+    );
 
     res.status(500).json({
-      error: "Error obteniendo datos de OpenAI",
+      error:
+        "Error obteniendo datos de OpenAI",
+
       details: error.message,
     });
   }
