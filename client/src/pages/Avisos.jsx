@@ -342,6 +342,7 @@ function CanvasBlock({
   const enterEdit = (e) => {
     e.preventDefault();
     e.stopPropagation();
+    window.getSelection()?.removeAllRanges();
     setSelectedBlock({ avisoId, bloqueIndex });
     setEditingBlock({ avisoId, bloqueIndex });
   };

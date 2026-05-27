@@ -214,11 +214,10 @@ export default function Navbar() {
     if (!shouldBlockLeavingSet) return true
     return window.confirm("Tienes cambios sin guardar. ¿Seguro que deseas salir de este set de avisos?")
   }
-
+//Cuidar tambien la navegación entre avisos y preview dentro del mismo set, para no perder cambios sin guardar
   const guardNavTo = (targetPath) => (event) => {
-    if (path === targetPath) return
-    const leavingSet = isSetRoute && !targetPath.startsWith("/avisos/")
-    if (leavingSet && !confirmLeaveSet()) {
+    
+    if (!confirmLeaveSet()) {
       event.preventDefault()
     }
   }
