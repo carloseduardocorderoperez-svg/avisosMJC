@@ -127,8 +127,15 @@ export default function Navbar() {
       setToast({ type: "success", message: `${aiAvisos.length} avisos importados y reemplazados` })
     }
   }
-
+//Preguntar al usuario si desea guardar cambios antes de cerrar sesión, si hay cambios pendientes
   const handleLogout = async () => {
+    if (dirty) {
+      const confirm = window.confirm("Tienes cambios sin guardar. ¿Deseas cerrar sesión de todas formas? Se perderán los cambios no guardados.")
+      if (!confirm) return
+    } else {
+      const confirm = window.confirm("¿Deseas cerrar sesión?")
+      if (!confirm) return
+    }
     try {
       await logout()
       setAuthStatus({ authorized: false, user: null })
@@ -143,6 +150,7 @@ export default function Navbar() {
     }
   }
 
+  //Preguntar al usuario si desea guardar cambios antes de cerrar sesión, si hay cambios pendientes
   const handleLogin = () => {
     loginWithGoogle()
   }
