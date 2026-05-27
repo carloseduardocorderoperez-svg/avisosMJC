@@ -19,7 +19,6 @@ export default function ImageLibraryModal({
 
   const fileInputRef = useRef(null);
   const popupRef = useRef(null);
-  const authTriggeredRef = useRef(false);
 
   // ===============================
   // Cargar imágenes
@@ -41,13 +40,9 @@ export default function ImageLibraryModal({
           res.status === 401 &&
           data?.error === "drive_token_revoked"
         ) {
+          // Evita popup automático desde flujo async; OAuth se inicia solo por clic del usuario.
           setDriveAuthorized(false);
-
-          if (!authTriggeredRef.current) {
-            authTriggeredRef.current = true;
-            handleConnectDrive();
-          }
-
+          setWaitingAuth(false);
           return;
         }
 
@@ -73,8 +68,6 @@ export default function ImageLibraryModal({
     setSelected(null);
     setError(null);
     setImages([]);
-    authTriggeredRef.current = false;
-
     fetchImages();
   }, [isOpen, fetchImages]);
 
@@ -120,8 +113,6 @@ export default function ImageLibraryModal({
         if (e.data?.type === "drive-auth-success") {
           setWaitingAuth(false);
           setDriveAuthorized(true);
-          authTriggeredRef.current = false;
-
           try {
             popupRef.current?.close();
           } catch {}
@@ -183,11 +174,8 @@ export default function ImageLibraryModal({
           ) {
             setDriveAuthorized(false);
 
-            if (!authTriggeredRef.current) {
-              authTriggeredRef.current = true;
-              handleConnectDrive();
-            }
-
+            // Evita popup automático desde flujo async; OAuth se inicia solo por clic del usuario.
+            setWaitingAuth(false);
             return;
           }
 
