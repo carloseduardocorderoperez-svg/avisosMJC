@@ -241,7 +241,7 @@ export default function DashboardSetCard({
                 <a
                   className="dashboard-card-menu-item"
                   style={{ textDecoration: 'none' }}
-                  href={`https://zonaomaha-8a35a.web.app/${slugValue}`}
+                  href={`https://zonaomaha-8a35a.web.app/${slugValue}/`}
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={(e) => { e.stopPropagation(); setMenuOpen(false); }}
@@ -266,7 +266,7 @@ export default function DashboardSetCard({
                            addNotification({ type: 'error', text: 'No hay URL pública disponible para copiar.', timeout: 3500 })
                            return
                          }
-                         const url = `https://zonaomaha-8a35a.web.app/${slug}`
+                        const url = `https://zonaomaha-8a35a.web.app/${slug}/`
                          try {
                            if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
                              await navigator.clipboard.writeText(url)

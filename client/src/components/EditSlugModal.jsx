@@ -52,7 +52,7 @@ export default function EditSlugModal({ set, initialValue = "", onClose, onSave,
           )}
 
           <div style={{ marginBottom: "12px", padding: "10px 12px", background: "rgba(255, 255, 255, 0.03)", borderRadius: "8px", fontSize: "12px", color: "var(--text-muted)", border: "1px solid var(--border-soft)" }}>
-            <strong>Vista previa URL:</strong> {typeof window !== 'undefined' ? window.location.origin : ''}/avisos-semanales/{slugInput || "-"}
+            <strong>Vista previa URL:</strong> {typeof window !== 'undefined' ? window.location.origin : ''}/avisos-semanales/{slugInput || "-"}/
           </div>
         </div>
 
