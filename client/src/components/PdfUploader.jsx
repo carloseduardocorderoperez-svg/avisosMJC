@@ -1,6 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
-import apiUrl from "../utils/api";
+import { apiUrl } from "../utils/api";
 
 function PdfUploader({ onUploadSuccess }) {
 
@@ -27,9 +27,17 @@ function PdfUploader({ onUploadSuccess }) {
       setLoading(true);
       setMessage("Subiendo PDF y generando imágenes...");
 
+      const token = typeof window !== 'undefined' ? localStorage.getItem('mjc_auth_token') : null;
+
       const response = await axios.post(
         apiUrl("/upload-pdf"),
-        formData
+        formData,
+        {
+          withCredentials: true,
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        }
       );
 
       setMessage(response.data.message);
