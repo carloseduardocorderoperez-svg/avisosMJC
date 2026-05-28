@@ -42,7 +42,8 @@ try {
 
       // copy dist-public into tmpDir/dist-public so workflows watching 'dist-public/**' trigger
       const targetDist = path.join(tmpDir, 'dist-public');
-      await (fs.promises || fs).mkdir ? fs.mkdirSync(targetDist, { recursive: true }) : null;
+      // create target dist directory synchronously
+      try { fs.mkdirSync(targetDist, { recursive: true }); } catch (e) {}
       fs.cpSync(distPath, targetDist, { recursive: true });
 
       // include firebase config so the GitHub Action can deploy from this branch
@@ -80,12 +81,14 @@ try {
           console.error('Cannot determine owner/repo for DEPLOY_BRANCH push. Aborting.');
           process.exit(2);
         }
-        pushUrl = `https://${pushToken}@github.com/${ownerRepo}.git`;
-        run(`git remote add origin "${pushUrl}"`, { cwd: tmpDir });
+        pushUrl = `https://github.com/${ownerRepo}.git`;
+        console.log('Deploy: will push to', pushUrl, '(token will be used for auth)');
+        run(`git remote add origin "https://${pushToken}@github.com/${ownerRepo}.git"`, { cwd: tmpDir });
       } else {
         // reuse existing origin URL
         try {
           const originUrl = run('git remote get-url origin').trim();
+          console.log('Deploy: will push to existing origin', originUrl);
           run(`git remote add origin "${originUrl}"`, { cwd: tmpDir });
         } catch (e) {
           console.error('Cannot determine origin URL for DEPLOY_BRANCH push. Aborting.');
