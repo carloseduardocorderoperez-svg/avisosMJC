@@ -21,7 +21,7 @@ async function generateStaticAviso(set) {
   if (!set) throw new Error('Se requiere el objeto set');
 
   const slug = normalizeSlug(set.publicSlug || set.code || set.id || 'set');
-  const targetDir = path.join(__dirname, '../dist-public', slug);
+  const targetDir = path.join(__dirname, '../dist-public', 'avisos-semanales', slug);
 
   await ensureDir(targetDir);
 
@@ -63,33 +63,36 @@ async function generateIndex() {
     publishedAt: s.publishedAt || ''
   }));
 
-  // Cleanup: remove any stale folders in dist-public that no longer correspond
-  // to published slugs. This prevents leftover empty folders from previous
-  // runs (e.g. when a set was unpublished but its directory remained).
+  // Cleanup: remove any stale folders under dist-public/avisos-semanales that
+  // no longer correspond to published slugs. This prevents leftover empty
+  // folders from previous runs (e.g. when a set was unpublished).
   try {
     const distDir = path.join(__dirname, '../dist-public');
     const kept = new Set(minimal.map((m) => String(m.slug || '').trim()).filter(Boolean));
     if (fsSync.existsSync(distDir)) {
-      const entries = fsSync.readdirSync(distDir, { withFileTypes: true });
-      for (const e of entries) {
-        if (!e.isDirectory()) continue;
-        const name = e.name;
-        if (!kept.has(name) && name !== '.' && name !== '..') {
-          const target = path.join(distDir, name);
-          try {
-            // Only remove if directory is empty to avoid deleting build assets
-            const contents = fsSync.readdirSync(target);
-            if (!contents || contents.length === 0) {
-              if (fsSync.rm) {
-                fsSync.rmSync(target, { recursive: true, force: true });
-              } else {
-                fsSync.rmdirSync(target, { recursive: true });
+      const avisosBase = path.join(distDir, 'avisos-semanales');
+      if (fsSync.existsSync(avisosBase)) {
+        const entries = fsSync.readdirSync(avisosBase, { withFileTypes: true });
+        for (const e of entries) {
+          if (!e.isDirectory()) continue;
+          const name = e.name;
+          if (!kept.has(name)) {
+            const target = path.join(avisosBase, name);
+            try {
+              // Only remove if directory is empty to avoid deleting build assets
+              const contents = fsSync.readdirSync(target);
+              if (!contents || contents.length === 0) {
+                if (fsSync.rm) {
+                  fsSync.rmSync(target, { recursive: true, force: true });
+                } else {
+                  fsSync.rmdirSync(target, { recursive: true });
+                }
+                console.log('staticPublisher: removed empty stale folder', name);
               }
-              console.log('staticPublisher: removed empty stale folder', name);
+            } catch (er) {
+              // ignore removal errors
+              console.warn('staticPublisher: could not remove stale folder', name, er && er.message ? er.message : er);
             }
-          } catch (er) {
-            // ignore removal errors
-            console.warn('staticPublisher: could not remove stale folder', name, er && er.message ? er.message : er);
           }
         }
       }
@@ -238,8 +241,9 @@ async function generateIndex() {
           items.forEach(function(it){
             const li = document.createElement('li');
             const a = document.createElement('a');
-            // Use root-relative paths to avoid stacking segments when clicked from nested pages
-            a.href = '/' + it.slug + '/';
+            // Link to the public route under /avisos-semanales/<slug>/ so it
+            // points to the static files generated under dist-public/avisos-semanales
+            a.href = '/avisos-semanales/' + it.slug + '/';
             a.textContent = formatLong(it.date);
             li.appendChild(a);
             itemsList.appendChild(li);
@@ -295,7 +299,7 @@ async function removeStaticAviso(setOrSlug) {
 
   if (!slug) throw new Error('No se pudo determinar slug para eliminación');
 
-  const targetDir = path.join(__dirname, '../dist-public', slug);
+  const targetDir = path.join(__dirname, '../dist-public', 'avisos-semanales', slug);
 
   // Use fs.rm if available
   try {

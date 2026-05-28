@@ -581,54 +581,71 @@ app.post("/sets/:id/publish", requireAuth, async (req, res) => {
     if (!updated.publicSlug) {
       const dateStr = updated.date || "";
 
-      function formatDayMonthLabel(s) {
+      // Build a short date-based slug like `30may26`. Falls back to title/code/id when date is missing.
+      function formatShortDateLabel(s) {
         if (!s) return null;
         const t = String(s).trim();
-        const isoMatch = t.match(/^(\d{4})-(\d{2})-(\d{2})/);
-        if (isoMatch) {
-          const y = parseInt(isoMatch[1], 10);
-          const m = parseInt(isoMatch[2], 10) - 1;
-          const d = parseInt(isoMatch[3], 10);
-          try {
-            const dateObj = new Date(y, m, d);
-            const monthName = dateObj.toLocaleString("es-ES", { month: "long" });
-            return `${d} de ${monthName}`;
-          } catch (e) { return null; }
+
+        // Try ISO YYYY-MM-DD
+        const iso = t.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        let d, m, y;
+        if (iso) {
+          y = parseInt(iso[1], 10);
+          m = parseInt(iso[2], 10) - 1;
+          d = parseInt(iso[3], 10);
+        } else {
+          const dm = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+          if (dm) {
+            d = parseInt(dm[1], 10);
+            m = parseInt(dm[2], 10) - 1;
+            y = dm[3].length === 2 ? 2000 + parseInt(dm[3], 10) : parseInt(dm[3], 10);
+          } else {
+            const parsed = new Date(t);
+            if (!isNaN(parsed.getTime())) {
+              d = parsed.getDate();
+              m = parsed.getMonth();
+              y = parsed.getFullYear();
+            }
+          }
         }
-        const dm = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
-        if (dm) {
-          const day = parseInt(dm[1], 10);
-          const monthIndex = parseInt(dm[2], 10) - 1;
-          const year = dm[3].length === 2 ? 2000 + parseInt(dm[3], 10) : parseInt(dm[3], 10);
-          try { const dateObj = new Date(year, monthIndex, day); const monthName = dateObj.toLocaleString("es-ES", { month: "long" }); return `${day} de ${monthName}`; } catch (e) { return null; }
+
+        if (typeof d === 'number' && typeof m === 'number' && typeof y === 'number') {
+          const months = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+          const yy = String(y).slice(-2);
+          return `${d}${months[m]}${yy}`;
         }
-        const textMatch = t.match(/(\d{1,2})\s*(?:de)?\s*([A-Za-záéíóúñÑ]+)/i);
-        if (textMatch) { const day = parseInt(textMatch[1], 10); const monthName = String(textMatch[2]).toLowerCase(); return `${day} de ${monthName}`; }
+
         return null;
       }
 
       function normalizeForSlug(str) {
-        return String(str || "")
+        return String(str || '')
           .trim()
           .toLowerCase()
-          .replace(/[^a-z0-9\-_.]+/g, "-")
-          .replace(/^-+|-+$/g, "");
+          .replace(/[^a-z0-9_\-]+/g, '-')
+          .replace(/^-+|-+$/g, '')
+          .replace(/^-+|_+$/g, '');
       }
 
-      const baseLabel = formatDayMonthLabel(dateStr) || String(updated.title || "").trim() || String(updated.code || updated.id || "set");
-      let candidate = normalizeForSlug(baseLabel) || normalizeForSlug(String(updated.code || updated.id || "set"));
+      const baseLabel = formatShortDateLabel(dateStr) || String(updated.title || '').trim() || String(updated.code || updated.id || 'set');
+      let candidate = normalizeForSlug(baseLabel) || normalizeForSlug(String(updated.code || updated.id || 'set'));
 
       // Reload sets to ensure uniqueness check uses latest data
       const fresh = await loadAllSets();
       const freshSets = Array.isArray(fresh.sets) ? fresh.sets : [];
-      const existingSlugs = new Set(freshSets.filter((s) => String(s.id) !== String(id)).map((s) => String(s.publicSlug || s.code || s.id || "").trim().toLowerCase()).filter(Boolean));
+      const existingSlugs = new Set(
+        freshSets
+          .filter((s) => String(s.id) !== String(id))
+          .map((s) => String(s.publicSlug || s.code || s.id || '').trim().toLowerCase())
+          .filter(Boolean),
+      );
 
       if (existingSlugs.has(candidate)) {
-        let i = 2;
-        let cand = `${candidate}-${i}`;
+        let i = 1;
+        let cand = `${candidate}_${i}`;
         while (existingSlugs.has(cand) && i < 1000) {
           i += 1;
-          cand = `${candidate}-${i}`;
+          cand = `${candidate}_${i}`;
         }
         candidate = cand;
       }
@@ -643,8 +660,9 @@ app.post("/sets/:id/publish", requireAuth, async (req, res) => {
 
     // Construir publicUrl si aplica
     const clientBase = (process.env.CLIENT_URL || "").replace(/\/$/, "");
+    const slugPart = encodeURIComponent(String(updated.publicSlug || updated.code || '').trim());
     const url = updated.published
-      ? `${clientBase}/avisos-semanales/${updated.publicSlug || updated.code}`
+      ? `${clientBase}/avisos-semanales/${slugPart}/`
       : null;
 
     // Intentar generar o eliminar HTML estático en dist-public según published
