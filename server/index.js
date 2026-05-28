@@ -1194,7 +1194,22 @@ app.get("/auth/drive/callback", async (req, res) => {
 });
 
 app.post("/auth/logout", (req, res) => {
-  res.clearCookie("auth_token");
+  try {
+    console.log("[auth/logout] request cookies:", req.cookies || null);
+    console.log("[auth/logout] authorization:", req.headers && req.headers.authorization);
+  } catch (e) {
+    // ignore
+  }
+
+  const cookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    path: "/",
+  };
+
+  // Clear cookie using same options as when it was set
+  res.clearCookie("auth_token", cookieOptions);
   res.json({ success: true });
 });
 
