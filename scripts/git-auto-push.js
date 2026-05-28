@@ -56,6 +56,14 @@ try {
         fs.copyFileSync(firebaserc, path.join(tmpDir, '.firebaserc'));
       }
 
+      // copy workflow files so GitHub will evaluate and run them on this branch
+      const workflowsSrc = path.join(repoRoot, '.github', 'workflows');
+      const workflowsDestDir = path.join(tmpDir, '.github');
+      if (fs.existsSync(workflowsSrc)) {
+        try { fs.mkdirSync(workflowsDestDir, { recursive: true }); } catch (e) {}
+        try { fs.cpSync(workflowsSrc, path.join(workflowsDestDir, 'workflows'), { recursive: true }); } catch (e) {}
+      }
+
       // stage and commit
       run('git add -A', { cwd: tmpDir });
       const safeMsg = slug ? `auto publish aviso: ${slug}` : 'auto publish aviso';
