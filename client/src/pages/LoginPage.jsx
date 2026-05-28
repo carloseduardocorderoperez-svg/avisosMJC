@@ -51,8 +51,8 @@ export default function LoginPage() {
       <div className="login-container">
         <div className="login-header">
           <Shield size={48} />
-          <h1>MJC Avisos IA</h1>
-          <p>Sistema de gestión de avisos con inteligencia artificial</p>
+          <h1>Avisos Omaha</h1>
+          <p>Sistema de gestión de avisos</p>
         </div>
 
         <div className="login-content">
@@ -64,8 +64,8 @@ export default function LoginPage() {
             </p>
 
             <div className="login-info">
-              <p><strong>Acceso autorizado solo para:</strong></p>
-              <p className="allowed-email">omaha.zona@gmail.com</p>
+              <p><strong>Acceso autorizado solo para</strong></p>
+              <p className="allowed-email">Zona Omaha (ECZ)</p>
             </div>
 
             <button
@@ -73,7 +73,7 @@ export default function LoginPage() {
               onClick={handleLogin}
             >
               <LogIn size={18} />
-              Iniciar sesión con Google
+              Iniciar sesión en Google como Zona Omaha
             </button>
 
             <p className="login-note">
