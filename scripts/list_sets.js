@@ -7,18 +7,10 @@
       const loaded = await ds.loadAllSets();
       sets = Array.isArray(loaded.sets) ? loaded.sets : [];
     } catch (e) {
-      // Fallback: leer data/avisos.json directamente
-      try {
-        const fs = require('fs');
-        const path = require('path');
-        const raw = fs.readFileSync(path.join(__dirname, '../data/avisos.json'), 'utf8');
-        const parsed = JSON.parse(raw || '{}');
-        sets = Array.isArray(parsed.sets) ? parsed.sets : [];
-        console.warn('Usando fallback local data/avisos.json (Firestore inaccesible):', e && e.message ? e.message : e);
-      } catch (e2) {
-        console.error('No se pudo leer data/avisos.json:', e2 && e2.message ? e2.message : e2);
-        process.exit(3);
-      }
+      console.error('Error cargando sets desde Firestore. El fallback local fue eliminado.');
+      console.error('Detalle:', e && e.message ? e.message : e);
+      console.error('Si necesitas un fallback temporal, restaura `data/avisos.json` o configura correctamente las credenciales de Firestore.');
+      process.exit(3);
     }
 
     console.log('Sets encontrados:', sets.length);

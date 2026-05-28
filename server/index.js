@@ -354,11 +354,9 @@ app.post("/sets/:id/generar-html", requireAuth, async (req, res) => {
       return res.status(404).json({ error: "Set no encontrado" });
     }
 
-    // Actualizar la fecha del set a la fecha actual (local YYYY-MM-DD)
-    const nowLocal = new Date();
-    const localDateStr = `${nowLocal.getFullYear()}-${String(nowLocal.getMonth() + 1).padStart(2, "0")}-${String(nowLocal.getDate()).padStart(2, "0")}`;
-    set.date = localDateStr;
-    await updateSet(id, set);
+    // Do NOT overwrite the set date when generating HTML for preview —
+    // keep the user-edited date. Generating HTML must not mutate persisted
+    // set state unexpectedly.
 
     const title = set.title || "AVISOS ZONALES";
 

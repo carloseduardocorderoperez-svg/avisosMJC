@@ -2,7 +2,8 @@ const fs = require("fs");
 const path = require("path");
 const { v4: uuidv4 } = require("uuid");
 
-const dataPath = path.join(__dirname, "../data/avisos.json");
+// NOTE: local `data/avisos.json` fallback was removed intentionally.
+// All data operations now require Firestore to be configured.
 const SIMPLE_CODE_RE = /^([A-Z0-9]+)-(\d{3,})$/;
 const LEGACY_AUTO_CODE_RE = /^(HTML|AI)-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z(?:-copy(?:\d+)?)*$/i;
 
@@ -176,48 +177,7 @@ function migrateLegacySetCodes(sets) {
   return { sets: normalizedSets, changed };
 }
 
-function readRawData() {
-  if (!fs.existsSync(dataPath)) {
-    return {};
-  }
-
-  try {
-    const raw = fs.readFileSync(dataPath, "utf8");
-    if (!raw.trim()) return {};
-    return JSON.parse(raw);
-  } catch (e) {
-    console.error("Error leyendo avisos.json:", e);
-    return {};
-  }
-}
-
-function normalizeToMultiSet(raw) {
-  if (raw && Array.isArray(raw.sets)) {
-    return { sets: raw.sets };
-  }
-
-  const avisos = Array.isArray(raw && raw.avisos) ? raw.avisos : [];
-
-  if (!avisos.length) {
-    return { sets: [] };
-  }
-
-  const now = new Date().toISOString();
-  const nowLocal = new Date();
-  const localDateStr = `${nowLocal.getFullYear()}-${String(nowLocal.getMonth() + 1).padStart(2, '0')}-${String(nowLocal.getDate()).padStart(2, '0')}`;
-
-  const defaultSet = {
-    id: uuidv4(),
-    code: "DEFAULT",
-    date: localDateStr,
-    title: "AVISOS ZONALES",
-    avisos,
-    createdAt: now,
-    updatedAt: now,
-  };
-
-  return { sets: [defaultSet] };
-}
+// Local file fallback removed: avoid reading/writing `data/avisos.json`.
 
 function restoreFirestoreValue(value) {
   if (Array.isArray(value)) {
@@ -425,7 +385,7 @@ function convertDatesToFirestoreValues(obj) {
 
 async function saveAllSetsToFirestore(data) {
   if (!isFirestoreAvailable()) {
-    return saveAllSets(data);
+    throw new Error('Firestore no está disponible. El fallback local fue eliminado. Configura Firestore antes de usar esta función.');
   }
 
   const setsCollection = db.collection("sets");
@@ -457,7 +417,7 @@ async function saveAllSetsToFirestore(data) {
 
 async function loadAllSetsFromFirestore() {
   if (!isFirestoreAvailable()) {
-    return loadAllSets();
+    throw new Error('Firestore no está disponible.');
   }
 
   const setsCollection = db.collection("sets");
@@ -472,33 +432,19 @@ async function loadAllSetsFromFirestore() {
   return { sets: migrated.sets };
 }
 
-function saveAllSets(data) {
-  const payload = {
-    sets: Array.isArray(data.sets) ? data.sets : [],
-  };
-
-  fs.writeFileSync(dataPath, JSON.stringify(payload, null, 2));
-}
+// Local file persistence removed. Do not write to `data/avisos.json`.
 
 async function loadAllSets() {
-  if (isFirestoreAvailable()) {
-    return loadAllSetsFromFirestore();
+  if (!isFirestoreAvailable()) {
+    throw new Error('Firestore no está disponible. El fallback local fue eliminado. Configura Firestore para continuar.');
   }
 
-  return loadAllSetsFromFile();
+  return loadAllSetsFromFirestore();
 }
 
-function loadAllSetsFromFile() {
-  const raw = readRawData();
-  const normalized = normalizeToMultiSet(raw);
-  const migrated = migrateLegacySetCodes(normalized.sets);
-
-  if (migrated.changed) {
-    saveAllSets({ sets: migrated.sets });
-  }
-
-  return { sets: migrated.sets };
-}
+// Local file loader removed — the system now relies on Firestore only.
+// If you need to load from a local JSON file for migration or tests, use
+// the migration scripts or restore `data/avisos.json` temporarily.
 
 async function findSetById(id) {
   if (!id) {
@@ -551,14 +497,14 @@ async function createSet({ code, date, title, bannerMessage, avisos, source = "S
 
   const updated = { sets: [...sets, newSet] };
 
-  if (isFirestoreAvailable()) {
-    await db.collection("sets").doc(newSet.id).set(sanitizeSetForFirestore(convertDatesToFirestoreValues({
-      ...newSet,
-      codeLower: String(newSet.code || "").trim().toLowerCase(),
-    })));
-  } else {
-    saveAllSets(updated);
+  if (!isFirestoreAvailable()) {
+    throw new Error('Firestore no está disponible. No existe fallback local. Configura Firestore para poder crear sets.');
   }
+
+  await db.collection("sets").doc(newSet.id).set(sanitizeSetForFirestore(convertDatesToFirestoreValues({
+    ...newSet,
+    codeLower: String(newSet.code || "").trim().toLowerCase(),
+  })));
 
   return newSet;
 }
@@ -589,28 +535,25 @@ async function updateSet(id, partial) {
   const nextSets = [...sets];
   nextSets[idx] = merged;
 
-  if (isFirestoreAvailable()) {
-    await db.collection("sets").doc(merged.id).set(sanitizeSetForFirestore(convertDatesToFirestoreValues({
-      ...merged,
-      codeLower: String(merged.code || "").trim().toLowerCase(),
-    })));
-  } else {
-    saveAllSets({ sets: nextSets });
+  if (!isFirestoreAvailable()) {
+    throw new Error('Firestore no está disponible. No existe fallback local. Configura Firestore para poder actualizar sets.');
   }
+
+  await db.collection("sets").doc(merged.id).set(sanitizeSetForFirestore(convertDatesToFirestoreValues({
+    ...merged,
+    codeLower: String(merged.code || "").trim().toLowerCase(),
+  })));
 
   return merged;
 }
 
 async function deleteSet(id) {
-  if (isFirestoreAvailable()) {
-    await db.collection("sets").doc(String(id)).delete();
-    return { removed: 1 };
+  if (!isFirestoreAvailable()) {
+    throw new Error('Firestore no está disponible. No existe fallback local. Configura Firestore para poder eliminar sets.');
   }
 
-  const { sets } = loadAllSetsFromFile();
-  const nextSets = sets.filter((s) => String(s.id) !== String(id));
-  saveAllSets({ sets: nextSets });
-  return { removed: sets.length - nextSets.length };
+  await db.collection("sets").doc(String(id)).delete();
+  return { removed: 1 };
 }
 
 async function duplicateSet(id) {
@@ -638,22 +581,20 @@ async function duplicateSet(id) {
     updatedAt: now,
   };
 
-  if (isFirestoreAvailable()) {
-    await db.collection("sets").doc(cloned.id).set(sanitizeSetForFirestore(convertDatesToFirestoreValues({
-      ...cloned,
-      codeLower: String(cloned.code || "").trim().toLowerCase(),
-    })));
-  } else {
-    const nextSets = [...sets, cloned];
-    saveAllSets({ sets: nextSets });
+  if (!isFirestoreAvailable()) {
+    throw new Error('Firestore no está disponible. No existe fallback local. Configura Firestore para poder duplicar sets.');
   }
+
+  await db.collection("sets").doc(cloned.id).set(sanitizeSetForFirestore(convertDatesToFirestoreValues({
+    ...cloned,
+    codeLower: String(cloned.code || "").trim().toLowerCase(),
+  })));
 
   return cloned;
 }
 
 module.exports = {
   loadAllSets,
-  saveAllSets,
   findSetById,
   createSet,
   updateSet,

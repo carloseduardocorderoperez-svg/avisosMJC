@@ -70,8 +70,14 @@ async function main() {
   });
 
   const db = adminModule.firestore();
-  const jsonPath = path.join(__dirname, "../data/avisos.json");
 
+  // Allow specifying source JSON via CLI arg or env var MIGRATE_SOURCE_PATH
+  const sourceArg = process.argv[2] || process.env.MIGRATE_SOURCE_PATH;
+  if (!sourceArg) {
+    throw new Error('Por favor indique la ruta al archivo JSON de origen como argumento CLI o mediante MIGRATE_SOURCE_PATH.');
+  }
+
+  const jsonPath = path.resolve(sourceArg);
   if (!fs.existsSync(jsonPath)) {
     throw new Error(`No existe el archivo ${jsonPath}`);
   }
@@ -80,7 +86,7 @@ async function main() {
   const sets = normalizeData(raw);
 
   if (!sets.length) {
-    console.log("No se encontraron sets en data/avisos.json.");
+    console.log(`No se encontraron sets en ${jsonPath}`);
     return;
   }
 

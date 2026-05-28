@@ -47,14 +47,9 @@ async function generateIndex() {
     const loaded = await loadAllSets();
     sets = Array.isArray(loaded.sets) ? loaded.sets : [];
   } catch (e) {
-    // Fallback: leer data/avisos.json directamente sin inicializar Firestore
-    try {
-      const raw = fsSync.readFileSync(path.join(__dirname, '../data/avisos.json'), 'utf8');
-      const parsed = JSON.parse(raw || '{}');
-      sets = Array.isArray(parsed.sets) ? parsed.sets : [];
-    } catch (e2) {
-      sets = [];
-    }
+    console.error('Error cargando sets desde Firestore. El fallback local fue eliminado.');
+    console.error('Detalle:', e && e.message ? e.message : e);
+    throw e;
   }
   const allSets = Array.isArray(sets) ? sets : [];
   let published = allSets.filter((s) => s && (s.published || s.publishedAt));

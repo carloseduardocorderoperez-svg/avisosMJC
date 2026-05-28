@@ -412,7 +412,6 @@ function fechaLarga(dateStr) {
 // - title: título principal del HTML
 function buildHTMLString(options = {}) {
   const templatePath = path.join(__dirname, "../template/avisos_template.html");
-  const dataPath = path.join(__dirname, "../data/avisos.json");
 
   const template = fs.readFileSync(templatePath, "utf8");
 
@@ -426,33 +425,8 @@ function buildHTMLString(options = {}) {
   if (Array.isArray(options.avisos)) {
     avisos = options.avisos;
   } else {
-    // Compatibilidad con archivos antiguos y nuevo modelo multi-set
-    let raw = {};
-    try {
-      raw = JSON.parse(fs.readFileSync(dataPath));
-    } catch (e) {
-      raw = {};
-    }
-
-    if (Array.isArray(raw.avisos)) {
-      avisos = raw.avisos;
-    } else {
-      const current = Array.isArray(raw.sets) ? raw.sets[0] : null;
-      if (current) {
-        avisos = Array.isArray(current.avisos) ? current.avisos : [];
-        if (!options.title && current.title) {
-          metaTitle = current.title.replace(/ - \d{2}\/\d{2}\/\d{4}$/, "").trim();
-        }
-        if (!options.date && current.date) {
-          metaDate = fechaLarga(current.date);
-        }
-        if (!options.bannerMessage && current.bannerMessage) {
-          metaBanner = current.bannerMessage;
-        }
-      } else {
-        avisos = [];
-      }
-    }
+    // Local fallback removed: if no avisos are provided explicitly, render empty.
+    avisos = [];
   }
 
   const secciones = {
