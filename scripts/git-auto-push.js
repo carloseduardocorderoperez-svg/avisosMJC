@@ -40,8 +40,10 @@ try {
       try { run('git config user.name "auto-publish-bot"', { cwd: tmpDir }); } catch (e) {}
       try { run('git config user.email "auto-publish-bot@local"', { cwd: tmpDir }); } catch (e) {}
 
-      // copy dist-public into tmpDir
-      fs.cpSync(distPath, tmpDir, { recursive: true });
+      // copy dist-public into tmpDir/dist-public so workflows watching 'dist-public/**' trigger
+      const targetDist = path.join(tmpDir, 'dist-public');
+      await (fs.promises || fs).mkdir ? fs.mkdirSync(targetDist, { recursive: true }) : null;
+      fs.cpSync(distPath, targetDist, { recursive: true });
 
       // include firebase config so the GitHub Action can deploy from this branch
       const firebaseJson = path.join(repoRoot, 'firebase.json');
