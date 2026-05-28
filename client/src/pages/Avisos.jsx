@@ -500,16 +500,20 @@ function CanvasBlock({
           onError={(e) => {
             if (!drivePreviewUrl) return;
             e.currentTarget.style.display = "none";
-            const iframe = e.currentTarget.nextElementSibling;
-            if (iframe) iframe.style.display = "block";
+            const link = e.currentTarget.nextElementSibling;
+            if (link) link.style.display = "inline-block";
           }}
         />
         {drivePreviewUrl ? (
-          <iframe
-            title="Vista previa Drive"
-            src={drivePreviewUrl}
-            style={{ display: "none" }}
-          />
+          <a
+            href={drivePreviewUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ display: "none", marginTop: "6px" }}
+            className="btn btn-neutral"
+          >
+            Abrir vista previa en Drive
+          </a>
         ) : null}
       </div>
     ) : (

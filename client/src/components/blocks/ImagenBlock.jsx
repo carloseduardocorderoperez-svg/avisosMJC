@@ -69,6 +69,7 @@ function normalizeDriveUrl(url) {
 export default function ImagenBlock({ bloque, avisoId, bloqueIndex }) {
   const { avisos, setAvisos } = useAvisosStore();
   const [galleryOpen, setGalleryOpen] = useState(false);
+  const [showDriveFallback, setShowDriveFallback] = useState(false);
 
   const applyUrl = (value, { normalizeRaw = false } = {}) => {
     const cleaned = sanitizeUrlInput(value);
@@ -141,34 +142,32 @@ export default function ImagenBlock({ bloque, avisoId, bloqueIndex }) {
 
       {previewUrl ? (
         <div style={{ marginTop: "10px" }}>
-          <img
-            src={previewUrl}
-            alt="Previsualización de imagen"
-            onError={(e) => {
-              if (!drivePreviewUrl) return;
-              e.currentTarget.style.display = "none";
-              const iframe = e.currentTarget.nextElementSibling;
-              if (iframe) iframe.style.display = "block";
-            }}
-            style={{
-              maxWidth: "100%",
-              borderRadius: "10px",
-              display: "block",
-            }}
-          />
-          {drivePreviewUrl ? (
-            <iframe
-              title="Previsualización Drive"
-              src={drivePreviewUrl}
+          {!showDriveFallback ? (
+            <img
+              src={previewUrl}
+              alt="Previsualización de imagen"
+              onError={() => {
+                if (drivePreviewUrl) setShowDriveFallback(true);
+              }}
               style={{
-                display: "none",
-                width: "100%",
-                minHeight: "260px",
-                border: "0",
+                maxWidth: "100%",
                 borderRadius: "10px",
-                marginTop: "6px",
+                display: "block",
               }}
             />
+          ) : null}
+
+          {showDriveFallback && drivePreviewUrl ? (
+            <div style={{ marginTop: "6px" }}>
+              <a
+                href={drivePreviewUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-neutral"
+              >
+                Abrir vista previa en Drive
+              </a>
+            </div>
           ) : null}
         </div>
       ) : (

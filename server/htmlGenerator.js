@@ -150,8 +150,8 @@ ${items.map((i) => `<li>${i}</li>`).join("")}
 
     return `
 <div${extraClassAttr("canvas-imagen", b)} style="margin-top:12px;text-align:center">
-  <img src="${src}" alt="" style="max-width:100%;border-radius:6px" onerror="if(this.nextElementSibling){this.style.display='none';this.nextElementSibling.style.display='block';}" />
-  ${drivePreviewUrl ? `<iframe src="${drivePreviewUrl}" style="display:none;"></iframe>` : ""}
+  <img src="${src}" alt="" style="max-width:100%;border-radius:6px" onerror="if(this.nextElementSibling){this.style.display='none';this.nextElementSibling.style.display='inline-block';}" />
+  ${drivePreviewUrl ? `<a href="${drivePreviewUrl}" target="_blank" rel="noopener noreferrer" style="display:none;margin-top:6px;" class="btn btn-neutral">Abrir vista previa en Drive</a>` : ""}
 </div>
 `;
   }
