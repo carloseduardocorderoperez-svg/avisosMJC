@@ -94,11 +94,9 @@ async function exchangeCodeForTokens(code, envPath) {
   fs.writeFileSync(envPath, envContent, "utf8");
   // Activar en memoria sin reiniciar
   process.env.GOOGLE_REFRESH_TOKEN = tokens.refresh_token;
-  // Log the refresh token so it can be copied to the hosting env (e.g. Render dashboard)
-  // WARNING: this prints a secret to stdout; remove or disable in strict production environments.
+  // Refresh token saved to environment; do not print secrets to logs.
   try {
-    console.log('Google Drive refresh token received. Set env var GOOGLE_REFRESH_TOKEN to:');
-    console.log(tokens.refresh_token);
+    console.log('Google Drive refresh token stored to environment (secret not printed)');
   } catch (e) {}
   return tokens;
 }

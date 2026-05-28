@@ -706,16 +706,14 @@ app.post("/sets/:id/publish", requireAuth, async (req, res) => {
         console.log("Running auto git push after static changes...");
         try {
           const { execSync } = require("child_process");
-          const out = execSync(cmd, {
+          execSync(cmd, {
             cwd: path.join(__dirname, ".."),
             encoding: "utf8",
             stdio: "pipe",
           });
           console.log("Git push completed");
-          if (out) console.log(String(out).slice(0, 2000));
         } catch (e) {
           console.error("Git push failed:", e && e.message ? e.message : e);
-          if (e && e.stdout) console.error(String(e.stdout).slice(0, 2000));
         }
         autoPushQueued = true;
       }
@@ -1194,13 +1192,6 @@ app.get("/auth/drive/callback", async (req, res) => {
 });
 
 app.post("/auth/logout", (req, res) => {
-  try {
-    console.log("[auth/logout] request cookies:", req.cookies || null);
-    console.log("[auth/logout] authorization:", req.headers && req.headers.authorization);
-  } catch (e) {
-    // ignore
-  }
-
   const cookieOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
