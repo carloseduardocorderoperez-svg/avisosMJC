@@ -59,7 +59,7 @@
   </main>
 
   <script>
-    window.AVISOS_SETS = [{"slug":"set-001","title":"AVISOS ZONALES","date":"2026-05-30T00:00:00.000Z","publishedAt":"2026-05-28T06:27:45.702Z"}];
+    window.AVISOS_SETS = [];
     (function(){
       const sets = Array.isArray(window.AVISOS_SETS) ? window.AVISOS_SETS : [];
       const root = document.getElementById('root');
@@ -136,9 +136,8 @@
           items.forEach(function(it){
             const li = document.createElement('li');
             const a = document.createElement('a');
-            // Link to the public route under /avisos-semanales/<slug>/ so it
-            // points to the static files generated under dist-public/avisos-semanales
-            a.href = '/avisos-semanales/' + it.slug + '/';
+            // Link to the public route at root (/slug/) where static files are written
+            a.href = '/' + it.slug + '/';
             a.textContent = formatLong(it.date);
             li.appendChild(a);
             itemsList.appendChild(li);
