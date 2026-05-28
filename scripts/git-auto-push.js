@@ -27,18 +27,9 @@ try {
     process.exit(0);
   }
 
-  // Check for changes in dist-public
-  let statusOut = '';
-  try {
-    statusOut = run('git status --porcelain dist-public');
-  } catch (e) {
-    statusOut = '';
-  }
-
-  if (!statusOut || !statusOut.trim()) {
-    console.log('No changes in dist-public to commit');
-    process.exit(0);
-  }
+  // Try to add dist-public contents and check if anything was staged.
+  // Older environments may return empty for `git status --porcelain` on ignored paths,
+  // so we rely on staging + checking the index instead.
 
   // Ensure git user config
   try {

@@ -571,77 +571,85 @@ app.post("/sets/:id/publish", requireAuth, async (req, res) => {
       desiredSlug = String(target.publicSlug).trim();
     }
 
-    // If still not defined, try to derive from visible date (robust parsing)
+    // If still not defined, derive a user-friendly label similar to the
+    // UI `displayTitle` (day + month) and build a link-friendly slug.
+    // If collisions occur, append a numeric suffix (-2, -3, ...).
     if (!desiredSlug) {
       const dateStr = target.date || "";
 
-      function normalizeMonthName(s) {
-        if (!s) return s;
-        // remove accents
-        const map = {
-          á: "a",
-          é: "e",
-          í: "i",
-          ó: "o",
-          ú: "u",
-          Á: "A",
-          É: "E",
-          Í: "I",
-          Ó: "O",
-          Ú: "U",
-          ñ: "n",
-          Ñ: "N",
-        };
-        return s.replace(/[áéíóúÁÉÍÓÚñÑ]/g, (c) => map[c] || c).toLowerCase();
-      }
-
-      function dateToSlug(s) {
+      function formatDayMonthLabel(s) {
         if (!s) return null;
         const t = String(s).trim();
-        // YYYY-MM-DD or ISO
+
+        // YYYY-MM-DD or ISO-like
         const isoMatch = t.match(/^(\d{4})-(\d{2})-(\d{2})/);
-        if (isoMatch)
-          return `${isoMatch[3]}${normalizeMonthName(new Date(isoMatch[1], parseInt(isoMatch[2], 10) - 1, isoMatch[3]).toLocaleString("es-ES", { month: "long" }))}${isoMatch[1]}`;
+        if (isoMatch) {
+          const y = parseInt(isoMatch[1], 10);
+          const m = parseInt(isoMatch[2], 10) - 1;
+          const d = parseInt(isoMatch[3], 10);
+          try {
+            const dateObj = new Date(y, m, d);
+            const monthName = dateObj.toLocaleString("es-ES", { month: "long" });
+            return `${d} de ${monthName}`;
+          } catch (e) {
+            return null;
+          }
+        }
 
         // DD/MM/YYYY
         const dm = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
         if (dm) {
-          const day = String(parseInt(dm[1], 10));
-          const month = parseInt(dm[2], 10) - 1;
-          const year =
-            dm[3].length === 2
-              ? 2000 + parseInt(dm[3], 10)
-              : parseInt(dm[3], 10);
-          const monthName = normalizeMonthName(
-            new Date(year, month, 1).toLocaleString("es-ES", { month: "long" }),
-          );
-          return `${day}${monthName}${year}`;
+          const day = parseInt(dm[1], 10);
+          const monthIndex = parseInt(dm[2], 10) - 1;
+          const year = dm[3].length === 2 ? 2000 + parseInt(dm[3], 10) : parseInt(dm[3], 10);
+          try {
+            const dateObj = new Date(year, monthIndex, day);
+            const monthName = dateObj.toLocaleString("es-ES", { month: "long" });
+            return `${day} de ${monthName}`;
+          } catch (e) {
+            return null;
+          }
         }
 
-        // Spanish textual like "19 de mayo de 2026" or "martes 19 de mayo"
-        const textMatch = t.match(
-          /(\d{1,2})\s*(?:de)?\s*([A-Za-záéíóúñÑ]+)\s*(?:de)?\s*(\d{2,4})?/i,
-        );
+        // Spanish textual: "19 de mayo" or similar
+        const textMatch = t.match(/(\d{1,2})\s*(?:de)?\s*([A-Za-záéíóúñÑ]+)/i);
         if (textMatch) {
-          const day = String(parseInt(textMatch[1], 10));
-          const monthName = normalizeMonthName(textMatch[2]);
-          const year = textMatch[3]
-            ? textMatch[3].length === 2
-              ? 2000 + parseInt(textMatch[3], 10)
-              : parseInt(textMatch[3], 10)
-            : new Date().getFullYear();
-          return `${day}${monthName}${year}`;
+          const day = parseInt(textMatch[1], 10);
+          const monthName = String(textMatch[2]).toLowerCase();
+          return `${day} de ${monthName}`;
         }
 
         return null;
       }
 
-      const byDate = dateToSlug(dateStr);
-      if (byDate) {
-        desiredSlug = byDate;
-      } else {
-        desiredSlug = (target.code || "set").toLowerCase();
+      const baseLabel = formatDayMonthLabel(dateStr) || String(target.title || "").trim() || String(target.code || target.id || "set");
+
+      function normalizeForSlug(str) {
+        return String(str || "")
+          .trim()
+          .toLowerCase()
+          .replace(/[^a-z0-9\-_.]+/g, "-")
+          .replace(/^-+|-+$/g, "");
       }
+
+      let candidate = normalizeForSlug(baseLabel) || normalizeForSlug(String(target.code || target.id || "set"));
+
+      // Ensure uniqueness among existing sets (and avoid excessive loops)
+      const reserved = new Set((sets || [])
+        .map((s) => String(s && (s.publicSlug || s.code || s.id) || "").trim().toLowerCase())
+        .filter(Boolean));
+
+      if (reserved.has(candidate)) {
+        let i = 2;
+        let trySlug = `${candidate}-${i}`;
+        while (reserved.has(trySlug) && i < 1000) {
+          i += 1;
+          trySlug = `${candidate}-${i}`;
+        }
+        candidate = trySlug;
+      }
+
+      desiredSlug = candidate;
     }
 
     // Normalizar desiredSlug
@@ -651,15 +659,22 @@ app.post("/sets/:id/publish", requireAuth, async (req, res) => {
       .replace(/[^a-z0-9\-_.]+/g, "-")
       .replace(/^-+|-+$/g, "");
 
-    // Evitar colisiones simples: si existe otro con mismo slug, añadir timestamp corto
-    const clash = (sets || []).some(
-      (s) =>
-        s &&
-        String(s.id) !== String(id) &&
-        String(s.publicSlug || "").toLowerCase() === desiredSlug,
-    );
-    if (clash) {
-      desiredSlug = `${desiredSlug}-${Date.now().toString().slice(-4)}`;
+    // Ensure slug uniqueness among existing sets: if another set (different id)
+    // already uses the same publicSlug, append a numeric suffix.
+    // (This avoids unpredictable timestamps and aligns with displayTitle-based slugs.)
+    const existingSlugs = new Set((sets || [])
+      .filter((s) => s && String(s.id) !== String(id))
+      .map((s) => String(s.publicSlug || s.code || s.id || "").trim().toLowerCase())
+      .filter(Boolean));
+
+    if (existingSlugs.has(desiredSlug)) {
+      let n = 2;
+      let cand = `${desiredSlug}-${n}`;
+      while (existingSlugs.has(cand) && n < 1000) {
+        n += 1;
+        cand = `${desiredSlug}-${n}`;
+      }
+      desiredSlug = cand;
     }
 
     const updated = await updateSet(id, {
