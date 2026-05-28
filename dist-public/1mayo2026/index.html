@@ -1,0 +1,843 @@
+﻿<!doctype html>
+<html lang="es">
+<head>
+
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<meta name="theme-color" content="#000000"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+<title>AVISOS ZONALES</title>
+
+<style>
+
+:root{
+--bg-main:#050505;
+--bg-elevated:#111217;
+--bg-soft:#191b22;
+--text-main:#f8f8f8;
+--text-muted:#b5b7c2;
+--primary-red:#dd2d4a;
+--primary-blue:#2c6dff;
+--primary-brown:#7a4b2f;
+--border-strong:#2d3040;
+--border-soft:#242735;
+--ok:#29b36a;
+--warning:#f0a036;
+--danger:#e5484d;
+--shadow-lg:0 14px 34px rgba(0,0,0,0.4);
+}
+
+html{
+background:#000;
+min-height:100%;
+color-scheme:dark;
+}
+
+body{
+background:#000;
+color:#fff;
+font-family:Arial,Helvetica,sans-serif;
+margin:0;
+padding:0;
+min-height:100dvh;
+}
+
+.container{
+max-width:1000px;
+margin:auto;
+padding:28px;
+box-sizing:border-box;
+min-height:100dvh;
+padding-bottom:calc(28px + env(safe-area-inset-bottom, 0px));
+}
+
+@supports not (min-height: 100dvh){
+body,
+.container{
+min-height:100vh;
+}
+}
+
+.header{
+text-align:center;
+margin-bottom:20px;
+}
+
+.header .title{
+font-size:28px;
+font-weight:bold;
+letter-spacing:1px;
+}
+
+.header .date{
+font-size:14px;
+color:#c19a6b;
+margin-top:6px;
+}
+
+.separator{
+height:4px;
+background:#8b4513;
+margin-bottom:30px;
+}
+
+.nav-bar{
+display:flex;
+justify-content:center;
+gap:12px;
+margin-bottom:30px;
+flex-wrap:wrap;
+}
+
+.all-read-banner{
+display:none;
+text-align:center;
+margin-bottom:14px;
+font-size:14px;
+color:#b9f6ca;
+background:rgba(22,163,74,.08);
+border:1px solid rgba(74,222,128,.5);
+border-radius:999px;
+padding:6px 14px;
+}
+
+.all-read-banner.visible{
+display:block;
+}
+
+.nav-btn{
+background:#222;
+color:#fff;
+border:1px solid #333;
+padding:12px 20px;
+border-radius:8px;
+cursor:pointer;
+transition:all .3s ease;
+font-size:16px;
+font-weight:bold;
+position:relative;
+overflow:hidden;
+}
+
+.nav-btn:hover{
+background:#333;
+border-color:#555;
+transform:translateY(-2px);
+box-shadow:0 4px 12px rgba(0,0,0,.5);
+}
+
+.nav-btn.active{
+background:#4caf50;
+border-color:#4caf50;
+color:#fff;
+}
+
+/* Color activo por sección */
+.nav-btn[data-section="admin"].active{
+background:#ff4444;
+border-color:#ff4444;
+color:#fff;
+}
+
+.nav-btn[data-section="eventos"].active{
+background:#ffdd44;
+border-color:#ffdd44;
+color:#000;
+}
+
+.nav-btn[data-section="pastoral"].active{
+background:#4caf50;
+border-color:#4caf50;
+color:#fff;
+}
+
+.nav-btn[data-section="formacion"].active{
+background:#4da3ff;
+border-color:#4da3ff;
+color:#fff;
+}
+
+.nav-btn[data-section="extras"].active{
+background:#8b4513;
+border-color:#8b4513;
+color:#f9e7d0;
+}
+
+/* Secciones ya visitadas (no activas) */
+.nav-btn.visited:not(.active){
+background:#181b20;
+border-color:#4caf50;
+color:#d1fae5;
+box-shadow:0 0 0 1px rgba(74,222,128,.35);
+}
+
+.nav-btn.visited:not(.active)::after{
+content:"✓";
+position:absolute;
+right:8px;
+top:6px;
+font-size:11px;
+opacity:.9;
+}
+
+.content-container{
+position:relative;
+min-height:200px;
+}
+
+.section{
+display:none;
+width:100%;
+}
+
+.section.active{
+display:block;
+}
+
+.card{
+background:#111;
+padding:20px;
+margin-bottom:28px;
+border-radius:6px;
+border-left:5px solid;
+transition:transform .3s ease,box-shadow .3s ease;
+}
+
+.card:hover{
+transform:translateY(-5px);
+box-shadow:0 8px 25px rgba(0,0,0,.3);
+}
+
+.admin{border-left-color:#ff4444;}
+.formacion{border-left-color:#4da3ff;}
+.eventos{border-left-color:#ffdd44;}
+.pastoral{border-left-color:#4caf50;}
+.extras{border-left-color:#8b4513;}
+
+.admin .title{color:#ff4444;}
+.formacion .title{color:#4da3ff;}
+.eventos .title{color:#ffdd44;}
+.pastoral .title{color:#4caf50;}
+.extras .title{color:#c19a6b;}
+
+.title{
+font-size:20px;
+font-weight:bold;
+}
+
+.btn{
+display:inline-block;
+text-decoration:none;
+padding:10px 16px;
+border-radius:5px;
+font-weight:bold;
+transition:all .3s ease;
+}
+
+.btn:hover{
+transform:scale(1.05);
+box-shadow:0 4px 12px rgba(0,0,0,.3);
+}
+
+.tag{
+display:inline-block;
+background:#1a1a1a;
+padding:4px 10px;
+border-radius:20px;
+font-size:12px;
+margin:4px 4px 0 0;
+border:1px solid;
+}
+
+.footer{
+text-align:center;
+font-size:12px;
+color:#888;
+margin-top:30px;
+}
+
+.footer::before{
+content:"";
+display:block;
+height:4px;
+background:#8b4513;
+margin-bottom:10px;
+}
+
+</style>
+
+<style>
+/*
+ * blocks.css — Estilos ÚNICOS DE VERDAD para los bloques de avisos.
+ *
+ * - Este archivo se importa en app.css → panel central del editor.
+ * - El backend (htmlGenerator.js) lo lee e inyecta en el HTML de salida.
+ *
+ * Edita aquí para cambiar el aspecto de los bloques en AMBOS lados a la vez.
+ */
+
+/* ============================================================
+   Variables (necesarias para el HTML de salida).
+   En el editor React estas vienen de :root en app.css, pero el
+   servidor las inyecta de este mismo bloque al generar el HTML.
+   ============================================================ */
+
+:root {
+  --bs-text-main: #f8f8f8;
+  --bs-text-muted: #b5b7c2;
+  --bs-border-soft: #242735;
+  --bs-border-strong: #2d3040;
+  --bs-bg-elevated: #111217;
+}
+
+/* ============================================================
+   TEXTO
+   ============================================================ */
+
+.canvas-block-text {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--bs-text-main, #f8f8f8);
+  margin-top: 8px;
+}
+
+/* ============================================================
+   LISTA
+   ============================================================ */
+
+.canvas-list {
+  margin: 8px 0 0;
+  padding-left: 1.3rem;
+}
+
+.canvas-list li {
+  margin-bottom: 3px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* ============================================================
+   TABLA
+   ============================================================ */
+
+.canvas-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  font-size: 12px;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.canvas-table td {
+  border: 1px solid var(--bs-border-soft, #242735);
+  padding: 6px 8px;
+}
+
+.canvas-table tr:nth-child(n + 2) td {
+  background: rgba(255, 255, 255, 0.01);
+}
+
+.canvas-table tr:nth-child(odd):not(:first-child) td {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.canvas-table tr:hover td {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* Tabla: encabezado y bordes por categoría */
+
+.admin .canvas-table td              { border-color: rgba(255, 68, 68, 0.4); }
+.admin .canvas-table tr:first-child td { background: rgba(255, 68, 68, 0.15); font-weight: 600; }
+
+.eventos .canvas-table td              { border-color: rgba(255, 221, 68, 0.4); }
+.eventos .canvas-table tr:first-child td { background: rgba(255, 221, 68, 0.16); font-weight: 600; color: #fff; }
+
+.pastoral .canvas-table td              { border-color: rgba(76, 175, 80, 0.45); }
+.pastoral .canvas-table tr:first-child td { background: rgba(76, 175, 80, 0.18); font-weight: 600; }
+
+.formacion .canvas-table td              { border-color: rgba(77, 163, 255, 0.45); }
+.formacion .canvas-table tr:first-child td { background: rgba(77, 163, 255, 0.2); font-weight: 600; }
+
+.extras .canvas-table td              { border-color: rgba(139, 69, 19, 0.5); }
+.extras .canvas-table tr:first-child td { background: rgba(139, 69, 19, 0.24); font-weight: 600; }
+
+/* ============================================================
+   LINK / BOTÓN (3D)
+   ============================================================ */
+
+/* Contenedor clicable: puede ser <a> o <button> */
+.canvas-link {
+  position: relative;
+  display: inline-block;
+  margin-top: 14px;   /* más aire por encima */
+  margin-bottom: 12px; /* más aire por debajo para la sombra 3D */
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: none;
+  outline-offset: 4px;
+  transition: filter 250ms;
+}
+
+/* Borde lateral con degradado oscuro (para fondo negro) */
+.canvas-link-edge {
+  position: absolute;
+  top: 3px;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  background: rgb(156, 1, 1)
+}
+
+/* Cara visible del botón; el color se ajusta por categoría */
+.canvas-link-front {
+  display: block;
+  position: relative;
+  padding: 10px 22px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #ffffff;
+  background: #3a7bff; /* color por defecto si no hay categoría */
+  will-change: transform;
+  transform: translateY(-4px);
+  transition: transform 600ms cubic-bezier(0.3, 0.7, 0.4, 1);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+
+.canvas-link:hover {
+  filter: brightness(112%);
+}
+
+.canvas-link:hover .canvas-link-front {
+  transform: translateY(-6px);
+  transition: transform 250ms cubic-bezier(0.3, 0.7, 0.4, 1.5);
+}
+
+.canvas-link:active .canvas-link-front {
+  transform: translateY(-2px);
+  transition: transform 34ms;
+}
+
+.canvas-link:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Pequeña animación periódica para sugerir "soy clicable" */
+
+@keyframes canvas-link-pulse {
+  0% {
+    transform: translateY(-4px);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.03);
+  }
+  50% {
+    transform: translateY(-6px);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.55);
+  }
+  100% {
+    transform: translateY(-4px);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.03);
+  }
+}
+
+/* Solo cuando no se está haciendo hover, para que no moleste al interactuar */
+.canvas-link:not(:hover) .canvas-link-front {
+  animation: canvas-link-pulse 3.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .canvas-link:not(:hover) .canvas-link-front {
+    animation: none;
+  }
+}
+
+/* Color de botón por categoría (aplicado a la "front") */
+
+.admin    .canvas-link-front { background: #c90000; color: #fff; }
+.eventos  .canvas-link-front { background: #ffdd44; color: #000; }
+.pastoral .canvas-link-front { background: #4caf50; color: #fff; }
+.formacion .canvas-link-front { background: #4da3ff; color: #fff; }
+.extras   .canvas-link-front { background: #555555; color: #eeeeee; }
+
+/* Borde 3D por categoría: mismo color pero más oscuro */
+
+.admin .canvas-link-edge {
+  background: rgb(156, 1, 1);
+}
+
+.eventos .canvas-link-edge {
+  /* amarillo oscuro, derivado de #ffdd44 */
+  background: rgb(191, 160, 0);
+}
+
+.pastoral .canvas-link-edge {
+  /* verde oscuro, derivado de #4caf50 */
+  background: rgb(27, 94, 32);
+}
+
+.formacion .canvas-link-edge {
+  /* azul oscuro, derivado de #4da3ff */
+  background: rgb(13, 71, 161);
+}
+
+.extras .canvas-link-edge {
+  /* marrón/gris oscuro para extras */
+  background: rgb(90, 60, 30);
+}
+
+/* ============================================================
+   INFO (fecha / lugar / horario)
+   ============================================================ */
+
+.canvas-info {
+  margin-top: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #1a1a1a;
+  font-size: 12px;
+  color: var(--bs-text-main, #f8f8f8);
+  line-height: 1.6;
+}
+
+/* ============================================================
+   CHIPS (personas)
+   ============================================================ */
+
+.canvas-meta {
+  font-size: 11px;
+  color: var(--bs-text-muted, #b5b7c2);
+  margin-top: 8px;
+}
+
+.canvas-chips {
+  margin-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.canvas-chip {
+  display: inline-block;
+  background: #1a1a1a;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Color de chip por categoría */
+
+.admin    .canvas-chip { border-color: #ff4444; color: #ff4444; }
+.eventos  .canvas-chip { border-color: #ffdd44; color: #ffdd44; }
+.pastoral .canvas-chip { border-color: #4caf50; color: #4caf50; }
+.formacion .canvas-chip { border-color: #4da3ff; color: #4da3ff; }
+.extras   .canvas-chip { border-color: #666;   color: #ccc; }
+
+/* ============================================================
+   BANCO (datos de transferencia)
+   ============================================================ */
+
+.canvas-banco {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--bs-border-soft, #242735);
+  font-size: 12px;
+}
+
+.canvas-banco-header {
+  font-weight: 600;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+
+.canvas-banco-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 3px;
+}
+
+.canvas-banco-label {
+  color: var(--bs-text-muted, #b5b7c2);
+}
+
+.canvas-banco-value {
+  color: var(--bs-text-main, #f8f8f8);
+}
+
+/* Color del valor por categoría */
+
+.admin    .canvas-banco-value { color: #ff4444; }
+.eventos  .canvas-banco-value { color: #ffdd44; }
+.pastoral .canvas-banco-value { color: #4caf50; }
+.formacion .canvas-banco-value { color: #4da3ff; }
+.extras   .canvas-banco-value { color: #c19a6b; }
+
+/* ============================================================
+   IMAGEN
+   ============================================================ */
+
+.canvas-imagen {
+  margin-top: 8px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px dashed var(--bs-border-soft, #242735);
+  font-size: 12px;
+  color: var(--bs-text-muted, #b5b7c2);
+  text-align: center;
+}
+
+.canvas-imagen img {
+  max-width: 100%;
+  display: block;
+  border-radius: 8px;
+  margin: 0 auto;
+}
+
+.canvas-imagen iframe {
+  width: 100%;
+  min-height: 260px;
+  border: 0;
+  border-radius: 8px;
+  display: block;
+}
+
+.canvas-imagen.vacio {
+  font-style: italic;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="header">
+<div class="title">AVISOS ZONALES</div>
+<div class="date">Martes 26 de mayo del 2026</div>
+</div>
+
+<div class="separator"></div>
+
+
+<div id="all-read-banner" class="all-read-banner">
+Gracias!
+</div>
+
+<div class="nav-bar">
+
+<button class="nav-btn active" data-section="admin">
+📋 ADMINISTRATIVOS
+</button>
+
+<button class="nav-btn" data-section="eventos">
+🎉 EVENTOS
+</button>
+
+
+
+
+
+
+
+</div>
+
+
+<div class="content-container">
+
+<div id="admin" class="section active">
+
+<div class="card admin">
+<div class="title">ANL 2026 - Cartas Responsivas</div>
+<p class="canvas-block-text" style="margin-top:10px"><p>Encontrarán una carpeta por cada zona donde deberán:</p><ul><li><p>Escanear</p></li><li><p>Subir su carta firmada de manera autógrafa</p></li></ul><p>Fecha límite para subirlas: <span style="color: rgb(255, 0, 0);">HOY</span></p><p>Entrega en físico a su encargado de camión: <span style="color: rgb(255, 0, 0);">1° de mayo.</span></p><p>Nombrar los archivos de la siguiente manera: <span style="color: rgb(255, 0, 0);">*Nombre de grupo – Nombre completo*</span></p><p>Ejemplo: ECR-Daniela Lozano Rodríguez</p></p>
+<a href="https://drive.google.com/drive/folders/1CVr4P9gZitMXxCltIE3O2S6SaCC2QTKH" target="_blank" rel="noopener noreferrer" class="canvas-link">
+  <span class="canvas-link-edge"></span>
+  <span class="canvas-link-front">Cartas Responsivas</span>
+</a>
+
+</div>
+
+<div class="card admin">
+<div class="title">ANL 2026</div>
+<p class="canvas-block-text" style="margin-top:10px"><p>Recordatorios importantes:</p><ul><li><p>Los grupos que <span style="color: rgb(255, 0, 0);"><strong>NO asistan a ANL NO podrán tener actividades.</strong></span></p></li><li><p>Entrega de bordones/cirio para quienes viajan en avión: Domingo 26 de abril en IC o en la misa en la Basilica.</p></li><li><p>Enviar a Viri la lista de quienes necesitarán solicitar bordones en Querétaro.</p></li></ul></p>
+</div>
+
+<div class="card admin">
+<div class="title">Examen de Documentos</div>
+<p class="canvas-block-text" style="margin-top:10px"><p>Registro de sedes:</p><p>Inicio de registro: Lunes 20 de abril<br>Cierre de registro: Miércoles 6 de mayo</p></p>
+<a href="#" class="canvas-link">
+  <span class="canvas-link-edge"></span>
+  <span class="canvas-link-front">REGISTRO DE SEDE</span>
+</a>
+<p class="canvas-block-text" style="margin-top:10px"><p>Prerequisito al examen:</p><p>Inicio: 20 de abril<br>Cierre: 30 de abril</p></p>
+<a href="#" class="canvas-link">
+  <span class="canvas-link-edge"></span>
+  <span class="canvas-link-front">PREREGISTRO AL EXAMEN</span>
+</a>
+
+</div>
+
+<div class="card admin">
+<div class="title">Repaso para Examen de Documentos</div>
+<p class="canvas-block-text" style="margin-top:10px"><p><span style="font-size: 20px;"><strong>Presencial:</strong></span></p></p>
+<div class="canvas-info">
+📅 Lunes 4 de mayo del 2026 | 📍 Casito PJ | 🕒 Por definir
+</div>
+<p class="canvas-block-text" style="margin-top:10px"><ul><li><p>Se darán puntos extra</p></li><li><p>Cooperación a la PJ: $20</p></li></ul></p><p class="canvas-block-text" style="margin-top:10px"><p><span style="font-size: 20px;"><strong>Virtual:</strong></span></p></p>
+<div class="canvas-info">
+📅 Jueves 7 de mayo del 2026 | 📍 Zoom | 🕒 Por Definir
+</div>
+<p class="canvas-block-text" style="margin-top:10px"><ul><li><p>No se otorgarán puntos extra</p></li></ul></p>
+</div>
+
+<div class="card admin">
+<div class="title">Deudas</div>
+<p class="canvas-block-text" style="margin-top:10px"><p>Acércase a hablar con la zona para coordinar pagos de sus deudas.</p></p>
+  <table class="canvas-table" style="width:100%;border-collapse:collapse;color:#fff;font-size:12px;margin-top:12px">
+
+
+<tr>
+<td style="padding:6px 8px">Grupo</td><td style="padding:6px 8px">Deuda</td>
+</tr>
+
+<tr>
+<td style="padding:6px 8px">Alfirk</td><td style="padding:6px 8px">$560</td>
+</tr>
+
+
+</table>
+
+<div class="canvas-banco">
+
+<div class="canvas-banco-header">💳 TRANSFERENCIA</div>
+
+
+<div class="canvas-banco-row">
+<span class="canvas-banco-label">Banco:</span>
+<span class="canvas-banco-value">Nu</span>
+</div>
+
+
+<div class="canvas-banco-row">
+<span class="canvas-banco-label">Tipo:</span>
+<span class="canvas-banco-value">CLABE</span>
+</div>
+
+
+<div class="canvas-banco-row">
+<span class="canvas-banco-label">Cuenta:</span>
+<span class="canvas-banco-value">638180010160134075</span>
+</div>
+
+
+<div class="canvas-banco-row">
+<span class="canvas-banco-label">Titular:</span>
+<span class="canvas-banco-value">Carlos Gerardo Hernández Salas</span>
+</div>
+
+
+<div class="canvas-banco-row">
+<span class="canvas-banco-label">Referencia:</span>
+<span class="canvas-banco-value">Ejemplo: Deuda - Hagen</span>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<div id="eventos" class="section">
+
+<div class="card eventos">
+<div class="title">Asamblea Zonal Virtual</div>
+
+<div class="canvas-info">
+📅 Martes 5 de mayo | 📍 Google Meets | 🕒 Votar en el Grupo de Coordis
+</div>
+<p class="canvas-block-text" style="margin-top:10px"><p>Solo coordinadores, se tocará el tema de la Convivencia Zonal</p></p>
+</div>
+
+<div class="card eventos">
+<div class="title">Hora Santa Regional</div>
+
+<div class="canvas-info">
+📅 6 de mayo | 📍 Basílica Nuestra Señora del Roble | 🕒 8:00 p.m.
+</div>
+<p class="canvas-block-text" style="margin-top:10px"><p>Con mucha alegría nos preparamos para vivir juntos la Hora Santa Regional.</p></p>
+</div>
+
+</div>
+
+
+
+
+
+
+
+</div>
+
+
+<footer class="footer">
+© 2026 Zona Omaha. Todos los derechos reservados.
+</footer>
+
+
+</div>
+
+
+<script>
+
+document.addEventListener("DOMContentLoaded",function(){
+
+const navBtns=document.querySelectorAll(".nav-btn");
+const sections=document.querySelectorAll(".section");
+const allReadBanner=document.getElementById("all-read-banner");
+
+function updateAllReadBanner(){
+if(!allReadBanner)return;
+const allVisited=Array.from(navBtns).every(btn=>btn.classList.contains("visited"));
+ const wasVisible=allReadBanner.classList.contains("visible");
+ allReadBanner.classList.toggle("visible",allVisited);
+}
+
+// Marca la sección inicial como visitada
+const initialActive=document.querySelector(".nav-btn.active");
+if(initialActive){
+initialActive.classList.add("visited");
+updateAllReadBanner();
+}
+
+navBtns.forEach(btn=>{
+
+btn.addEventListener("click",function(){
+
+const sectionId=this.getAttribute("data-section");
+
+navBtns.forEach(b=>b.classList.remove("active"));
+this.classList.add("active");
+this.classList.add("visited");
+
+sections.forEach(sec=>sec.classList.remove("active"));
+
+document.getElementById(sectionId).classList.add("active");
+
+updateAllReadBanner();
+
+});
+
+});
+
+});
+
+</script>
+
+</body>
+</html>
