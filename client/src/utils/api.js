@@ -10,6 +10,8 @@ export const API = API_BASE_URL;
 // Estado de autenticación
 let authStatus = null;
 let authCheckPromise = null;
+// In-memory token (mutable) used as a fallback when cookies are blocked
+let existingToken = null;
 
 // Token storage key for JWT fallback (used when cookies are blocked)
 const AUTH_TOKEN_KEY = 'mjc_auth_token';
@@ -59,7 +61,11 @@ function extractTokenFromHash() {
 }
 
 // Initialize token from storage or URL hash
-const _existingToken = (typeof localStorage !== 'undefined' && localStorage.getItem(AUTH_TOKEN_KEY)) || extractTokenFromHash();
+try {
+  existingToken = (typeof localStorage !== 'undefined' && localStorage.getItem(AUTH_TOKEN_KEY)) || extractTokenFromHash();
+} catch (e) {
+  existingToken = extractTokenFromHash();
+}
 
 const STORAGE_KEY = 'mjc_auth_status';
 
@@ -94,7 +100,7 @@ export async function apiRequest(url, options = {}) {
 
   // If we have a stored JWT (fallback), send it in Authorization header
   try {
-    const token = (typeof localStorage !== 'undefined' && localStorage.getItem(AUTH_TOKEN_KEY)) || _existingToken;
+    const token = (typeof localStorage !== 'undefined' && localStorage.getItem(AUTH_TOKEN_KEY)) || existingToken;
     if (token) headers['Authorization'] = `Bearer ${token}`;
   } catch (e) {
     // ignore
@@ -174,6 +180,7 @@ export async function logout() {
     authCheckPromise = null;
     localStorage.removeItem(STORAGE_KEY);
     try { localStorage.removeItem(AUTH_TOKEN_KEY); } catch (e) {}
+    try { existingToken = null; } catch (e) {}
     await apiRequest('/auth/logout', { method: 'POST' });
     return true;
   } catch (error) {
