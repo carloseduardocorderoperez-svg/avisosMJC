@@ -562,26 +562,30 @@ app.post("/sets/:id/publish", requireAuth, async (req, res) => {
         return res.status(400).json({ error: "publicSlug ya está en uso" });
     }
 
-    // Determinar publicSlug por defecto (si no se pasó uno)
-    let desiredSlug =
-      publicSlug !== undefined ? String(publicSlug).trim() : undefined;
+    // Prepare the minimal partial update for published state. We avoid
+    // setting `publicSlug` here unless the frontend explicitly provided one,
+    // so that if the user recently updated the `date` the slug generation
+    // can use the freshest saved value.
+    let providedSlug = publicSlug !== undefined ? String(publicSlug).trim() : undefined;
+    if (providedSlug === '') providedSlug = undefined;
 
-    // If frontend didn't provide publicSlug, preserve existing one if present
-    if (!desiredSlug && target.publicSlug) {
-      desiredSlug = String(target.publicSlug).trim();
-    }
+    const partial = {
+      published: !!published,
+      publishedAt: published === true ? new Date().toISOString() : null,
+    };
+    if (providedSlug !== undefined) partial.publicSlug = providedSlug;
 
-    // If still not defined, derive a user-friendly label similar to the
-    // UI `displayTitle` (day + month) and build a link-friendly slug.
-    // If collisions occur, append a numeric suffix (-2, -3, ...).
-    if (!desiredSlug) {
-      const dateStr = target.date || "";
+    let updated = await updateSet(id, partial);
+
+    // If we don't have a publicSlug after the initial update, generate one
+    // now using the updated record (which includes any date changes the
+    // user may have saved just before publishing). Ensure uniqueness.
+    if (!updated.publicSlug) {
+      const dateStr = updated.date || "";
 
       function formatDayMonthLabel(s) {
         if (!s) return null;
         const t = String(s).trim();
-
-        // YYYY-MM-DD or ISO-like
         const isoMatch = t.match(/^(\d{4})-(\d{2})-(\d{2})/);
         if (isoMatch) {
           const y = parseInt(isoMatch[1], 10);
@@ -591,38 +595,19 @@ app.post("/sets/:id/publish", requireAuth, async (req, res) => {
             const dateObj = new Date(y, m, d);
             const monthName = dateObj.toLocaleString("es-ES", { month: "long" });
             return `${d} de ${monthName}`;
-          } catch (e) {
-            return null;
-          }
+          } catch (e) { return null; }
         }
-
-        // DD/MM/YYYY
         const dm = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
         if (dm) {
           const day = parseInt(dm[1], 10);
           const monthIndex = parseInt(dm[2], 10) - 1;
           const year = dm[3].length === 2 ? 2000 + parseInt(dm[3], 10) : parseInt(dm[3], 10);
-          try {
-            const dateObj = new Date(year, monthIndex, day);
-            const monthName = dateObj.toLocaleString("es-ES", { month: "long" });
-            return `${day} de ${monthName}`;
-          } catch (e) {
-            return null;
-          }
+          try { const dateObj = new Date(year, monthIndex, day); const monthName = dateObj.toLocaleString("es-ES", { month: "long" }); return `${day} de ${monthName}`; } catch (e) { return null; }
         }
-
-        // Spanish textual: "19 de mayo" or similar
         const textMatch = t.match(/(\d{1,2})\s*(?:de)?\s*([A-Za-záéíóúñÑ]+)/i);
-        if (textMatch) {
-          const day = parseInt(textMatch[1], 10);
-          const monthName = String(textMatch[2]).toLowerCase();
-          return `${day} de ${monthName}`;
-        }
-
+        if (textMatch) { const day = parseInt(textMatch[1], 10); const monthName = String(textMatch[2]).toLowerCase(); return `${day} de ${monthName}`; }
         return null;
       }
-
-      const baseLabel = formatDayMonthLabel(dateStr) || String(target.title || "").trim() || String(target.code || target.id || "set");
 
       function normalizeForSlug(str) {
         return String(str || "")
@@ -632,56 +617,31 @@ app.post("/sets/:id/publish", requireAuth, async (req, res) => {
           .replace(/^-+|-+$/g, "");
       }
 
-      let candidate = normalizeForSlug(baseLabel) || normalizeForSlug(String(target.code || target.id || "set"));
+      const baseLabel = formatDayMonthLabel(dateStr) || String(updated.title || "").trim() || String(updated.code || updated.id || "set");
+      let candidate = normalizeForSlug(baseLabel) || normalizeForSlug(String(updated.code || updated.id || "set"));
 
-      // Ensure uniqueness among existing sets (and avoid excessive loops)
-      const reserved = new Set((sets || [])
-        .map((s) => String(s && (s.publicSlug || s.code || s.id) || "").trim().toLowerCase())
-        .filter(Boolean));
+      // Reload sets to ensure uniqueness check uses latest data
+      const fresh = await loadAllSets();
+      const freshSets = Array.isArray(fresh.sets) ? fresh.sets : [];
+      const existingSlugs = new Set(freshSets.filter((s) => String(s.id) !== String(id)).map((s) => String(s.publicSlug || s.code || s.id || "").trim().toLowerCase()).filter(Boolean));
 
-      if (reserved.has(candidate)) {
+      if (existingSlugs.has(candidate)) {
         let i = 2;
-        let trySlug = `${candidate}-${i}`;
-        while (reserved.has(trySlug) && i < 1000) {
+        let cand = `${candidate}-${i}`;
+        while (existingSlugs.has(cand) && i < 1000) {
           i += 1;
-          trySlug = `${candidate}-${i}`;
+          cand = `${candidate}-${i}`;
         }
-        candidate = trySlug;
+        candidate = cand;
       }
 
-      desiredSlug = candidate;
-    }
-
-    // Normalizar desiredSlug
-    desiredSlug = String(desiredSlug || "")
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9\-_.]+/g, "-")
-      .replace(/^-+|-+$/g, "");
-
-    // Ensure slug uniqueness among existing sets: if another set (different id)
-    // already uses the same publicSlug, append a numeric suffix.
-    // (This avoids unpredictable timestamps and aligns with displayTitle-based slugs.)
-    const existingSlugs = new Set((sets || [])
-      .filter((s) => s && String(s.id) !== String(id))
-      .map((s) => String(s.publicSlug || s.code || s.id || "").trim().toLowerCase())
-      .filter(Boolean));
-
-    if (existingSlugs.has(desiredSlug)) {
-      let n = 2;
-      let cand = `${desiredSlug}-${n}`;
-      while (existingSlugs.has(cand) && n < 1000) {
-        n += 1;
-        cand = `${desiredSlug}-${n}`;
+      // Persist the computed slug
+      try {
+        updated = await updateSet(id, { publicSlug: candidate });
+      } catch (e) {
+        console.warn('No se pudo guardar publicSlug automáticamente:', e && e.message ? e.message : e);
       }
-      desiredSlug = cand;
     }
-
-    const updated = await updateSet(id, {
-      published: !!published,
-      publicSlug: desiredSlug,
-      publishedAt: published === true ? new Date().toISOString() : null,
-    });
 
     // Construir publicUrl si aplica
     const clientBase = (process.env.CLIENT_URL || "").replace(/\/$/, "");

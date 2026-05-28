@@ -58,10 +58,6 @@ async function generateIndex() {
   }
   const allSets = Array.isArray(sets) ? sets : [];
   let published = allSets.filter((s) => s && (s.published || s.publishedAt));
-  if (!published || published.length === 0) {
-    // Fallback: if nothing is explicitly published, include all sets
-    published = allSets.slice();
-  }
   published = published.sort((a, b) => new Date(b.publishedAt || b.date || b.createdAt || 0) - new Date(a.publishedAt || a.date || a.createdAt || 0));
 
   // Minimal data we need on the client side
@@ -71,6 +67,41 @@ async function generateIndex() {
     date: s.date || '',
     publishedAt: s.publishedAt || ''
   }));
+
+  // Cleanup: remove any stale folders in dist-public that no longer correspond
+  // to published slugs. This prevents leftover empty folders from previous
+  // runs (e.g. when a set was unpublished but its directory remained).
+  try {
+    const distDir = path.join(__dirname, '../dist-public');
+    const kept = new Set(minimal.map((m) => String(m.slug || '').trim()).filter(Boolean));
+    if (fsSync.existsSync(distDir)) {
+      const entries = fsSync.readdirSync(distDir, { withFileTypes: true });
+      for (const e of entries) {
+        if (!e.isDirectory()) continue;
+        const name = e.name;
+        if (!kept.has(name) && name !== '.' && name !== '..') {
+          const target = path.join(distDir, name);
+          try {
+            // Only remove if directory is empty to avoid deleting build assets
+            const contents = fsSync.readdirSync(target);
+            if (!contents || contents.length === 0) {
+              if (fsSync.rm) {
+                fsSync.rmSync(target, { recursive: true, force: true });
+              } else {
+                fsSync.rmdirSync(target, { recursive: true });
+              }
+              console.log('staticPublisher: removed empty stale folder', name);
+            }
+          } catch (er) {
+            // ignore removal errors
+            console.warn('staticPublisher: could not remove stale folder', name, er && er.message ? er.message : er);
+          }
+        }
+      }
+    }
+  } catch (err) {
+    // non-fatal
+  }
 
   const safeData = JSON.stringify(minimal).replace(/</g, '\\u003c');
 
@@ -212,7 +243,8 @@ async function generateIndex() {
           items.forEach(function(it){
             const li = document.createElement('li');
             const a = document.createElement('a');
-            a.href = './' + it.slug + '/';
+            // Use root-relative paths to avoid stacking segments when clicked from nested pages
+            a.href = '/' + it.slug + '/';
             a.textContent = formatLong(it.date);
             li.appendChild(a);
             itemsList.appendChild(li);
