@@ -1128,13 +1128,23 @@ app.get("/auth/callback", async (req, res) => {
     });
 
     // Redirigir de vuelta a la aplicación (al dashboard)
+    // Además incluimos el JWT en el fragmento de la URL para entornos
+    // donde las cookies de terceros puedan ser bloqueadas (móviles/Safari).
     const clientBase = (
       process.env.CLIENT_URL || "http://localhost:5173"
     ).replace(/\/$/, "");
-    const redirectUrl =
-      process.env.CLIENT_USE_HASH === "true"
-        ? `${clientBase}/#/dashboard`
-        : `${clientBase}/dashboard`;
+
+    const tokenFragment = `auth_token=${encodeURIComponent(jwtToken)}`;
+
+    let redirectUrl;
+    if (process.env.CLIENT_USE_HASH === "true") {
+      // Hash routing: put token in fragment query part
+      redirectUrl = `${clientBase}/#/dashboard?${tokenFragment}`;
+    } else {
+      // Regular routing: put token after # so it's not sent to server
+      redirectUrl = `${clientBase}/dashboard#${tokenFragment}`;
+    }
+
     res.redirect(redirectUrl);
   } catch (err) {
     console.error("Error en callback:", err);

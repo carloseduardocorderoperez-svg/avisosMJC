@@ -11,6 +11,56 @@ export const API = API_BASE_URL;
 let authStatus = null;
 let authCheckPromise = null;
 
+// Token storage key for JWT fallback (used when cookies are blocked)
+const AUTH_TOKEN_KEY = 'mjc_auth_token';
+
+// Extract token from URL fragment if present (e.g. #auth_token=... or #/dashboard?auth_token=...)
+function extractTokenFromHash() {
+  try {
+    if (typeof window === 'undefined') return null;
+    const hash = window.location.hash || '';
+    if (!hash) return null;
+
+    // Remove leading '#'
+    const hashStr = hash.replace(/^#/, '');
+
+    // If using hash routing like '/#/dashboard?auth_token=..', find the '?' part
+    const qIndex = hashStr.indexOf('?');
+    const queryStr = qIndex >= 0 ? hashStr.slice(qIndex + 1) : hashStr;
+
+    const params = new URLSearchParams(queryStr);
+    const token = params.get('auth_token') || params.get('token');
+    if (!token) return null;
+
+    // Save token to localStorage for Authorization header fallback
+    localStorage.setItem(AUTH_TOKEN_KEY, token);
+
+    // Clean URL (remove token from fragment)
+    try {
+      const base = window.location.href.split('#')[0];
+      let newHash = '';
+      if (qIndex >= 0) {
+        const pathPart = hashStr.slice(0, qIndex);
+        params.delete('auth_token');
+        params.delete('token');
+        const rest = params.toString();
+        newHash = pathPart + (rest ? ('?' + rest) : '');
+      }
+      const newUrl = base + (newHash ? ('#' + newHash) : '');
+      window.history.replaceState(null, '', newUrl);
+    } catch (e) {
+      // ignore
+    }
+
+    return token;
+  } catch (e) {
+    return null;
+  }
+}
+
+// Initialize token from storage or URL hash
+const _existingToken = (typeof localStorage !== 'undefined' && localStorage.getItem(AUTH_TOKEN_KEY)) || extractTokenFromHash();
+
 const STORAGE_KEY = 'mjc_auth_status';
 
 // Guardar estado en localStorage
@@ -37,13 +87,23 @@ export async function apiRequest(url, options = {}) {
   const fullUrl = apiUrl(url);
 
   // Asegurar que tenemos credenciales
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(options.headers || {}),
+  };
+
+  // If we have a stored JWT (fallback), send it in Authorization header
+  try {
+    const token = (typeof localStorage !== 'undefined' && localStorage.getItem(AUTH_TOKEN_KEY)) || _existingToken;
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+  } catch (e) {
+    // ignore
+  }
+
   const response = await fetch(fullUrl, {
     ...options,
-    credentials: 'include', // Importante para enviar cookies de sesión
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
+    credentials: 'include', // still send cookies when available
+    headers,
   });
 
   // Si es 401, intentar refrescar el estado de auth
@@ -113,6 +173,7 @@ export async function logout() {
     authStatus = null;
     authCheckPromise = null;
     localStorage.removeItem(STORAGE_KEY);
+    try { localStorage.removeItem(AUTH_TOKEN_KEY); } catch (e) {}
     await apiRequest('/auth/logout', { method: 'POST' });
     return true;
   } catch (error) {
