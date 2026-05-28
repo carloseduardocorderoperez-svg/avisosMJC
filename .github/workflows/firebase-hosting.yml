@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - public-builds
     paths:
       - 'dist-public/**'
   workflow_dispatch: {}

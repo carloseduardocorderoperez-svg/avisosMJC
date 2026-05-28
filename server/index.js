@@ -671,11 +671,14 @@ app.post("/sets/:id/publish", requireAuth, async (req, res) => {
 
     // Intentar generar o eliminar HTML estático en dist-public según published
     let staticResult = null;
-    try {
-      if (updated.published) {
+      try {
+        if (updated.published) {
         // publish new slug
-        console.log("Generating static HTML...");
+        console.log(new Date().toISOString(), "Generating static HTML for set", updated.id, "slug=" + (updated.publicSlug || updated.code || updated.id));
+        const start = Date.now();
         staticResult = await publishAviso(updated);
+        const dur = Date.now() - start;
+        console.log(new Date().toISOString(), `Static HTML generated in ${dur}ms for`, updated.id);
 
         // If slug changed, remove old static folder to avoid stale copies
         try {
@@ -714,6 +717,7 @@ app.post("/sets/:id/publish", requireAuth, async (req, res) => {
 
     // If configured, automatically run git-auto-push synchronously in the publish flow
     let autoPushQueued = false;
+    let pushResult = null;
     try {
       const autoFlag = String(
         process.env.AUTO_PUSH_ON_PUBLISH || "",
@@ -725,25 +729,43 @@ app.post("/sets/:id/publish", requireAuth, async (req, res) => {
           updated.publicSlug || updated.code || updated.id || "",
         ).replace(/"/g, "");
         const cmd = `node scripts/git-auto-push.js "${slugArg}"`;
-        console.log("Running auto git push after static changes...");
+        console.log(new Date().toISOString(), "Running auto git push after static changes... cmd=", cmd);
         try {
           const { execSync } = require("child_process");
-          execSync(cmd, {
+          const stdout = execSync(cmd, {
             cwd: path.join(__dirname, ".."),
             encoding: "utf8",
             stdio: "pipe",
           });
-          console.log("Git push completed");
+          console.log(new Date().toISOString(), "Git push completed");
+          pushResult = { ok: true, message: "Push completed", stdout: String(stdout || "").slice(0, 10000) };
         } catch (e) {
-          console.error("Git push failed:", e && e.message ? e.message : e);
+          // capture stdout/stderr if present on the error
+          const out = (e && e.stdout) ? String(e.stdout) : '';
+          const errOut = (e && e.stderr) ? String(e.stderr) : '';
+          const msg = (e && e.message) ? e.message : String(e);
+          console.error(new Date().toISOString(), "Git push failed:", msg);
+          if (out) console.error(new Date().toISOString(), "git-auto-push stdout:", out.slice(0, 2000));
+          if (errOut) console.error(new Date().toISOString(), "git-auto-push stderr:", errOut.slice(0, 2000));
+          pushResult = { ok: false, message: "Push failed: " + msg, stdout: out.slice(0, 10000), stderr: errOut.slice(0, 10000) };
         }
         autoPushQueued = true;
       }
     } catch (e) {
-      console.warn(
-        "Error intentando auto-push:",
-        e && e.message ? e.message : e,
-      );
+      console.warn(new Date().toISOString(), "Error intentando auto-push:", e && e.message ? e.message : e);
+      pushResult = { ok: false, message: (e && e.message) ? e.message : String(e) };
+    }
+
+    // Build a user-facing message summarizing results succinctly
+    let userMessage = updated.published ? 'El aviso se marcó como publicado.' : 'El aviso se despublicó.';
+    if (staticResult && staticResult.ok) {
+      userMessage += ' El contenido estático se generó correctamente.';
+    } else if (staticResult && !staticResult.ok) {
+      userMessage += ' Hubo un problema generando el contenido estático.';
+    }
+    if (pushResult) {
+      if (pushResult.ok) userMessage += ' El sitio remoto se actualizó correctamente.';
+      else userMessage += ' No se pudo actualizar el sitio remoto automáticamente; revisa los registros.';
     }
 
     res.json({
@@ -752,6 +774,8 @@ app.post("/sets/:id/publish", requireAuth, async (req, res) => {
       publicUrl: url,
       staticPublish: staticResult,
       autoPushQueued,
+      pushResult,
+      userMessage,
     });
   } catch (err) {
     console.error("Error publicando set:", err);

@@ -134,7 +134,14 @@ export default function DashboardSetCard({
           setIsPublished(!!data.set?.published)
           setSlugValue(data.set?.publicSlug || slugValue)
           if (typeof onPublish === 'function') onPublish(data.set)
-          addNotification({ type: 'info', text: `Despublicación en curso. Puede tardar hasta 3 minutos.`, timeout: 4000 })
+          // Show user-friendly message returned by server, or generic info
+          if (data && data.userMessage) addNotification({ type: 'info', text: data.userMessage, timeout: 6000 })
+          else addNotification({ type: 'info', text: `Despublicación en curso. Puede tardar hasta 3 minutos.`, timeout: 4000 })
+
+          if (data && data.pushResult && data.pushResult.ok === false) {
+            addNotification({ type: 'error', text: 'No se pudo actualizar el sitio público automáticamente. Contacta al administrador.', timeout: 8000 })
+            console.error('pushResult:', data.pushResult)
+          }
         } catch (err) {
           console.error('Error unpublishing set', err)
           setPublishError(err.message || 'Error despublicando')
@@ -175,7 +182,13 @@ export default function DashboardSetCard({
         setSlugValue(data.set?.publicSlug || slugValue)
         setEditSlugOpen(false)
         if (typeof onPublish === 'function') onPublish(data.set)
-        addNotification({ type: 'info', text: `Publicación en curso. Puede tardar hasta 3 minutos.`, timeout: 4000 })
+        if (data && data.userMessage) addNotification({ type: 'info', text: data.userMessage, timeout: 6000 })
+        else addNotification({ type: 'info', text: `Publicación en curso. Puede tardar hasta 3 minutos.`, timeout: 4000 })
+
+        if (data && data.pushResult && data.pushResult.ok === false) {
+          addNotification({ type: 'error', text: 'No se pudo actualizar el sitio público automáticamente. Contacta al administrador.', timeout: 8000 })
+          console.error('pushResult:', data.pushResult)
+        }
       } catch (err) {
         console.error('Error publishing set', err)
         setPublishError(err.message || 'Error publicando')
@@ -386,8 +399,13 @@ export default function DashboardSetCard({
                 setSlugValue(data.set?.publicSlug || normalized)
                 setEditSlugOpen(false)
                 if (typeof onPublish === 'function') onPublish(data.set)
+                if (data && data.userMessage) addNotification({ type: 'success', text: data.userMessage, timeout: 3000 })
+                else addNotification({ type: 'success', text: `Slug actualizado para avisos del ${dateLabel}`, timeout: 3000 })
 
-                addNotification({ type: 'success', text: `Slug actualizado para avisos del ${dateLabel}`, timeout: 3000 })
+                if (data && data.pushResult && data.pushResult.ok === false) {
+                  addNotification({ type: 'error', text: 'No se pudo actualizar el sitio público automáticamente. Contacta al administrador.', timeout: 8000 })
+                  console.error('pushResult:', data.pushResult)
+                }
               } catch (err) {
                 console.error('Error updating slug', err)
                 setPublishError(err.message || 'Error actualizando slug')
