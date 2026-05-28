@@ -117,12 +117,18 @@ export default function DashboardSetCard({
         try {
           setPublishing(true)
           setSyncing(true)
+          const payload = { published: false };
+          const originalSlug = (set?.publicSlug) || ((set?.code || '').toLowerCase());
+          if (slugValue && String(slugValue).trim().toLowerCase() !== String(originalSlug).trim().toLowerCase()) {
+            payload.publicSlug = slugValue;
+          }
+
           const res = await fetch(apiUrl(`/sets/${set.id}/publish`), {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ published: false, publicSlug: slugValue }),
-          })
+              method: 'POST',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload),
+            })
           const data = await res.json()
           if (!res.ok) throw new Error((data && data.error) || 'Error actualizando estado público')
           setIsPublished(!!data.set?.published)
@@ -151,11 +157,17 @@ export default function DashboardSetCard({
       try {
         setPublishing(true)
         setSyncing(true)
+        const payload = { published: true };
+        const originalSlug = (set?.publicSlug) || ((set?.code || '').toLowerCase());
+        if (slugValue && String(slugValue).trim().toLowerCase() !== String(originalSlug).trim().toLowerCase()) {
+          payload.publicSlug = slugValue;
+        }
+
         const res = await fetch(apiUrl(`/sets/${set.id}/publish`), {
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ published: true, publicSlug: slugValue }),
+          body: JSON.stringify(payload),
         })
         const data = await res.json()
         if (!res.ok) throw new Error((data && data.error) || 'Error actualizando estado público')

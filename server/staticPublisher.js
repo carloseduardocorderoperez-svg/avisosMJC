@@ -21,7 +21,7 @@ async function generateStaticAviso(set) {
   if (!set) throw new Error('Se requiere el objeto set');
 
   const slug = normalizeSlug(set.publicSlug || set.code || set.id || 'set');
-  const targetDir = path.join(__dirname, '../dist-public', 'avisos-semanales', slug);
+  const targetDir = path.join(__dirname, '../dist-public', slug);
 
   await ensureDir(targetDir);
 
@@ -70,29 +70,26 @@ async function generateIndex() {
     const distDir = path.join(__dirname, '../dist-public');
     const kept = new Set(minimal.map((m) => String(m.slug || '').trim()).filter(Boolean));
     if (fsSync.existsSync(distDir)) {
-      const avisosBase = path.join(distDir, 'avisos-semanales');
-      if (fsSync.existsSync(avisosBase)) {
-        const entries = fsSync.readdirSync(avisosBase, { withFileTypes: true });
-        for (const e of entries) {
-          if (!e.isDirectory()) continue;
-          const name = e.name;
-          if (!kept.has(name)) {
-            const target = path.join(avisosBase, name);
-            try {
-              // Only remove if directory is empty to avoid deleting build assets
-              const contents = fsSync.readdirSync(target);
-              if (!contents || contents.length === 0) {
-                if (fsSync.rm) {
-                  fsSync.rmSync(target, { recursive: true, force: true });
-                } else {
-                  fsSync.rmdirSync(target, { recursive: true });
-                }
-                console.log('staticPublisher: removed empty stale folder', name);
+      const entries = fsSync.readdirSync(distDir, { withFileTypes: true });
+      for (const e of entries) {
+        if (!e.isDirectory()) continue;
+        const name = e.name;
+        if (!kept.has(name) && name !== '.' && name !== '..') {
+          const target = path.join(distDir, name);
+          try {
+            // Only remove if directory is empty to avoid deleting build assets
+            const contents = fsSync.readdirSync(target);
+            if (!contents || contents.length === 0) {
+              if (fsSync.rm) {
+                fsSync.rmSync(target, { recursive: true, force: true });
+              } else {
+                fsSync.rmdirSync(target, { recursive: true });
               }
-            } catch (er) {
-              // ignore removal errors
-              console.warn('staticPublisher: could not remove stale folder', name, er && er.message ? er.message : er);
+              console.log('staticPublisher: removed empty stale folder', name);
             }
+          } catch (er) {
+            // ignore removal errors
+            console.warn('staticPublisher: could not remove stale folder', name, er && er.message ? er.message : er);
           }
         }
       }
@@ -241,9 +238,8 @@ async function generateIndex() {
           items.forEach(function(it){
             const li = document.createElement('li');
             const a = document.createElement('a');
-            // Link to the public route under /avisos-semanales/<slug>/ so it
-            // points to the static files generated under dist-public/avisos-semanales
-            a.href = '/avisos-semanales/' + it.slug + '/';
+            // Link to the public route at root (/slug/) where static files are written
+            a.href = '/' + it.slug + '/';
             a.textContent = formatLong(it.date);
             li.appendChild(a);
             itemsList.appendChild(li);
@@ -299,7 +295,7 @@ async function removeStaticAviso(setOrSlug) {
 
   if (!slug) throw new Error('No se pudo determinar slug para eliminación');
 
-  const targetDir = path.join(__dirname, '../dist-public', 'avisos-semanales', slug);
+  const targetDir = path.join(__dirname, '../dist-public', slug);
 
   // Use fs.rm if available
   try {

@@ -575,10 +575,14 @@ app.post("/sets/:id/publish", requireAuth, async (req, res) => {
 
     let updated = await updateSet(id, partial);
 
-    // If we don't have a publicSlug after the initial update, generate one
-    // now using the updated record (which includes any date changes the
-    // user may have saved just before publishing). Ensure uniqueness.
-    if (!updated.publicSlug) {
+    // If we don't have a publicSlug after the initial update, or the existing
+    // publicSlug looks like a generated code-based value (e.g. "set-001"),
+    // generate a new date-based slug now using the updated record. This
+    // covers older sets where `publicSlug` was left as the default code.
+    const currentSlugLower = String(updated.publicSlug || '').trim().toLowerCase();
+    const codeLower = String(updated.code || '').trim().toLowerCase();
+    const likelyDefaultSlug = currentSlugLower === codeLower || /^set[-_]*\d{1,}/i.test(currentSlugLower);
+    if (!currentSlugLower || likelyDefaultSlug) {
       const dateStr = updated.date || "";
 
       // Build a short date-based slug like `30may26`. Falls back to title/code/id when date is missing.
@@ -662,7 +666,7 @@ app.post("/sets/:id/publish", requireAuth, async (req, res) => {
     const clientBase = (process.env.CLIENT_URL || "").replace(/\/$/, "");
     const slugPart = encodeURIComponent(String(updated.publicSlug || updated.code || '').trim());
     const url = updated.published
-      ? `${clientBase}/avisos-semanales/${slugPart}/`
+      ? `${clientBase}/${slugPart}/`
       : null;
 
     // Intentar generar o eliminar HTML estático en dist-public según published
