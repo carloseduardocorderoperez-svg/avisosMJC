@@ -256,38 +256,40 @@ export default function DashboardSetCard({
               <button type="button" className="dashboard-card-menu-item" onClick={() => { setMenuOpen(false); setEditDateOpen(true) }}>
                 <Calendar size={14} /> Editar fecha
               </button>
-              <button
-                type="button"
-                className="dashboard-card-menu-item"
-                onClick={() => actionAndClose(async () => {
-                  const slug = String(slugValue || '').trim();
-                  if (!slug) {
-                    addNotification({ type: 'error', text: 'No hay URL pública disponible para copiar.', timeout: 3500 })
-                    return
-                  }
-                  const url = `https://zonaomaha-8a35a.web.app/${slug}`
-                  try {
-                    if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
-                      await navigator.clipboard.writeText(url)
-                    } else {
-                      const ta = document.createElement('textarea')
-                      ta.value = url
-                      ta.style.position = 'fixed'
-                      ta.style.left = '-9999px'
-                      document.body.appendChild(ta)
-                      ta.select()
-                      document.execCommand('copy')
-                      document.body.removeChild(ta)
-                    }
-                    addNotification({ type: 'success', text: 'URL pública copiada al portapapeles', timeout: 3000 })
-                  } catch (err) {
-                    console.error('Error copiando URL', err)
-                    addNotification({ type: 'error', text: 'No se pudo copiar la URL', timeout: 4000 })
-                  }
-                })}
-              >
-                <Clipboard size={14} /> Copiar URL
-              </button>
+                   {isPublished && (
+                     <button
+                       type="button"
+                       className="dashboard-card-menu-item"
+                       onClick={() => actionAndClose(async () => {
+                         const slug = String(slugValue || '').trim();
+                         if (!slug) {
+                           addNotification({ type: 'error', text: 'No hay URL pública disponible para copiar.', timeout: 3500 })
+                           return
+                         }
+                         const url = `https://zonaomaha-8a35a.web.app/${slug}`
+                         try {
+                           if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
+                             await navigator.clipboard.writeText(url)
+                           } else {
+                             const ta = document.createElement('textarea')
+                             ta.value = url
+                             ta.style.position = 'fixed'
+                             ta.style.left = '-9999px'
+                             document.body.appendChild(ta)
+                             ta.select()
+                             document.execCommand('copy')
+                             document.body.removeChild(ta)
+                           }
+                           addNotification({ type: 'success', text: 'URL pública copiada al portapapeles', timeout: 3000 })
+                         } catch (err) {
+                           console.error('Error copiando URL', err)
+                           addNotification({ type: 'error', text: 'No se pudo copiar la URL', timeout: 4000 })
+                         }
+                       })}
+                     >
+                       <Clipboard size={14} /> Copiar URL
+                     </button>
+                   )}
               <button type="button" className="dashboard-card-menu-item" onClick={() => actionAndClose(onCopyHtml)}>
                 <Clipboard size={14} /> Copiar HTML
               </button>
