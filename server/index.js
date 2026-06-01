@@ -1121,6 +1121,8 @@ app.get('/auth/check', (req, res) => {
 app.get("/auth/login", (req, res) => {
   try {
     const url = getAuthUrl();
+    console.log(new Date().toISOString(), '[auth] /auth/login - redirecting to Google OAuth URL');
+    // Do not log the full URL in production since it may contain sensitive params
     res.redirect(url);
   } catch (err) {
     res.status(500).json({ error: `Error al iniciar login: ${err.message}` });
@@ -1141,6 +1143,7 @@ app.get("/auth/start", (req, res) => {
 app.get("/auth/callback", async (req, res) => {
   const code = req.query.code;
   if (!code) {
+    console.warn(new Date().toISOString(), '[auth] /auth/callback called without code');
     return res.status(400).send("Falta el código de autorización.");
   }
 
@@ -1171,6 +1174,9 @@ app.get("/auth/callback", async (req, res) => {
       maxAge: 24 * 60 * 60 * 1000, // 24 horas
     });
 
+    console.log(new Date().toISOString(), `[auth] /auth/callback - user authenticated: ${userInfo.email}`);
+    console.log(new Date().toISOString(), `[auth] Setting auth cookie (httpOnly), secure=${process.env.NODE_ENV === 'production'}`);
+
     // Redirigir de vuelta a la aplicación (al dashboard)
     // Además incluimos el JWT en el fragmento de la URL para entornos
     // donde las cookies de terceros puedan ser bloqueadas (móviles/Safari).
@@ -1189,6 +1195,7 @@ app.get("/auth/callback", async (req, res) => {
       redirectUrl = `${clientBase}/dashboard#${tokenFragment}`;
     }
 
+    console.log(new Date().toISOString(), '[auth] redirecting user to client after auth:', redirectUrl);
     res.redirect(redirectUrl);
   } catch (err) {
     console.error("Error en callback:", err);

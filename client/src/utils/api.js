@@ -35,7 +35,10 @@ function extractTokenFromHash() {
     if (!token) return null;
 
     // Save token to localStorage for Authorization header fallback
-    localStorage.setItem(AUTH_TOKEN_KEY, token);
+    try {
+      localStorage.setItem(AUTH_TOKEN_KEY, token);
+      console.log('[auth] token extraído del fragmento de URL y guardado en localStorage');
+    } catch (e) {}
 
     // Clean URL (remove token from fragment)
     try {
@@ -50,6 +53,7 @@ function extractTokenFromHash() {
       }
       const newUrl = base + (newHash ? ('#' + newHash) : '');
       window.history.replaceState(null, '', newUrl);
+      try { console.log('[auth] limpiado fragmento de URL que contenía token'); } catch(e){}
     } catch (e) {
       // ignore
     }
@@ -115,6 +119,7 @@ export async function apiRequest(url, options = {}) {
   // Si es 401, intentar refrescar el estado de auth
   if (response.status === 401) {
     authStatus = null; // Reset auth status
+    try { console.warn('[auth] 401 recibido desde', fullUrl); } catch(e){}
     throw new Error('No autorizado');
   }
 
@@ -131,20 +136,35 @@ export async function checkAuthStatus() {
     return authCheckPromise;
   }
 
+  // Ensure we extract token from URL fragment if present (extra guard)
+  try {
+    const found = extractTokenFromHash();
+    if (found) {
+      existingToken = found;
+      try { console.log('[auth] token encontrado al inicio de checkAuthStatus'); } catch(e){}
+    } else {
+      try { console.log('[auth] no se encontró token en fragmento al iniciar checkAuthStatus; localStorage token present=', !!localStorage.getItem(AUTH_TOKEN_KEY)); } catch(e){}
+    }
+  } catch (e) {}
+
   authCheckPromise = apiRequest('/auth/status')
     .then(response => response.json())
     .then(data => {
       authStatus = data;
+      try { console.log('[auth] checkAuthStatus:', data && data.authorized ? 'authorized' : 'not authorized', data && data.user ? data.user.email : ''); } catch(e) {}
       if (data.authorized) {
         saveAuthToStorage(data);
 
         // Si acabamos de iniciar sesión, redirigir automáticamente
         const redirectPath = sessionStorage.getItem('redirectAfterLogin');
-        if (redirectPath && window.location.pathname === '/login') {
-          sessionStorage.removeItem('redirectAfterLogin');
-          setTimeout(() => {
-            window.location.href = redirectPath;
-          }, 100);
+        if (redirectPath) {
+          try { console.log('[auth] redirectAfterLogin encontrado:', redirectPath, 'currentPath=', window.location.pathname); } catch(e){}
+          if (window.location.pathname === '/login') {
+            sessionStorage.removeItem('redirectAfterLogin');
+            setTimeout(() => {
+              window.location.href = redirectPath;
+            }, 100);
+          }
         }
       } else {
         localStorage.removeItem(STORAGE_KEY);
@@ -165,9 +185,22 @@ export async function checkAuthStatus() {
 
 // Login con Google OAuth
 export function loginWithGoogle() {
-  // Guardar la URL actual para redirigir después del login
-  const currentPath = window.location.pathname;
-  sessionStorage.setItem('redirectAfterLogin', currentPath);
+  // Guardar la URL actual para redirigir después del login.
+  // Si estamos en la página de login (o en rutas de auth), usar el dashboard
+  // como destino para evitar bucles de redirección que vuelven a /login.
+  const currentPath = window.location.pathname || '/';
+  let target = currentPath;
+  if (
+    currentPath === '/login' ||
+    currentPath === '/' ||
+    currentPath.startsWith('/auth')
+  ) {
+    target = '/dashboard';
+  }
+  sessionStorage.setItem('redirectAfterLogin', target);
+  try {
+    console.log('[auth] iniciando login con Google; volveré a:', target);
+  } catch (e) {}
 
   // Redirigir a Google OAuth
   window.location.href = apiUrl('/auth/login');
